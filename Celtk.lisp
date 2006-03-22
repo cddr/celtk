@@ -24,25 +24,28 @@
   (:use :common-lisp :utils-kt :cells)
 
   (:import-from #:ltk
-    #:wish-stream #:*wish* #:*ewish* "*DEBUG-TK*"
-    #:peek-char-no-hang #:read-data
-    #:send-wish #:tkescape
+    #:wish-stream #:*wish* #:*ewish*
+    #:peek-char-no-hang #:read-data #:event-root-x #:event-root-y
+    #:send-wish #:tkescape #:after #:after-cancel #:bind
     #:with-ltk #:do-execute #:add-callback)
 
-  (:export #:window #:panedwindow #:mk-row #:pack-self #:mk-stack #:mk-text-widget
+  (:export
+    #:pop-up #:event-root-x #:event-root-y
+   #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget
     #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label #:selection #:selector
-    #:mk-checkbutton #:mk-button #:mk-button-ex #:mk-entry
-    #:frame-stack #:mk-frame-stack #:pack-layout? #:path
+    #:mk-checkbutton #:mk-button #:mk-button-ex #:mk-entry #:text
+    #:frame-stack #:mk-frame-stack #:path #:^path
     #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
     #:mk-menu-radio-group #:mk-menu-entry-separator
-    #:mk-menu-entry-command #:tk-callback #:mk-menu #:mk-menu-entry-cascade #:mk-menubar
+    #:mk-menu-entry-command #:tk-callback #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
     #:^entry-values #:tk-eval-list #:mk-scale #:mk-popup-menubutton
-    #:mk-polygon #:mk-oval #:mk-line #:mk-arc #:mk-text-item
-    #:mk-rectangle #:mk-bitmap #:mk-canvas #:mk-frame-row
+    #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-tem #:mk-text-item
+    #:rectangle #:mk-rectangle #:bitmap #:mk-bitmap #:canvas #:mk-canvas #:mk-frame-row
     #:mk-scrolled-list #:listbox-item #:mk-spinbox
+    #:mk-scroller #:mk-menu-entry-cascade-ex
     #:with-ltk #:tk-format #:send-wish #:value #:.tkw
-    #:tk-user-queue-handler))
+    #:tk-user-queue-handler #:timer))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -51,12 +54,48 @@
 
 (defmodel tk-object (model)
   ((.md-name :cell nil :initform (gentemp "TK") :initarg :id)
-   (tk-class :cell nil :initform nil :initarg :tk-class :reader tk-class)))
+   (tk-class :cell nil :initform nil :initarg :tk-class :reader tk-class)
+   (timers :initarg :timers :accessor timers :initform nil)))
 
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))
 
 (define-symbol-macro .tkw (nearest self window))
+
+;;; --- timers ----------------------------------------
+
+(defmodel timer ()
+  ((id :initarg :id :accessor id
+     :initform (c? (bwhen (spawn (^spawn))
+                     (apply 'after spawn))))
+   (tag :cell nil :initarg :tag :accessor tag :initform :anon)
+   (action :initform nil :initarg :action :accessor action)
+   (delay :initform 0 :initarg :delay :accessor delay)
+   (repeat :initform 1 :initarg :repeat :accessor repeat)
+   (completed :cell :ephemeral :initform (c-in nil) :initarg :completed :accessor completed)
+   (executions :initarg :executions :accessor executions
+     :initform (c? (+ (or .cache 0)
+                     (if (^completed) 1 0))))
+   (spawn :initarg :spawn :accessor spawn
+     :initform (c? (if (not (^action))
+                       (trc "Warning: timer with no associated action" self)
+                     (flet ((spawn-delayed (n)
+                              (list n (lambda ()
+                                        (funcall (^action) self)
+                                        (setf (^completed) t)))))
+                       (bwhen (repeat (^repeat))
+                         (when (or (zerop (^executions))
+                                 (^completed))
+                           (typecase repeat
+                             (number (when (< (^executions)(^repeat))
+                                       (spawn-delayed (^delay))))
+                             (cons (bwhen (delay (nth (^executions) (^repeat)))
+                                     (spawn-delayed delay)))
+                             (otherwise (spawn-delayed (^delay))))))))))))
+
+(defobserver timers ((self tk-object) new-value old-value)
+  (dolist (k (set-difference old-value new-value))
+    (after-cancel (id k)))) ;;  causes tk error if not outstanding?
 
 ;;; --- widget -----------------------------------------
 
@@ -67,9 +106,11 @@
                  (format nil "~(~a.~a~)"
                      (parent-path (fm-parent self))
                      (md-name self))))
-   (layout :reader layout :initarg :layout :initform nil)
+   (packing :reader packing :initarg :packing :initform nil)
+   (gridding :reader gridding :initarg :gridding :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
    (bindings :reader bindings :initarg :bindings :initform nil)
+   (menus :reader menus :initarg :menus :initform nil)
    (image-files :reader image-files :initarg :image-files :initform nil)
    (selector :reader selector :initarg :selector
      :initform (c? (upper self selector))))
@@ -82,33 +123,38 @@
     (tk-format `(:make-tk ,self) "~(~a~) ~a ~{~(~a~) ~a~^ ~}"
       (tk-class self) (path self)(tk-configurations self)) :stdfctry))
 
-;;;(defmethod md-awaken :before ((self widget))
-;;;  (loop for (name file-pathname) in (^image-files)
-;;;        do (tk-format "image create photo ~(~a.~a~) -file ~a"
-;;;             (^path) name (tkescape (namestring file-pathname)))))
+(defmethod tk-configure ((self widget) option value)
+  (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
 
-(defobserver image-files ()
-  ;
-  ; I do not know how to create the photo for X before X exists
-  ; though it seems to work. <g> perhaps Tk understands it does not need to
-  ; place the image in a tree and lets the undefined path go? If so,
-  ; just add :pre-make-kt before :make-kt in the sort list
-  ;
-  (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
-      do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file ~a"
-           (^path) name (tkescape (namestring file-pathname)))))
+(defmethod not-to-be :after ((self widget))
+  (trc nil "not-to-be tk-forgetting true widget" self)
+  (tk-format `(:forget ,self) "pack forget ~a" (^path))
+  (tk-format `(:destroy ,self) "destroy ~a" (^path)))
+
+;;; --- bindings ------------------------------------------------------------
 
 (defobserver bindings () ;;; (w widget) event fun)
-  (loop for (event fmt fn) in new-value
-        for name = (gentemp "BNDG")
-        do (tk-format `(:bind ,self) "bind ~a ~a ~a" ;; {puts {:callback ~a}}"
-                      (^path) event (format nil fmt (register-callback self name fn)))))
+  ;
+  ; when we get dynamic with this cell we will have to do the kids
+  ; thing and worry about extant new-values, de-bind lost old-values
+  ;
+  (with-integrity (:client `(:bind ,self))
+    (dolist (bspec new-value)
+      (if (eql (length bspec) 3) ;; getting wierd here
+          (destructuring-bind (event fmt fn) bspec
+            (let ((name (gentemp "BNDG")))
+              (tk-format `(:bind ,self) "bind ~a ~a ~a" ;; {puts {:callback ~a}}"
+                (^path) event (format nil fmt (register-callback self name fn)))))
+        (destructuring-bind (event fn) bspec
+          (bind (^path) event fn))))))
 
-(defobserver layout ((self widget))
+;;;  --- packing ---------------------------------------------------------
+
+(defobserver packing ((self widget))
   (when new-value
-    (assert (null (kids-layout .parent)) ()
-      "Do not specify layout (here for ~a) unless parent leaves kids-layout unspecified. 
-This parent is ~a, kids-layout ~a" self (list .parent (type-of .parent)) (kids-layout .parent)))
+    (assert (null (kids-packing .parent)) ()
+      "Do not specify packing (here for ~a) unless parent leaves kids-packing unspecified. 
+This parent is ~a, kids-packing ~a" self (list .parent (type-of .parent)) (kids-packing .parent)))
   ;
   ; This use next of the parent instead of self is pretty tricky. It has to do with getting
   ; the pack commands out nested widgets before parents. The pack command issued on behalf
@@ -122,17 +168,27 @@ This parent is ~a, kids-layout ~a" self (list .parent (type-of .parent)) (kids-l
   (when (and new-value (not (typep .parent 'panedwindow)))
     (tk-format `(:pack ,(fm-parent self)) new-value)))
 
-(defun pack-self ()
-  (c? (format nil "pack ~a" (path self))))
+(defmacro c?pack-self (&optional (modifier$ ""))
+  `(c? (format nil "pack ~a ~a" (path self) ,modifier$)))
 
-(defmethod tk-configure ((self widget) option value)
-  (tk-format `(:configure ,self ,option) "~A configure ~(~a~) ~a" (path self) option (tk-send-value value)))
+;;; --- grids -------------------------------------------------------------------------
 
-(defmethod not-to-be :after ((self widget))
-  (trc nil "not-to-be tk-forgetting true widget" self)
-  (tk-format `(:forget ,self) "pack forget ~a" (^path))
-  (tk-format `(:destroy ,self) "destroy ~a" (^path)))
+(defmodel grid-manager ()())
 
+(defobserver gridding ((self grid-manager))
+  (when new-value
+    (loop for k in (^kids)
+          when (gridding k)
+          do (tk-format `(:grid ,k) (format nil "grid ~a ~a" (path k) (gridding k))))
+    (destructuring-bind (&key columns rows) new-value
+      (when columns
+        (loop for config in columns
+              for idx upfrom 0
+              do (tk-format `(:grid ,self) (format nil "grid columnconfigure ~a ~a ~a" (^path) idx config))))
+      (when columns
+        (loop for config in rows
+              for idx upfrom 0
+              do (tk-format `(:grid ,self) (format nil "grid rowconfigure ~a ~a ~a" (^path) idx config)))))))
 
 ;;; --- items -----------------------------------------------------------------------
 
@@ -230,7 +286,7 @@ This parent is ~a, kids-layout ~a" self (list .parent (type-of .parent)) (kids-l
 (defun tk-callback (self id-suffix fn &optional command)
   (declare (ignorable command))
   (let ((id (register-callback self id-suffix fn)))
-    (trc  nil "tk-callback" self id command)
+    (trc nil "tk-callback" self id)
     (list 'callback id)))
 
 (defun tk-callbackstring (self id-suffix tk-token fn)
@@ -291,3 +347,21 @@ This parent is ~a, kids-layout ~a" self (list .parent (type-of .parent)) (kids-l
       (tk-variable self)
       (tk-send-value new-value))))
 
+;;; --- images -------------------------------------------------------
+
+(defobserver image-files ()
+  ;
+  ; I do not know how to create the photo for X before X exists
+  ; though it seems to work. <g> perhaps Tk understands it does not need to
+  ; place the image in a tree and lets the undefined path go? If so,
+  ; just add :pre-make-kt before :make-kt in the sort list
+  ;
+  (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
+      do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file ~a"
+           (^path) name (tkescape (namestring file-pathname)))))
+
+
+;;; --- menus ---------------------------------
+
+(defun pop-up (menu x y)
+  (tk-format-now "tk_popup ~A ~A ~A" (path menu) x y))

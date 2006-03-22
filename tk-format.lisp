@@ -25,11 +25,9 @@
 
 ; --- tk-format --- talking to wish/Tk -----------------------------------------------------
 
-(defparameter *tk-send-ct* 0)
-
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it stuff in the order it needs to work properly."
-  (let ((priority '(:destroy :pre-make-tk :make-tk :post-make-tk :variable :bind :selection :trace :configure :pack :fini)))
+  (let ((priority '(:destroy :pre-make-tk :make-tk :post-make-tk :variable :bind :selection :trace :configure :grid :pack :fini)))
     (destructuring-bind (type1 self1 &rest dbg) task1
       (declare (ignorable dbg))
       (assert type1)
@@ -58,45 +56,39 @@
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
         (funcall task)))
 
-(defun tk-format (defer-info fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
+(defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
+  ;
+  ; --- pure debug stuff ---
+  ;
+  (let ((yes '( "scroll")) ;; '("scroll" "pkg-sym"))
+        (no  '()))
+    (declare (ignorable yes no))
+    (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
+                      (not (find-if (lambda (s) (search s tk$)) no)))
+      (format t "~&tk[~a] ~a> ~A~%" dbg #+nah cells::*data-pulse-id* defer-info tk$)
+      #+nah (unless (find #\" tk$)
+              (break "bad set ~a" tk$))))
+  (assert (wish-stream *wish*)) ;; when not??
+  ;
+  ; --- serious stuff ---
+  ;
+  (format (wish-stream *wish*) "~A~%" tk$)
+  (force-output (wish-stream *wish*)))
+
+(defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"
   (assert (or (eq defer-info :grouped)
-            (consp defer-info)) () "need defer-info to sort command ~a. Specify :grouped if caller is managing user-queue" tk$)
-
-  ;; sigh, it can happen outside a path (assert (not (search "nil" tk$)) () "What is NIL doing in TK message ~a?" tk$)
+            (consp defer-info)) () "need defer-info to sort command ~a. Specify :grouped if caller is managing user-queue"
+    (apply 'format nil fmt$ fmt-args))
 
   (when (eq defer-info :grouped)
     (setf defer-info nil))
-
-  (flet ((core (dbg)
-           (declare (ignorable dbg))
-           ;
-           ; --- pure debug stuff ---
-           ;
-           (let ((yes '("font-face"))
-                 (no '("pkg-sym-list")))
-             (declare (ignorable yes no))
-             (when nil #+bzzt (and (find-if (lambda (s) (search s tk$)) yes)
-                              (not (find-if (lambda (s) (search s tk$)) no)))
-               (format t "~&tk[~a] ~a> ~A~%" dbg #+nah cells::*data-pulse-id* defer-info tk$)
-               #+nah (unless (find #\" tk$)
-                       (break "bad set ~a" tk$))))
-           (assert (wish-stream *wish*)) ;; when not??
-           ;
-           ; --- serious stuff ---
-           ;
-           (format (wish-stream *wish*) "~A~%" tk$)
-           (force-output (wish-stream *wish*))
-           ;
-           ; --- mo better debug -----------------
-           ;
-           #+sighh (loop 
-             while (peek-char-no-hang *ewish*)
-             do (break "ewish!!!!!!!> ~a" (read-line defun*ewish* nil nil)))))
+  (flet ((do-it ()
+           (apply 'tk-format-now fmt$ fmt-args)))
     (if defer-info
         (with-integrity (:client defer-info)
-          (core :wi))
-      (core :im))))
+          (do-it))
+    (do-it))))
 
 (defmethod tk-send-value ((s string))
   (format nil "~s" #+not "{~a}" s))
@@ -112,9 +104,6 @@
 
 (defmethod tk-send-value ((values list))
   (format nil "{~{~a~^ ~}}" (mapcar 'tk-send-value values)))
-
-(defmacro pack-layout? (fmt$ &rest args)
-  `(c? (format nil "pack ~a ~?" (^path) ,fmt$ (list ,@args))))
 
 (defmethod parent-path ((nada null)) "")
 (defmethod parent-path ((self t)) (^path))

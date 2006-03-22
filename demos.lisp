@@ -20,22 +20,22 @@
 |#
 
 
+
 (in-package :celtk-user)
 
 (defun ctk::tk-test ()
-  (tk-test-class 'a-few))
+  (cells-reset 'tk-user-queue-handler)
+  (tk-test-class 'ltktest-cells-inside))
 
 (defparameter *tktest* nil)
 
 (defun tk-test-class (root-class)
-  (cells-reset 'tk-user-queue-handler)
-  (setf ctk::*tk-send-ct* 0)
   (with-ltk (:debug 0)
     (send-wish "proc trc2 {cb n1 n2 op} {puts \"(:callback \\\"$cb\\\" :name1 $n1 :name2 \\\"$n2\\\" :op $op)\"}")
-    (setf ltk::*debug-tk* nil)
-    (time (setf *tktest* (make-instance root-class)))
-    (tk-format `(:fini) "wm deiconify .")
-    ))
+    (setf ltk:*debug-tk* nil)
+    (with-integrity ()
+      (time (setf *tktest* (make-instance root-class))))
+    (tk-format `(:fini) "wm deiconify .")))
 
 (defun tk-test-all ()(tk-test-class 'a-few))
 (defun mk-font-view ()
@@ -47,7 +47,7 @@
       :kids (c? (the-kids
                  (demo-all-menubar)
                  
-                 (mk-row (:layout (pack-self))
+                 (mk-row (:packing (c?pack-self))
                    (mk-label :text "aaa"
                      :image-files (list (list 'kt (make-pathname #+lispworks :host #-lispworks :device "c"
                                                     :directory '(:absolute "0dev" "Celtk")
@@ -56,7 +56,7 @@
                      :width 300
                      :image (c? (format nil "~(~a.~a~)" (ctk::^path) 'kt)))
                    
-                   (assorted-canvas-items)
+                   ;;(assorted-canvas-items)
                    
                    (mk-stack ()
                      (mk-text-widget
@@ -65,9 +65,9 @@
                       :height 8
                       :width 25)
                      
-                   (spin-package-with-symbols))
+                     (spin-package-with-symbols))
                    
-                   (mk-stack ()
+                   #+nahh (mk-stack ()
                      (mk-row (:id :radio-ny :selection (c-in 'yes))
                        (mk-radiobutton-ex ("yes" 'yes))
                        (mk-radiobutton-ex ("no" 'no))
@@ -93,7 +93,7 @@
                         :id :enter-me)
                        (mk-label :text (c? (conc$ "echo " (fm^v :enter-me))))))
                    
-                   (duelling-scrolled-lists)
+                   #+nahh (duelling-scrolled-lists)
                    )))))
   
 (defun style-by-edit-menu ()
@@ -124,8 +124,11 @@
                                 (item (when spinner (md-value spinner)))
                                 (pkg (find-package (string-upcase item))))
                            (when pkg
-                             (loop for sym being the present-symbols in pkg
-                                 collecting sym))))
+                             (loop for sym being the symbols in pkg
+                                   counting sym into symct
+                                   collecting sym into syms
+                                   finally (trc "syms found !!!" symct)
+                                   (return syms)))))
      :list-item-factory (lambda (sym)
                           (make-instance 'listbox-item
                             :fm-parent *parent*
@@ -191,7 +194,7 @@
 (defun style-by-widgets ()
   (mk-stack ("Style by Widgets" :id :widstyle)
     (mk-row (:id :stywid
-              :layout-side 'left
+              :packing-side 'left
               :layout-anchor 'sw)
       (mk-popup-menubutton
        :id :font-face
@@ -277,7 +280,7 @@
   (:default-initargs
       :kids (c? (the-kids
                  (mk-panedwindow
-                  :layout (pack-self)
+                  :packing (c?pack-self)
                   :orient 'vertical
                   :kids  (c? (the-kids
                               (loop repeat 2
@@ -288,9 +291,8 @@
   (:default-initargs
       :md-value (c? (tk-eval-list self "font families"))
     :pady 2 :padx 4
-    :layout-side 'left
+    :packing-side 'left
     :layout-anchor 'nw
-    ;;:kids-layout (pack-layout? "-side left -fill both -expand 1 -anchor nw")
     :kids (c? (the-kids
                (mk-spinbox :id :font-face
                  :md-value (c-in (car (^md-value)))
@@ -311,14 +313,7 @@
 
 ;;; ---- toplevel --------------------------------
 
-(defmodel tl-popper (frame-stack)
-  ()
-  (:default-initargs
-    :pady 2 :padx 4
-    :layout (pack-layout? "-side left -fill both -expand 1 -anchor nw")
-    :kids  (c? (the-kids
-                (mk-button-ex ("Open" (make-instance 'file-open))
-                 :underline 0)))))
+
 
 
 (defmodel file-open (toplevel)

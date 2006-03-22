@@ -1,3 +1,4 @@
+#+eval-this-if-you-do-not-autoload-asdf
 (load (make-pathname :device "c"
         :directory '(:absolute "0dev" "cells")
         :name "asdf"
@@ -7,10 +8,17 @@
     asdf:*central-registry*)
 
 (push (make-pathname :device "c" :directory '(:absolute "0dev" "Celtk"))
-  asdf:*central-registry*)
+    asdf:*central-registry*)
 
-(ASDF:OOS 'ASDF:LOAD-OP :Celtk :force t)
+#-runtestsuite
+(ASDF:OOS 'ASDF:LOAD-OP :CELLS)
 
-#+gratuitousfeature
+#+runtestsuite
+(ASDF:OOS 'ASDF:LOAD-OP :CELLS-TEST)
+
+#+checkoutceltk
+(ASDF:OOS 'ASDF:LOAD-OP :CELTK)
+
+#+testceltk
 (ctk::tk-test)
 

@@ -57,6 +57,9 @@ dynamic add/remove
     :grandpar (fm-parent .parent) (type-of (fm-parent .parent)))
   (tk-format `(:make-tk ,self) "menu ~a -tearoff 0" (^path)))
 
+(defmacro mk-menu-ex (&rest submenus)
+  `(mk-menu :kids (c? (the-kids ,@submenus))))
+
 (defmethod make-tk-instance :after ((self menu))
   (trc nil "make-tk-instance > traversing menu" self)
   (fm-menu-traverse self
@@ -139,6 +142,11 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     -menu)
   (:default-initargs
       :menu (c? (path (kid1 self)))))
+
+(defmacro mk-menu-entry-cascade-ex ((&rest initargs) &rest submenus)
+  `(mk-menu-entry-cascade
+    ,@initargs
+    :kids (c? (the-kids (mk-menu :kids (c? (the-kids ,@submenus)))))))
 
 (defmethod path ((self menu-entry-cascade))
   (format nil "~(~a.~a~)" (path .parent) (md-name self)))

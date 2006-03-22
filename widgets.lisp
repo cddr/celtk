@@ -42,8 +42,8 @@
   `(make-instance 'button
      :fm-parent *parent*
      :text ,text
-     :command (tk-callback self 'cmd 
-                (lambda () ,command))
+     :command (c? (tk-callback self 'cmd 
+                    (lambda () ,command)))
      ,@initargs))
 
 ; --- checkbutton ---------------------------------------------
@@ -196,9 +196,9 @@
 
 (defobserver initial-value ((self spinbox))
   (when new-value
-    (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
-    
-    (setf (^md-value) new-value)))
+    (with-integrity (:change)
+      (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
+      (setf (^md-value) new-value))))
 
 
 ; --- scroll bars ----------------------------------------
@@ -223,7 +223,7 @@
    (list-height :initarg :list-height :accessor list-height :initform nil))
   (:default-initargs
       :list-height (c? (max 1 (length (^list-item-keys))))
-    :kids-layout nil
+    :kids-packing nil
       :kids (c? (the-kids
                  (mk-listbox :id :list-me
                    :kids (c? (the-kids
@@ -232,11 +232,11 @@
                    :font '(courier 9)
                    :state (c? (if (enabled .parent) 'normal 'disabled))
                    :height (c? (list-height .parent))
-                   :layout (c? (format nil "pack ~a -side left -fill both -expand 1" (^path)))
+                   :packing (c? (format nil "pack ~a -side left -fill both -expand 1" (^path)))
                    :yscrollcommand (c? (when (enabled .parent)
                                          (format nil "~a set" (path (nsib))))))
                  (mk-scrollbar :id :vscroll
-                     :layout (c? (format nil "pack ~a -side right -fill y" (^path)))
+                     :packing (c?pack-self "-side right -fill y")
                      :command (c? (format nil "~a yview" (path (psib)))))))))
 
 (defmethod tk-output-selection :after ((self scrolled-list) new-value old-value old-value-boundp)

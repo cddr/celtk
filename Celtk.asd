@@ -18,8 +18,10 @@
                (:file "Celtk")
                (:file "tk-format")
                (:file "menu")
-               (:file "composites")
                (:file "textual")
                (:file "widgets")
                (:file "canvas")
-               (:file "demos")))
+               (:file "composites")
+               (:file "demos")
+               (:file "ltktest-cells-inside")))
+

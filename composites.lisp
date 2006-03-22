@@ -51,7 +51,7 @@
     -showhandle)
   (:default-initargs
       :id (gentemp "PW")
-      :layout nil))
+      :packing nil))
 
 (defmethod make-tk-instance ((self panedwindow))
   (tk-format `(:make-tk ,self) "panedwindow ~a -orient ~(~a~)"
@@ -67,7 +67,10 @@
 
 ; --------------------------------------------------------
 
-(defmodel window (family)
+(defmodel composite-widget (widget)
+  ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
+
+(defmodel window (composite-widget)
   ((wish :initarg :wish :accessor wish
      :initform (wish-stream *wish*)
      #+(or) (c? (do-execute "wish84 -name testwindow" 
@@ -82,47 +85,46 @@
 
 (defmethod path ((self window)) ".")
 (defmethod parent-path ((self window)) "")
-(defmethod kids-layout ((self window)) nil)
 
 
 ;--- group geometry -----------------------------------------
 
-(defmodel inline-mixin ()
-  ((kids-layout :initarg :kids-layout :accessor kids-layout :initform nil)
-   (padx :initarg :padx :accessor padx :initform 0)
+(defmodel inline-mixin (composite-widget)
+  ((padx :initarg :padx :accessor padx :initform 0)
    (pady :initarg :pady :accessor pady :initform 0)
-   (layout-side :initarg :layout-side :accessor layout-side :initform 'left)
+   (packing-side :initarg :packing-side :accessor packing-side :initform 'left)
    (layout-anchor :initarg :layout-anchor :accessor layout-anchor :initform 'nw))
   (:default-initargs
       :kid-slots (lambda (self)
                    (declare (ignore self))
                    (list
-                    (mk-kid-slot (layout :if-missing t)
+                    (mk-kid-slot (packing :if-missing t)
                       nil))) ;; suppress default
-    :kids-layout (c? (format nil "pack~{ ~a~} -side ~a -anchor ~a -padx ~a -pady ~a"
-                       (mapcar 'path (^kids))
-                       (down$ (^layout-side))
-                       (down$ (^layout-anchor))
-                       (^padx)(^pady)))))
+    :kids-packing (c? (when (^kids)
+                        (format nil "pack~{ ~a~} -side ~a -anchor ~a -padx ~a -pady ~a"
+                          (mapcar 'path (^kids))
+                          (down$ (^packing-side))
+                          (down$ (^layout-anchor))
+                          (^padx)(^pady))))))
 
-(defobserver kids-layout ()
+(defobserver kids-packing ()
   (when new-value
-    (tk-format `(:pack ,self kids-layout) new-value)))
+    (tk-format `(:pack ,self kids-packing) new-value)))
 
 (defmodel row-mixin (inline-mixin)
   ()
   (:default-initargs
-    :layout-side 'left))
+    :packing-side 'left))
 
 (defmodel stack-mixin (inline-mixin)
   ()
   (:default-initargs
-    :layout-side 'top))
+    :packing-side 'top))
 
 
 ;--- f r a m e --------------------------------------------------
 
-(deftk frame ()
+(deftk frame (composite-widget)
   ()
   (:tk-spec frame -borderwidth -cursor	-highlightbackground -highlightcolor
     -highlightthickness -padx -pady -relief
@@ -168,3 +170,38 @@
 
 (def-mk-inline mk-row (frame-row labelframe-row))
 (def-mk-inline mk-stack (frame-stack labelframe-stack))
+
+;--- scroller (of canvas; need to generalize this) ----------
+
+(defmodel scroller (grid-manager frame)
+  ((canvas :initarg :canvas :accessor canvas :initform nil))
+  (:default-initargs
+      :id :cv-scroller
+    :kids-packing nil
+    :gridding '(:columns ("-weight {1}" "-weight {0}")
+                 :rows ("-weight {1}" "-weight {0}"))
+    :kids (c? (the-kids
+               (^canvas)
+               (mk-scrollbar :id :hscroll
+                 :orient "horizontal"
+                 :gridding "-row 1 -column 0 -sticky we"
+                 :command (c? (format nil "~a xview" (path (kid1 .parent)))))
+               (mk-scrollbar :id :vscroll
+                 :orient "vertical"
+                 :gridding "-row 0 -column 1 -sticky ns"
+                 :command (c? (format nil "~a yview" (path (kid1 .parent)))))))))
+
+(defmacro mk-scroller (&rest iargs)
+  `(make-instance 'scroller
+     :fm-parent self
+     ,@iargs))
+
+(defmethod initialize-instance :after ((self scroller) &key)
+  ;
+  ; Tk does not do late binding on widget refs, so the canvas cannot mention the scrollbars
+  ; in x/y scrollcommands since the canvas gets made first
+  ;
+  (with-integrity (:client `(:post-make-tk ,self))
+    (setf (xscrollcommand (kid1 self)) (format nil "~a set" (path (fm! :hscroll))))
+    (setf (yscrollcommand (kid1 self)) (format nil "~a set" (path (fm! :vscroll))))))
+

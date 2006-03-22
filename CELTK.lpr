@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (Mar 7, 2006 20:04)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Mar 19, 2006 10:49)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -6,15 +6,16 @@
 
 (define-project :name :celtk
   :modules (list (make-instance 'module :name "ltk-kt.lisp")
-                 (make-instance 'module :name "notes.lisp")
                  (make-instance 'module :name "Celtk.lisp")
                  (make-instance 'module :name "tk-format.lisp")
                  (make-instance 'module :name "menu.lisp")
-                 (make-instance 'module :name "composites.lisp")
                  (make-instance 'module :name "textual.lisp")
                  (make-instance 'module :name "widgets.lisp")
                  (make-instance 'module :name "canvas.lisp")
-                 (make-instance 'module :name "demos.lisp"))
+                 (make-instance 'module :name "composites.lisp")
+                 (make-instance 'module :name "demos.lisp")
+                 (make-instance 'module :name
+                                "ltktest-cells-inside.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells"))
   :libraries nil

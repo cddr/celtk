@@ -517,26 +517,26 @@ toplevel             x
 
 ;;; start wish and set (wish-stream *wish*)
 (defun start-wish (&rest keys &key handle-errors handle-warnings (debugger t)
-                   stream)
+                    stream)
   (declare (ignore handle-errors handle-warnings debugger))
   ;; open subprocess
   (if (null (wish-stream *wish*))
       (progn
-	(setf (wish-stream *wish*) (or stream (do-execute *wish-pathname* *wish-args*))
-	      (wish-call-with-condition-handlers-function *wish*)
-	      (apply #'make-condition-handler-function keys))
-	;; perform tcl initialisations
+        (setf (wish-stream *wish*) (or stream (do-execute *wish-pathname* *wish-args*))
+          (wish-call-with-condition-handlers-function *wish*)
+          (apply #'make-condition-handler-function keys))
+        ;; perform tcl initialisations
         (with-ltk-handlers ()
           (init-wish)))
-      ;; By default, we don't automatically create a new connection, because the
-      ;; user may have simply been careless and doesn't want to push the old
-      ;; connection aside.  The NEW-WISH restart makes it easy to start another.
-      (restart-case (ltk-error "There is already an inferior wish.")
-	(new-wish ()
-	  :report "Create an additional inferior wish."
-	  (push *wish* *wish-connections*)
-	  (setf *wish* (make-ltk-connection))
-	  (apply #'start-wish keys)))))
+    ;; By default, we don't automatically create a new connection, because the
+    ;; user may have simply been careless and doesn't want to push the old
+    ;; connection aside.  The NEW-WISH restart makes it easy to start another.
+    (restart-case (ltk-error "There is already an inferior wish.")
+      (new-wish ()
+        :report "Create an additional inferior wish."
+        (push *wish* *wish-connections*)
+        (setf *wish* (make-ltk-connection))
+        (apply #'start-wish keys)))))
 
 (defun exit-wish ()
   (with-ltk-handlers ()
@@ -619,7 +619,7 @@ event to read and blocking is set to nil"
   (handler-case
       (or
        (let ((event (pop (wish-event-queue *wish*))))
-              (when event (ukt:trc "read-event > popq" event))
+              ;; (when event (ukt:trc "read-event > popq" event))
               event)
        
         (if (or blocking (can-read (wish-stream *wish*)))

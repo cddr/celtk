@@ -70,16 +70,13 @@
     :textvariable (c? (^path))
       :md-value (c-in "<your string here>")))
 
-;;;(defmethod make-tk-instance ((self entry))
-;;;  (setf (gethash (^path) (dictionary .tkw)) self)
-;;;  (tk-format "entry ~a -textvariable ~a" (path self)(path self)))
-
 (defmethod md-awaken :after ((self entry))
   (tk-format `(:trace ,self) "trace add variable ~a write \"trc2 ~a\""
     (^path)
     (register-callback self 'tracewrite
       (lambda (&key name1 name2 op)
         (declare (ignorable name1 name2 op))
+        (trc nil "tracewrite BINGO!!!!" (^path) (tk-eval-var (^path)))
         (let ((new-value (tk-eval-var (^path))))
           (unless (string= new-value (^md-value))
             (setf (^md-value) new-value)))))))
