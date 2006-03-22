@@ -23,25 +23,23 @@
 
 (in-package :celtk-user)
 
-(defun ctk::tk-test ()
-  (cells-reset 'tk-user-queue-handler)
+(defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (tk-test-class 'ltktest-cells-inside))
 
-(defparameter *tktest* nil)
-
 (defun tk-test-class (root-class)
+  (cells-reset 'tk-user-queue-handler)
   (with-ltk (:debug 0)
     (send-wish "proc trc2 {cb n1 n2 op} {puts \"(:callback \\\"$cb\\\" :name1 $n1 :name2 \\\"$n2\\\" :op $op)\"}")
     (setf ltk:*debug-tk* nil)
     (with-integrity ()
-      (time (setf *tktest* (make-instance root-class))))
+      (make-instance root-class))
     (tk-format `(:fini) "wm deiconify .")))
 
-(defun tk-test-all ()(tk-test-class 'a-few))
+(defun tk-test-all ()(tk-test-class 'lotsa-widgets))
 (defun mk-font-view ()
   (make-instance 'font-view))
 
-(defmodel a-few (window)
+(defmodel lotsa-widgets (window)
   ()
   (:default-initargs
       :kids (c? (the-kids
@@ -56,7 +54,7 @@
                      :width 300
                      :image (c? (format nil "~(~a.~a~)" (ctk::^path) 'kt)))
                    
-                   ;;(assorted-canvas-items)
+                   (assorted-canvas-items)
                    
                    (mk-stack ()
                      (mk-text-widget
@@ -67,7 +65,7 @@
                      
                      (spin-package-with-symbols))
                    
-                   #+nahh (mk-stack ()
+                   (mk-stack ()
                      (mk-row (:id :radio-ny :selection (c-in 'yes))
                        (mk-radiobutton-ex ("yes" 'yes))
                        (mk-radiobutton-ex ("no" 'no))
@@ -79,7 +77,7 @@
                        (mk-label :text (c? (if (fm^v :check-me) "checked" "unchecked"))))
                      (mk-row ()
                        (mk-button-ex ("Time now?" (setf (fm!v :push-time)
-                                                 (get-universal-time))))
+                                                    (get-universal-time))))
                        (mk-label :text (c? (time-of-day (^md-value)))
                          :id :push-time
                          :md-value (c-in (get-universal-time))))
@@ -93,7 +91,7 @@
                         :id :enter-me)
                        (mk-label :text (c? (conc$ "echo " (fm^v :enter-me))))))
                    
-                   #+nahh (duelling-scrolled-lists)
+                   (duelling-scrolled-lists)
                    )))))
   
 (defun style-by-edit-menu ()

@@ -1,13 +1,15 @@
 #+eval-this-if-you-do-not-autoload-asdf
-(load (make-pathname :device "c"
+(load (make-pathname #+lispworks :host #-lispworks :device "c"
         :directory '(:absolute "0dev" "cells")
         :name "asdf"
         :type "lisp"))
 
-(push (make-pathname :device "c" :directory '(:absolute "0dev" "cells"))
+(push (make-pathname #+lispworks :host #-lispworks :device "c"
+                     :directory '(:absolute "0dev" "cells"))
     asdf:*central-registry*)
 
-(push (make-pathname :device "c" :directory '(:absolute "0dev" "Celtk"))
+(push (make-pathname #+lispworks :host #-lispworks :device "c"
+                     :directory '(:absolute "0dev" "Celtk"))
     asdf:*central-registry*)
 
 #-runtestsuite
@@ -22,3 +24,5 @@
 #+testceltk
 (ctk::tk-test)
 
+#+ortestceltk
+(celtk-user::tk-test-class 'celtk-user::lotsa-widgets)

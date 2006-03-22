@@ -45,7 +45,7 @@
     #:mk-scrolled-list #:listbox-item #:mk-spinbox
     #:mk-scroller #:mk-menu-entry-cascade-ex
     #:with-ltk #:tk-format #:send-wish #:value #:.tkw
-    #:tk-user-queue-handler #:timer))
+    #:tk-user-queue-handler #:timer #:make-timer-steps))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -63,6 +63,8 @@
 (define-symbol-macro .tkw (nearest self window))
 
 ;;; --- timers ----------------------------------------
+
+(defstruct timer-steps count)
 
 (defmodel timer ()
   ((id :initarg :id :accessor id
@@ -87,6 +89,8 @@
                          (when (or (zerop (^executions))
                                  (^completed))
                            (typecase repeat
+                             (timer-steps (when (< (^executions)(timer-steps-count (^repeat)))
+                                            (spawn-delayed (^delay))))
                              (number (when (< (^executions)(^repeat))
                                        (spawn-delayed (^delay))))
                              (cons (bwhen (delay (nth (^executions) (^repeat)))

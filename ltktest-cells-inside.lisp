@@ -17,18 +17,15 @@
                    (mk-row (:borderwidth 2 :relief 'sunken)
                      (mk-label :text "Rotation:")
                      (mk-button-ex ("Start" (setf (repeat (fm^ :moire-1)) t)))
-                     (mk-button-ex ("Stop" (progn (trc "killing running!!!!!!!!!!")
-                                             (setf (repeat (fm^ :moire-1)) nil)))))
-                   (mk-button-ex ("Hallo" (format T "Hallo~%")))
-                   (mk-button-ex ("Welt!" (format T "Welt~%")))
+                     (mk-button-ex ("Stop" (setf (repeat (fm^ :moire-1)) nil))))
+                   (mk-button-ex ("Hallo" (format T "~&Hallo")))
+                   (mk-button-ex ("Welt!" (format T "~&Welt")))
                    (mk-row (:borderwidth 2
                              :relief 'sunken)
                      (mk-label :text "Test:")
-                     (mk-button-ex ("OK:" (progn ;; I do not like this
-                                            (setf (repeat (fm^ :moire-1)) 0)
-                                            (setf (repeat (fm^ :moire-1)) 20)))))
+                     (mk-button-ex ("OK:" (setf (repeat (fm^ :moire-1)) (make-timer-steps :count 20)))))
                    (mk-entry :id :entry)
-                   (mk-button-ex ("get!" (format t "~&content of entry: ~A~%" (fm^v :entry))))
+                   (mk-button-ex ("get!" (format t "~&content of entry: ~A" (fm^v :entry))))
                    (mk-button-ex ("set!" (setf (fm^v :entry) "test of set"))))))))
    
 (defmodel ltk-test-canvas (canvas)
@@ -70,7 +67,7 @@
       :timers (c? (when (^repeat)
                       (list (make-instance 'timer
                               :tag :moire
-                              :delay 25
+                              :delay 1
                               :repeat (let ((m self))
                                         (c? (repeat m)))
                               :action (lambda (timer)
@@ -92,23 +89,24 @@
               (mk-menu-entry-cascade-ex (:label "File")
                 (mk-menu-entry-command :label "Load"
                   :command (c? (tk-callback .tkw 'load
-                                 (lambda () (format t "~&Load pressed~&")))))
+                                 (lambda () (format t "~&Load pressed")))))
                                       
                 (mk-menu-entry-command :label "Save"
                   :command (c? (tk-callback .tkw 'save
-                                 (lambda () (format t "Save pressed~&")))))
+                                 (lambda () (format t "~&Save pressed")))))
                 (mk-menu-entry-separator)
                 (mk-menu-entry-cascade-ex (:id :export :label "Export...")
                   (mk-menu-entry-command 
                    :label "jpeg"
                    :command (c? (tk-callback .tkw 'jpeg
-                                  (lambda () (format t "Jpeg pressed~&")))))
+                                  (lambda () (format t "~&Jpeg pressed")))))
                   (mk-menu-entry-command
                    :label "png"
                    :command (c? (tk-callback .tkw 'png
-                                  (lambda () (format t "Png pressed~&"))))))
+                                  (lambda () (format t "~&Png pressed"))))))
                 (mk-menu-entry-separator)
                 (mk-menu-entry-command :label "Quit"
-                  :accelerator "Alt Q"
+                  :accelerator "<Alt-q>"
+                  :underline 1
                   :command "exit"))))))
 

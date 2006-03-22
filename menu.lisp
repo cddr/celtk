@@ -136,6 +136,13 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     -compound -font -foreground -hidemargin
     -image -label -state -underline))
 
+(defobserver accelerator :around ((self menu-entry-usable))
+  (call-next-method)
+  (with-integrity (:client '(:bind nil))
+    (when new-value
+      (tk-format-now "bind . ~a {~a invoke ~a}" new-value (path (upper self menu)) (index self)))))
+
+
 (deftk menu-entry-cascade (selector family menu-entry-usable)
   ()
   (:tk-spec cascade

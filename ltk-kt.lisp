@@ -357,6 +357,7 @@ toplevel             x
 (defparameter *ewish* nil)
 
 (defun do-execute (program args &optional (wt nil))
+  (declare (ignorable wt))
   "execute program with args "
   #+:clisp (declare (ignore wt))
   (let ((fullstring program))

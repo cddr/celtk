@@ -60,12 +60,14 @@
   ;
   ; --- pure debug stuff ---
   ;
-  (let ((yes '( "scroll")) ;; '("scroll" "pkg-sym"))
+  (let ((yes '( "bind" "invoke")) ;; '("scroll" "pkg-sym"))
         (no  '()))
     (declare (ignorable yes no))
-    (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
+    (bwhen (st (search "\"Alt Q\"" tk$))
+        (replace tk$ "{Alt Q}" :start1 st))
+    (when (and (find-if (lambda (s) (search s tk$)) yes)
                       (not (find-if (lambda (s) (search s tk$)) no)))
-      (format t "~&tk[~a] ~a> ~A~%" dbg #+nah cells::*data-pulse-id* defer-info tk$)
+      (format t "~&tk> ~A~%" #+nah cells::*data-pulse-id* tk$)
       #+nah (unless (find #\" tk$)
               (break "bad set ~a" tk$))))
   (assert (wish-stream *wish*)) ;; when not??
@@ -107,5 +109,4 @@
 
 (defmethod parent-path ((nada null)) "")
 (defmethod parent-path ((self t)) (^path))
-
 
