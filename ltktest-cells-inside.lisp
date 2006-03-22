@@ -1,18 +1,73 @@
 (in-package :celtk-user)
+#|
 
+The comments throughout this source file cover two broad topics:
+
+    How is programming with Celtk different from LTk?
+    How is programming with Cells different from without Cells?
+
+Those questions are different because not everything different about Celtk
+depends on Cells. 
+
+The pattern will be to have explanatory comments appear after the explained code.
+
+|#
 #+test-ltktest
 (progn
   (cells-reset 'tk-user-queue-handler)
+  ;
+  ; Tk is fussy about the order in which things happen. It likes:
+  ;    - create widgets .x and .y
+  ;    - make .x the -textvariable of .y
+  ;    - set .x to "Hi, Mom"
+  ;
+  ; Tk does not like Step 3 going before Step 2. Unfortunately, in a declarative paradigm
+  ; one does not specify in what order different things should happen, one just specifies
+  ; the things we want to have happen. That is a big win when it works. But when it did not
+  ; I created the concept of a so-called "client queue" where client-code could store
+  ; order-sensitive tasks, and then allowed the client also to specify the handler for
+  ; that queue. This handler gets called at just the right time in the larger scheme of
+  ; state propagation one needs for data integrity. Whassat?
+  ;
+  ; Data integrity: when the overall data model gets perturbed by a SETF by imperative code 
+  ; (usually processing an event loop) of some datapoint X , we need:
+  ;
+  ;   - all state computed off X (directly or indirectly through some intermediate state) must be recomputed;
+  ;   - no recomputation can use datapoints not current with the new value of X;
+  ;   - when invoking client observers to process a change in a datapoint, no observer can use
+  ;     any datapoint not current with X; and a corrollary:
+  ;   - should a client observer itself want to SETF a datapoint Y, all the above must
+  ;     happen not just with values current with X, but also current with the value of Y /prior/
+  ;     to the intended change to Y.
+  ;
+  ; To achieve the above, Cells2 and now Cells3 have taken to using FIFO "unfinished business" queues 
+  ; to defer things until The Right Time. Which brings us back to Tk. Inspect the source of
+  ; tk-user-queue-handler and search the Celtk source for "with-integrity (:client" to see how Celtk
+  ; manages to talk to Tk in the order Tk likes. But in short, we just add this requirement:
+  ;  
+  ;   - Client code must see only values current with X and not any values current with some
+  ;     subsequent change to Y queued by an observer
+  ; 
   (tk-test-class 'ltktest-cells-inside))
 
+; That is all the imperative code there is to Celtk application development, aside from widget commands. Tk handles some
+; of the driving imperative logic, and Celtk internals handle the rest. The application works via rules reacting to change,
+; computing new state for the application model, which operates on the outside world via observers (on-change callbacks) triggered
+; automatically by the Cells engine. See DEFOBSERVER.
+
 (defmodel ltktest-cells-inside (window)
-  ((elapsed :initarg :elapsed :accessor elapsed :initform (c-in 0)))
+  ()
   (:default-initargs
       :kids (c? (the-kids
-                 (ltk-test-menus)
+                 ;
+                 ; Cells GUIs get a lot of mileage out of the family class, which is perfect
+                 ; for graphical hierarchies.
+                 ;
+                 (ltk-test-menus) ;; hiding some code. see below for deets
                  (mk-scroller
-                    :packing (c?pack-self "-side top -fill both -expand 1")
-                    :canvas (c? (make-kid 'ltk-test-canvas)))
+                  :packing (c?pack-self "-side top -fill both -expand 1")
+                  :canvas (c? (make-kid 'ltk-test-canvas)))
+                 
                  (mk-row (:packing (c?pack-self "-side bottom"))
                    (mk-row (:borderwidth 2 :relief 'sunken)
                      (mk-label :text "Rotation:")
@@ -67,7 +122,7 @@
       :timers (c? (when (^repeat)
                       (list (make-instance 'timer
                               :tag :moire
-                              :delay 1
+                              :delay 25
                               :repeat (let ((m self))
                                         (c? (repeat m)))
                               :action (lambda (timer)
