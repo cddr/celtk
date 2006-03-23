@@ -4,12 +4,23 @@
 The comments throughout this source file cover two broad topics:
 
     How is programming with Celtk different from LTk?
+
+Contrast the code below with the excellent ltktest "classic" in ltk.lisp to 
+see how Celtk programming is different.
+
+Second topic:
+
     How is programming with Cells different from without Cells?
 
 Those questions are different because not everything different about Celtk
 depends on Cells. 
 
 The pattern will be to have explanatory comments appear after the explained code.
+
+n.b. The paint is very fresh on Celtk, so if something like the Timer class looks
+dumb, well, it may be. Example: the scroller class only scrolls a canvas (well, I have not tried
+supplying a frame for the canvas slot, maybe it would work, but the slot name at least is 
+certainly wrong (or the class should be canvas-scroller).
 
 |#
 #+test-ltktest
@@ -21,23 +32,25 @@ The pattern will be to have explanatory comments appear after the explained code
   ;    - make .x the -textvariable of .y
   ;    - set .x to "Hi, Mom"
   ;
-  ; Tk does not like Step 3 going before Step 2. Unfortunately, in a declarative paradigm
-  ; one does not specify in what order different things should happen, one just specifies
-  ; the things we want to have happen. That is a big win when it works. But when it did not
-  ; I created the concept of a so-called "client queue" where client-code could store
-  ; order-sensitive tasks, and then allowed the client also to specify the handler for
+  ; Tk does not like Step 3 going before Step 2. That is, .y will not learn about "Hi, Mom.".
+  ; Unfortunately, in a declarative paradigm one does not specify in what order different 
+  ; things should happen, one just specifies the things we want to have happen. That is 
+  ; a big win when it works. But when it did not work for Tk I added to Cells the concept 
+  ; of a "client queue" where client-code could store
+  ; order-sensitive tasks, also allowing the client to specify the handler for
   ; that queue. This handler gets called at just the right time in the larger scheme of
-  ; state propagation one needs for data integrity. Whassat?
+  ; state propagation one needs for data integrity. What is that?
   ;
-  ; Data integrity: when the overall data model gets perturbed by a SETF by imperative code 
-  ; (usually processing an event loop) of some datapoint X , we need:
+  ; Data integrity: when the overall data model gets perturbed by imperative code 
+  ; (such as code processing an event loop) executing a SETF of some datapoint X , we want
+  ; these requirements satisfied:
   ;
-  ;   - all state computed off X (directly or indirectly through some intermediate state) must be recomputed;
-  ;   - no recomputation can use datapoints not current with the new value of X;
-  ;   - when invoking client observers to process a change in a datapoint, no observer can use
-  ;     any datapoint not current with X; and a corrollary:
-  ;   - should a client observer itself want to SETF a datapoint Y, all the above must
-  ;     happen not just with values current with X, but also current with the value of Y /prior/
+  ;   - all state computed off X (directly or indirectly through some intermediate datapoint) must be recomputed;
+  ;   - recomputations must see only datapoint values current with the new value of X. This must
+  ;     work transparently, ie, datapoint accessors are responsible for returning only current values;
+  ;   - similarly, client observers ("on change" callbacks) must see only values current with the new value of X
+  ;   - a corrollary: should a client observer SETF a datapoint Y, all the above must
+  ;     happen with values current not just with X, but also with the value of Y /prior/
   ;     to the intended change to Y.
   ;
   ; To achieve the above, Cells2 and now Cells3 have taken to using FIFO "unfinished business" queues 
@@ -56,8 +69,19 @@ The pattern will be to have explanatory comments appear after the explained code
 ; automatically by the Cells engine. See DEFOBSERVER.
 
 (defmodel ltktest-cells-inside (window)
-  ()
+  ((entry-warning :reader entry-warning
+     :initform (c? (bwhen (bad-chars (loop for c across (fm!v :entry)
+                                           when (digit-char-p c)
+                                           collect c))
+                     (format nil "Please! No digits! I see ~a!!" bad-chars)))
+     ;
+     ; By the time I decided to add this demo I already had a long discussion under the get! and set! buttons, so
+     ; check those out for details.
+     ;
+     :documentation "Demonstrate live tracking of entry edit"))
+
   (:default-initargs
+      :id :ltk-test
       :kids (c?
              ; c? has one hell of an expansion. In effect one gets:
              ;   - a first-class anonymous function with the expected body, which will have access to
@@ -65,25 +89,25 @@ The pattern will be to have explanatory comments appear after the explained code
              ;     computed value, if any
              ;   - guaranteed recomputation when the value of any other cell used in the computation changes
              ;
-             ; The abbreviation-challenged use c-formula instead of c?, with different syntax I do not recall
+             ; If the abbreviation bothers you, look up c-formula.
              ;
              (the-kids
                  ;
                  ; Cells GUIs get a lot of mileage out of the family class, which is perfect
-                 ; for graphical hierarchies. The deets of the-kids are of negligible interest.
+                 ; for graphical hierarchies. "the-kids" does not do much, btw.
                  ;
                  (ltk-test-menus) ;; hiding some code. see defun below for deets
                  (mk-scroller
                   ;
                   ; These "mk-" functions do nothing but expand into (make-instance 'scroller <the initarg list>).
-                  ; Where you see, say, mk-button-ex (a) I am poking fun at Microsoft naming of second generation
+                  ; Where you see, say, mk-button-ex I am (a) poking fun at Microsoft naming of second generation
                   ; library code that did not want to break existing code and (b) adding a little more value (just
                   ; inspect the macro source to see how).
                   ;
                   :packing (c?pack-self "-side top -fill both -expand 1")
                   ;
                   ; Here is an example of how the Family class helps. The above is one of only two packing
-                  ; statements need to recreate the ltktest demo. Other packing is handled via two
+                  ; statements needed to recreate the ltktest demo. Other packing is handled via two
                   ; slots in an inline-mixin class for various family subclasses, kids-layout and
                   ; kids-packing. The latter pulls any packing parameters and all kids into one
                   ; big pack statement kicked off by an observer on that slot. See the inline-mixin
@@ -105,7 +129,7 @@ The pattern will be to have explanatory comments appear after the explained code
                    ; first row parameter is a string, it knows to make a labelframe instead of plain frame)
                    ; The other thing it does, by forcing row parameters into a sub-list as the first argument,
                    ; is let the programmer then just list other widgets (see next) which are understood to
-                   ; be subwidgets contained (packed or gridded) within the frame.
+                   ; be kids/subwidgets contained (packed or gridded) within the frame.
                    ;
                    (mk-row (:borderwidth 2 :relief 'sunken)
                      (mk-label :text "Rotation:")
@@ -122,12 +146,15 @@ The pattern will be to have explanatory comments appear after the explained code
                      ; anywhere in the tree.)
                      ;
                      ; OK, now what is going on here? The above command starts the canvas display
-                     ; spinning, by tweaking the "repeat" slot of a "moire" (new ad hoc class) object 
-                     ; I created to render the pretty design from
+                     ; spinning, by tweaking (via the (setf moire-spin) defun below) the "repeat" slot of 
+                     ; an ad hoc "moire" class object created to render the pretty design from
                      ; ltktest. How it accomplishes that will be explained below in the moire class
                      ; definition.
                      ;
                      (mk-button-ex ("Stop" (setf (moire-spin (fm^ :moire-1)) nil))))
+                     ;
+                     ; ditto
+                     ;
 
 
                    (mk-button-ex ("Hallo" (format T "~&Hallo")))
@@ -148,10 +175,49 @@ The pattern will be to have explanatory comments appear after the explained code
                    ;
                    ; Thus each class uses md-value to hold something different, but in all cases it is
                    ; the current value of whatever the instance of that class is understood to hold.
+                   ; 
+                   ; The interesting question is, how does the md-value slot of the Lisp instance stay
+                   ; current with the text being edited in the Tk entry widget? Here we have a fundamental
+                   ; difference between Ltk and Celtk. Ltk lets Tk take care of everything, including
+                   ; storing the data. eg, (text my-entry) is an accessor call that asks Tk the value of
+                   ; the -text configuration for the Tk instance mirrored by my-entry. There is no text
+                   ; slot in the Lisp entry instance. But Cells works
+                   ; by having datapoints watching other datapoints, so we want data in the Lisp domain
+                   ; changing automatically as it changes on the TK side (such as when the user is actually
+                   ; typing in the entry widget). See the entry class to see how it uses the TCL "trace write"
+                   ; mechanism to keep the Lisp md-value slot abreast of the Tk entry text configuration
+                   ; keystroke by keystroke. 
+                   ; 
+                   ; I just added the entry-value slot above to demonstrate the mechanism in action. Click
+                   ; on the entry widget and type "abc123", then delete the 3, 2, and 1, keeping an eye
+                   ; on standard output.
                    ;
-                   (mk-button-ex ("set!" (setf (fm^v :entry) "test of set"))))))))
+                   (mk-button-ex ("set!" (setf (fm^v :entry) "test of set")))
+                   ;
+                   ; In Ltk one would SETF (text my-entry) and the
+                   ; SETF method would communicate with Tk to make the change to the Tk widget -text
+                   ; configuration. In Celtk, the md-value slot of the entry gets changed (possibly
+                   ; triggering other slots to update, which is why we do not just talk to Tk) and
+                   ; then that value gets propagated to Tk via "set <widget path> <value>". Because
+                   ; the textVariable for every entry is the entry itself, the text of the entry
+                   ; then changes. If that sounds weird, what we are actually doing is tapping into
+                   ; Tk to a large degree taking the same approach as Cells does with the md-value
+                   ; slot: in Cells, we think of model instances as wrapping some model-specific 
+                   ; value, which is held in the md-value slot of the model instance. Tk simply
+                   ; allows a widget path to be a global variable. Furthermore, as the company name
+                   ; ActiveState suggests, Tk also provides automatic propagation: change the
+                   ; variable, and anyone with that as its textVariable also changes.
+                   )))))
    
-
+(defobserver entry-warning ()
+    ;
+    ; This demonstrates ones ability to track the text in a Tk entry while it is being
+    ; edited. As you type you should see the changing values in standard output
+    ;
+    (if new-value
+        (format t "~&User, we have a problem: ~a" new-value)
+      (when old-value
+        (format t "~&That looks better: ~a" (fm!v :entry)))))
 
 (defmodel ltk-test-canvas (canvas)
   ()
@@ -188,8 +254,8 @@ The pattern will be to have explanatory comments appear after the explained code
     ;
     ; here is a limitation with the declarative paradigm. pop-up menus are free to float about
     ; unpacked in any parent. One just needs to remember the name of the menu widget to
-    ; pass it to the pop-up function. So imperative code like ltktest original can just make the menus
-    ; saving their name in a local variable and then refer to them in a callback to pop them up.
+    ; pass it to the pop-up function. So imperative code like ltktest "classic" can just make the menus
+    ; saving their name in a closed-over local variable and then refer to them in a callback to pop them up.
     ;
     ; in the declarative paradigm we need a slot (defined for any widget or item class) in which
     ; to build and store such menus:
@@ -214,30 +280,48 @@ The pattern will be to have explanatory comments appear after the explained code
                 :anchor "nw"
                 :text "Ltk Demonstration")
                (make-kid 'moire :id :moire-1)))))
+               ;
+               ; we give /this/ widget a specific ID so other rules can look it up, as
+               ; discussed above when explaining fm^.
   
 (defmodel moire (line)
-  ((rotx :initarg :rotx :accessor rotx :initform (c-in 0)))
+  ((angle-1 :initarg :angle-1 :accessor angle-1 :initform (c-in 0)))
   (:default-initargs
       :timers (c? (list (make-instance 'timer
-                            :state (c-in :on)
-                            :repeat (c-in nil)
-                            :delay 25 ;; milliseconds since this gets passed to TK after
-                            :action (lambda (timer)
-                                      (when (eq (state timer) :on)
-                                        (incf (^rotx)))))))
-    :coords (c? (let* ((angle (* 0.1 (^rotx)))
-                       (angle2 (* 0.3 angle))
-                       (wx (sin (* 0.1 angle))))
+                          ;
+                          ; it occurred to me that it might be useful to build a timer utility
+                          ; around the TCL after command. See the class definition of timer
+                          ; for the fireworks (in terms of Cells) that resulted
+                          ;
+                          :repeat (c-in nil)
+                          :delay 25 ;; milliseconds since this gets passed unvarnished to TK after
+                          :action (lambda (timer)
+                                    (when (eq (state timer) :on)
+                                      (incf (^angle-1) 0.1))))))
+    :coords (c? (let* ((angle-2 (* 0.3 (^angle-1)))
+                       (wx (sin (* 0.1 (^angle-1)))))
                   (loop for i below 100
-                      for w = (+ angle (* i 2.8001))
-                      for x = (+ (* 50 (sin angle2)) 250 (* 150 (sin w) (1+ wx)))
-                      for y = (+ (* 50 (cos angle2)) 200 (* 150 (cos w)))
+                      for w = (+ (^angle-1) (* i 2.8001))
+                      for x = (+ (* 50 (sin angle-2)) 250 (* 150 (sin w) (1+ wx)))
+                      for y = (+ (* 50 (cos angle-2)) 200 (* 150 (cos w)))
                       nconcing (list x y))))))
 
 (defun (setf moire-spin) (repeat self)
-  (setf (repeat (car (timers self))) repeat))
+  (setf (repeat (car (timers self))) repeat)) ;; just hiding the implementation
 
 (defun ltk-test-menus ()
+  ;
+  ; The only difference is that the menu structure as seen by the user
+  ; is apparent here, which might help some when reorganizing menus.
+  ;
+  ; Well, another thing which happens not to be visible here... hang on.
+  ; OK, I just made the Save menu item contingent upon there being no 
+  ; entry-warning. As you add/remove all digits (considered invalid for
+  ; demonstration purposes) the menu item becomes available/unavailable
+  ; appropriately.
+  ;
+  ; This is the kind of thing that Cells is good for.
+  ;
   (mk-menubar
    :kids (c? (the-kids
               (mk-menu-entry-cascade-ex (:label "File")
@@ -246,6 +330,8 @@ The pattern will be to have explanatory comments appear after the explained code
                                  (lambda () (format t "~&Load pressed")))))
                                       
                 (mk-menu-entry-command :label "Save"
+                  :state (c? (if (entry-warning (fm^ :ltk-test))
+                                 :disabled :normal))
                   :command (c? (tk-callback .tkw 'save
                                  (lambda () (format t "~&Save pressed")))))
                 (mk-menu-entry-separator)
@@ -260,7 +346,13 @@ The pattern will be to have explanatory comments appear after the explained code
                                   (lambda () (format t "~&Png pressed"))))))
                 (mk-menu-entry-separator)
                 (mk-menu-entry-command :label "Quit"
-                  :accelerator "<Alt-q>"
+                  :accelerator "Alt-q"
+                  ;
+                  ; check out the observer on the accelerator slot of the class menu-entry-usable
+                  ; to see how Celtk fills in a gap in Tk: accelerators should work just by
+                  ; declaring them to the menu widget, it seems to me. In Celtk, they do.
+                  ;
                   :underline 1
                   :command "exit"))))))
+
 

@@ -75,37 +75,54 @@
 ;;;    - the executions rule is true obfuscated code. It manages to reset the count to zero
 ;;;      on repeated (setf ... 20)'s because on the second repetition we know we will hit the rule
 ;;;      with repeat non-null (20, in fact) and the ephemeral executed will be nil (because it is
-;;;      only non-nil during propagation of (setf (executed...) t).
+;;;      only non-nil during propagation of (setf (executed...) t). not for Cell noobs.
 ;;;
 ;;;    - holy toledo. The /rule/ for after-factory sends the after command to Tk itself! I could just
 ;;;      return a list of the delay and the callback and have an observer dispatch it, but it would
 ;;;      have to so so exactly as the rule does, by dropping it in the deferred client queue.
-;;;      so do it in the rule, I decide.
+;;;      In a sense I am starting here to leverage Cells3 queues to simplify things. Mind you, if
+;;;      Timer evolves to where we let the client write its own after factory, we might want to
+;;;      factor out the actual dispatch into an observer to make it transparent (assuming that is
+;;;      not why they are supplying their own after-factory.
+;;;
+;;; Timer is totally a work-in-progress with much development ahead.
+;;;
 
 (defmodel timer ()
   ((id :cell nil :initarg :id :accessor id :initform nil
-     :documentation "We use this as well as a flag that an AFTER is outstanding")
-   (tag :cell nil :initarg :tag :accessor tag :initform :anon)
-   (state :initarg :state :accessor state :initform (c-in :on))
-   (action :initform nil :initarg :action :accessor action)
-   (delay :initform 0 :initarg :delay :accessor delay)
-   (repeat :initform (c-in nil) :initarg :repeat :accessor repeat :unchanged-if 'never-unchanged)
-   (executed :cell :ephemeral :initarg :executed :accessor executed :initform (c-in nil))
+     :documentation "Assigned by TCL after each AFTER issued. Use to cancel.")
+   (tag :cell nil :initarg :tag :accessor tag :initform :anon
+     :documentation "A debugging aid")
+   (state :initarg :state :accessor state :initform (c-in :on)
+     :documentation "Turn off to stop, regardless of REPEAT setting")
+   (action :initform nil :initarg :action :accessor action
+     :documentation "A function (to which the timer is passed) invoked by when the TCL AFTER executes")
+   (delay :initform 0 :initarg :delay :accessor delay
+     :documentation "Millisecond interval supplied as is to TCL AFTER")
+   (repeat :initform (c-in nil) :initarg :repeat :accessor repeat :unchanged-if 'never-unchanged
+     :documentation "t = run continuously, nil = pause, a number N = repeat N times")
+   (executed :cell :ephemeral :initarg :executed :accessor executed :initform (c-in nil)
+     :documentation "Internal: set after an execution")
    (executions :initarg :executions :accessor executions
+     :documentation "Number of times timer has had its action run since the last change to  the repeat slot"
      :initform (c? (if (null (^repeat))
-                       0
+                       0 ;; ok, repeat is off, safe to reset the counter here
                      (if (^executed)
-                         (1+ .cache )
-                       0))))
-   (after-factory :initform (c? (when (and (eq (^state) :on)
-                                        (let ((execs (^executions))) ;; odd reference just to establish dependency when repeat is t
-                                          (bwhen (rpt (^repeat))
-                                            (or (eql rpt t)
-                                              (< execs rpt)))) ;; it better be a number
-                                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
-                                          (setf (id self) (after (^delay) (lambda ()
-                                                                            (funcall (^action) self)
-                                                                            (setf (^executed) t)))))))))))
+                         (1+ (or .cache 0)) ;; obviously (.cache is the prior value, and playing it safe in case unset)
+                       0)))) ;; hunh? executed is ephemeral. we are here only if repeat is changed, so reset
+   
+   (after-factory
+    :documentation "Pure implementation"
+    :initform (c? (bwhen (rpt (when (eq (^state) :on)
+                                (^repeat)))
+                    (when (or (zerop (^executions)) (^executed)) ;; dispatch initially or after an execution
+                      (when (if (numberp rpt)
+                                (< (^executions) rpt)
+                              rpt) ;; a little redundant since bwhen checks that rpt is not nil
+                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
+                          (setf (id self) (after (^delay) (lambda ()
+                                                            (funcall (^action) self)
+                                                            (setf (^executed) t))))))))))))
 
 
 (defobserver timers ((self tk-object) new-value old-value)

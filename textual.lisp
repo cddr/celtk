@@ -68,7 +68,7 @@
   (:default-initargs
       :id (gentemp "ENT")
     :textvariable (c? (^path))
-      :md-value (c-in "<your string here>")))
+      :md-value (c-in "")))
 
 (defmethod md-awaken :after ((self entry))
   (tk-format `(:trace ,self) "trace add variable ~a write \"trc2 ~a\""
