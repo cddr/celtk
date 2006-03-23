@@ -163,7 +163,20 @@ certainly wrong (or the class should be canvas-scroller).
                              :relief 'sunken)
                      (mk-label :text "Test:")
                      (mk-button-ex ("OK:" (setf (moire-spin (fm^ :moire-1)) 20))))
-                   (mk-entry :id :entry)
+                   (mk-entry :id :entry
+                     :background (c? (if (entry-warning .tkw)
+                                         ;
+                                         ; ok, this is silly, the validation is entry-specific
+                                         ; and should be a rule applied to this entry widget, but I 
+                                         ; will leave it silly to make clear that cells of an instance
+                                         ; can depend on cells of other instances
+                                         ;
+                                         ; so what is .tkw? A symbol macro for (nearest self window).
+                                         ; what is nearest? It searches up the Family tree from
+                                         ; self inclusive searching for something (typep 'window)
+                                         ;
+                                       "red"
+                                       'SystemButtonFace)))
                    (mk-button-ex ("get!" (format t "~&content of entry: ~A" (fm^v :entry))))
                    ;
                    ; fm^v -> (md-value (fm^ ....

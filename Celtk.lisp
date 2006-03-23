@@ -274,8 +274,8 @@ This parent is ~a, kids-packing ~a" self (list .parent (type-of .parent)) (kids-
             into slot-defs
             when tk-option
             collecting `(defobserver ,slot-name ((self ,class))
-                          (when (and new-value old-value-boundp)
-                            (tk-configure self ,(string tk-option) new-value)))
+                          (when old-value-boundp
+                            (tk-configure self ,(string tk-option) (or new-value ""))))
             into outputs
             finally (return (values slot-defs outputs)))
       `(progn
