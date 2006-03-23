@@ -45,7 +45,7 @@
     #:mk-scrolled-list #:listbox-item #:mk-spinbox
     #:mk-scroller #:mk-menu-entry-cascade-ex
     #:with-ltk #:tk-format #:send-wish #:value #:.tkw
-    #:tk-user-queue-handler #:timer #:make-timer-steps))
+    #:tk-user-queue-handler #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -64,42 +64,55 @@
 
 ;;; --- timers ----------------------------------------
 
-(defstruct timer-steps count)
+(defun never-unchanged (new old) (declare (ignore new old)))
+
+;;;
+;;; Now, not one but three incredibly hairy gyrations Cells-wise:
+;;;
+;;;    - repeat cannot be ephemeral, but we want repeated (setf (^repeat) 20)'s each to fire,
+;;;      so we specify an unchanged-if value that always "no", lying to get propagation
+;;;
+;;;    - the executions rule is true obfuscated code. It manages to reset the count to zero
+;;;      on repeated (setf ... 20)'s because on the second repetition we know we will hit the rule
+;;;      with repeat non-null (20, in fact) and the ephemeral executed will be nil (because it is
+;;;      only non-nil during propagation of (setf (executed...) t).
+;;;
+;;;    - holy toledo. The /rule/ for after-factory sends the after command to Tk itself! I could just
+;;;      return a list of the delay and the callback and have an observer dispatch it, but it would
+;;;      have to so so exactly as the rule does, by dropping it in the deferred client queue.
+;;;      so do it in the rule, I decide.
 
 (defmodel timer ()
-  ((id :initarg :id :accessor id
-     :initform (c? (bwhen (spawn (^spawn))
-                     (apply 'after spawn))))
+  ((id :cell nil :initarg :id :accessor id :initform nil
+     :documentation "We use this as well as a flag that an AFTER is outstanding")
    (tag :cell nil :initarg :tag :accessor tag :initform :anon)
+   (state :initarg :state :accessor state :initform (c-in :on))
    (action :initform nil :initarg :action :accessor action)
    (delay :initform 0 :initarg :delay :accessor delay)
-   (repeat :initform 1 :initarg :repeat :accessor repeat)
-   (completed :cell :ephemeral :initform (c-in nil) :initarg :completed :accessor completed)
+   (repeat :initform (c-in nil) :initarg :repeat :accessor repeat :unchanged-if 'never-unchanged)
+   (executed :cell :ephemeral :initarg :executed :accessor executed :initform (c-in nil))
    (executions :initarg :executions :accessor executions
-     :initform (c? (+ (or .cache 0)
-                     (if (^completed) 1 0))))
-   (spawn :initarg :spawn :accessor spawn
-     :initform (c? (if (not (^action))
-                       (trc "Warning: timer with no associated action" self)
-                     (flet ((spawn-delayed (n)
-                              (list n (lambda ()
-                                        (funcall (^action) self)
-                                        (setf (^completed) t)))))
-                       (bwhen (repeat (^repeat))
-                         (when (or (zerop (^executions))
-                                 (^completed))
-                           (typecase repeat
-                             (timer-steps (when (< (^executions)(timer-steps-count (^repeat)))
-                                            (spawn-delayed (^delay))))
-                             (number (when (< (^executions)(^repeat))
-                                       (spawn-delayed (^delay))))
-                             (cons (bwhen (delay (nth (^executions) (^repeat)))
-                                     (spawn-delayed delay)))
-                             (otherwise (spawn-delayed (^delay))))))))))))
+     :initform (c? (if (null (^repeat))
+                       0
+                     (if (^executed)
+                         (1+ .cache )
+                       0))))
+   (after-factory :initform (c? (when (and (eq (^state) :on)
+                                        (let ((execs (^executions))) ;; odd reference just to establish dependency when repeat is t
+                                          (bwhen (rpt (^repeat))
+                                            (or (eql rpt t)
+                                              (< execs rpt)))) ;; it better be a number
+                                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
+                                          (setf (id self) (after (^delay) (lambda ()
+                                                                            (funcall (^action) self)
+                                                                            (setf (^executed) t)))))))))))
+
 
 (defobserver timers ((self tk-object) new-value old-value)
   (dolist (k (set-difference old-value new-value))
-    (after-cancel (id k)))) ;;  causes tk error if not outstanding?
+    (setf (state k) :off)
+    (when (id self)
+      (after-cancel (id k))))) ;; Tk doc says OK if cancelling already executed
 
 ;;; --- widget -----------------------------------------
 
