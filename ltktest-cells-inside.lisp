@@ -1,3 +1,35 @@
+#|
+
+ This software is Copyright (c) 2003, 2004, 2005, 2006  Peter Herth <herth@peter-herth.de>
+ Parts Copyright (c) 2005 Thomas F. Burdick
+ Parts Copyright (c) Cadence Design Systems, GmbH
+
+ Peter Herth grants you the rights to distribute
+ and use this software as governed by the terms
+ of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html),
+ known as the LLGPL.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!             PROMINENT NOTICE      !!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!! This demo was translated to Cells !!!!!!!!!!!!!!!
+!!!!!!!!!!!! by ken Tilton on March 22, 2006.  !!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!! Original (ltktest) can be found   !!!!!!!!!!!!!!!
+!!!!!!!!!!!! at the end of ltk.lisp            !!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+|#
+
+
 (in-package :celtk-user)
 #|
 

@@ -12,10 +12,9 @@
   :licence "MIT Style"
   :description "Tk via LTk with Cells Inside(tm)"
   :long-description "A Cells-driven portable GUI built atop the LTk core, ultimately implmented by Tk"
-  :depends-on (:cells)
+  :depends-on (:ltk :cells)
   :serial t
-  :components ((:file "ltk-kt")
-               (:file "Celtk")
+  :components ((:file "Celtk")
                (:file "tk-format")
                (:file "menu")
                (:file "textual")

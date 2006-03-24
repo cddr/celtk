@@ -1,31 +1,32 @@
-#|
-
- Celtic / widget.lisp : Foundation classes
-
-  Copyright (c) 2004 by Kenneth William Tilton <ktilton@nyc.rr.com>
-
- A work derived from Peter Herth's LTk. As a derived work,
- usage is governed by LTk's "Lisp LGPL" licensing:
-
- You have the right to distribute and use this software as governed by 
- the terms of the Lisp Lesser GNU Public License (LLGPL):
-
-    (http://opensource.franz.com/preamble.html)
- 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- Lisp Lesser GNU Public License for more details.
- 
-|#
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
+;;;
+;;; Copyright (c) 2006 by Kenneth William Tilton.
+;;;
+;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
+;;; of this software and associated documentation files (the "Software"), to deal 
+;;; in the Software without restriction, including without limitation the rights 
+;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+;;; copies of the Software, and to permit persons to whom the Software is furnished 
+;;; to do so, subject to the following conditions:
+;;;
+;;; The above copyright notice and this permission notice shall be included in 
+;;; all copies or substantial portions of the Software.
+;;;
+;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+;;; IN THE SOFTWARE.
 
 (defpackage :celtk
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells)
 
   (:import-from #:ltk
-    #:wish-stream #:*wish* #:*ewish*
-    #:peek-char-no-hang #:read-data #:event-root-x #:event-root-y
+    #:wish-stream #:*wish* #:widget-path
+    #:read-data #:event-root-x #:event-root-y
     #:send-wish #:tkescape #:after #:after-cancel #:bind
     #:with-ltk #:do-execute #:add-callback)
 
@@ -51,6 +52,7 @@
   (:use :common-lisp :utils-kt :cells :celtk))
 
 (in-package :Celtk)
+
 
 (defmodel tk-object (model)
   ((.md-name :cell nil :initform (gentemp "TK") :initarg :id)

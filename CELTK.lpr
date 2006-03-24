@@ -5,7 +5,8 @@
 (defpackage :CELTK)
 
 (define-project :name :celtk
-  :modules (list (make-instance 'module :name "ltk-kt.lisp")
+  :modules (list (make-instance 'module :name
+                                "C:\\0devtools\\ltk\\ltk.lisp")
                  (make-instance 'module :name "Celtk.lisp")
                  (make-instance 'module :name "tk-format.lisp")
                  (make-instance 'module :name "menu.lisp")
