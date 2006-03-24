@@ -14,7 +14,20 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!             PROMINENT NOTICE      !!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!! This file was modified by Kenny   !!!!!!!!!!!!!!!
+!!!!!!!!!!!! Tilton on March 22, 2006:         !!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!!   better handling of TK errors    !!!!!!!!!!!!!!!
+!!!!!!!!!!!!   commented out the demo          !!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!!                                   !!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 |#
 
 #|
