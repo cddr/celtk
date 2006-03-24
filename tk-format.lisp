@@ -56,6 +56,7 @@
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
         (funcall task)))
 
+#+debug
 (defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
   ;
   ; --- pure debug stuff ---
@@ -74,6 +75,11 @@
   ;
   ; --- serious stuff ---
   ;
+  (format (wish-stream *wish*) "~A~%" tk$)
+  (force-output (wish-stream *wish*)))
+
+(defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
+  ;;(format t "~&tk> ~A~%" tk$)
   (format (wish-stream *wish*) "~A~%" tk$)
   (force-output (wish-stream *wish*)))
 

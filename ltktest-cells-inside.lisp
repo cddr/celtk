@@ -341,9 +341,9 @@ certainly wrong (or the class should be canvas-scroller).
                           :repeat (c-in nil)
                           :delay 25 ;; milliseconds since this gets passed unvarnished to TK after
                           :action (lambda (timer)
-                                    (when (eq (state timer) :on)
-                                      (incf (^angle-1) 0.1))))))
-    :coords (c? (let* ((angle-2 (* 0.3 (^angle-1)))
+                                    (declare (ignore timer))
+                                    (incf (^angle-1) 0.1)))))
+    :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
                        (wx (sin (* 0.1 (^angle-1)))))
                   (loop for i below 100
                       for w = (+ (^angle-1) (* i 2.8001))

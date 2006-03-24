@@ -123,8 +123,9 @@
                               rpt) ;; a little redundant since bwhen checks that rpt is not nil
                         (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
                           (setf (id self) (after (^delay) (lambda ()
-                                                            (funcall (^action) self)
-                                                            (setf (^executed) t))))))))))))
+                                                            (when (eq (^state) :on)
+                                                              (funcall (^action) self)
+                                                              (setf (^executed) t)))))))))))))
 
 
 (defobserver timers ((self tk-object) new-value old-value)
