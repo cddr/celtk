@@ -77,11 +77,11 @@ certainly wrong (or the class should be canvas-scroller).
   ; (such as code processing an event loop) executing a SETF of some datapoint X , we want
   ; these requirements satisfied:
   ;
-  ;   - all state computed off X (directly or indirectly through some intermediate datapoint) must be recomputed;
+  ;   - recompute all and only state computed off X (directly or indirectly through some intermediate datapoint);
   ;   - recomputations must see only datapoint values current with the new value of X. This must
   ;     work transparently, ie, datapoint accessors are responsible for returning only current values;
   ;   - similarly, client observers ("on change" callbacks) must see only values current with the new value of X
-  ;   - a corrollary: should a client observer SETF a datapoint Y, all the above must
+  ;   - a corollary: should a client observer SETF a datapoint Y, all the above must
   ;     happen with values current not just with X, but also with the value of Y /prior/
   ;     to the intended change to Y.
   ;
@@ -102,15 +102,15 @@ certainly wrong (or the class should be canvas-scroller).
 
 (defmodel ltktest-cells-inside (window)
   ((entry-warning :reader entry-warning
-     :initform (c? (bwhen (bad-chars (loop for c across (fm!v :entry)
-                                           when (digit-char-p c)
+     :initform (c? (bwhen (bad-chars (loop for c across (fm!v :coord-ct)
+                                           unless (digit-char-p c)
                                            collect c))
-                     (format nil "Please! No digits! I see ~a!!" bad-chars)))
+                     (format nil "Please! Only digits! I see ~a!!" bad-chars)))
      ;
      ; By the time I decided to add this demo I already had a long discussion under the get! and set! buttons, so
-     ; check those out for details.
+     ; check that out for details.
      ;
-     :documentation "Demonstrate live tracking of entry edit"))
+     :documentation "Demonstrate live tracking key by key of entry widget editing"))
 
   (:default-initargs
       :id :ltk-test
@@ -119,7 +119,7 @@ certainly wrong (or the class should be canvas-scroller).
              ;   - a first-class anonymous function with the expected body, which will have access to
              ;   - variables self and .cache (symbol macro, last I looked) for the instance and prior
              ;     computed value, if any
-             ;   - guaranteed recomputation when the value of any other cell used in the computation changes
+             ;   - guaranteed recomputation when the value of any other cell /used in the most recent computation/ changes
              ;
              ; If the abbreviation bothers you, look up c-formula.
              ;
@@ -161,17 +161,22 @@ certainly wrong (or the class should be canvas-scroller).
                    ; first row parameter is a string, it knows to make a labelframe instead of plain frame)
                    ; The other thing it does, by forcing row parameters into a sub-list as the first argument,
                    ; is let the programmer then just list other widgets (see next) which are understood to
-                   ; be kids/subwidgets contained (packed or gridded) within the frame.
+                   ; be kids/subwidgets contained by the frame.
                    ;
                    (mk-row (:borderwidth 2 :relief 'sunken)
                      (mk-label :text "Rotation:")
+                     ;
+                     ; As with Ltk Classic, the Tk widget configurations become Lisp widget initializers, so
+                     ; the Tk doc documents Celtk. The advantage to the developer is that neither LTk nor
+                     ; Celtk introduce a new API to be mastered, widget-wise.
+                     ;
                      (mk-button-ex ("Start" (setf (moire-spin (fm^ :moire-1)) t)))
                      ;
-                     ; You were warned about mk-button-ex and its ilk above.
+                     ; You were warned about mk-button-ex and its ilk above. Just expand or inspect to
+                     ; see what they do, which is pretty much just hide some boilerplate.
                      ;
-                     ; fm^ is a wicked abbreviation for (hey, this is open source, look it up or
-                     ; macroexpand it). The long story is that the Family tree becomes effectively
-                     ; a namespace, where the ID slot is the name of a widget. I have a suite of
+                     ; fm^ is a wicked abbreviation for "search up the Family tree to find the widget
+                     ; with this ID". ie, The Family tree effectively becomes a namespace of IDs. I have a suite of
                      ; routines that search the namespace by name so one widget can operate on or,
                      ; more commonly, ask for the value of a slot of some specific widget known to
                      ; be Out There somewhere. (Kids know their parents, so the search can reach
@@ -191,27 +196,63 @@ certainly wrong (or the class should be canvas-scroller).
 
                    (mk-button-ex ("Hallo" (format T "~&Hallo")))
                    (mk-button-ex ("Welt!" (format T "~&Welt")))
-                   (mk-row (:borderwidth 2
-                             :relief 'sunken)
+                   (mk-row (:borderwidth 2 :relief 'sunken)
                      (mk-label :text "Test:")
                      (mk-button-ex ("OK:" (setf (moire-spin (fm^ :moire-1)) 20))))
-                   (mk-entry :id :entry
+                   ;
+                   ; Cells initiata will be surprised to learn the above works twice even if the button is
+                   ; clicked twice in a row; Cells is about managing state change, and the second time through
+                   ; there is no change. See the Timer class for the solution to this riddle.
+                   ;
+                   (mk-entry :id :coord-ct
+                     ;
+                     ; to help motivate "why Cells?" a little more, we start having the widgets take more
+                     ; interesting effect on each other. The boring entry field now determines the number
+                     ; of coordinates to generate for the canvas line item, which originally was fixed at 100.
+                     ; see the moire class for details.
+                     ;
+                     :md-value (c-in "40")
                      :background (c? (if (entry-warning .tkw)
                                          ;
                                          ; ok, this is silly, the validation is entry-specific
-                                         ; and should be a rule applied to this entry widget, but I 
-                                         ; will leave it silly to make clear that cells of an instance
-                                         ; can depend on cells of other instances
+                                         ; and should be a rule specified to this entry widget. Instead,
+                                         ; while casually hacking away I stuck it on the window (.tkw, explained
+                                         ; in the next paragraph. The Right Way (and coming soon) is an "errors" 
+                                         ; slot on every tk-object, but I 
+                                         ; will leave it silly to make clear that cells of one instance
+                                         ; can depend on cells of other instances. More discussion a few lines down.
                                          ;
-                                         ; so what is .tkw? A symbol macro for (nearest self window).
+                                         ; so what is .tkw? A symbol macro for "(nearest self window)".
                                          ; what is nearest? It searches up the Family tree from
                                          ; self inclusive searching for something (typep 'window)
                                          ;
                                        "red"
-                                       'SystemButtonFace)))
-                   (mk-button-ex ("get!" (format t "~&content of entry: ~A" (fm^v :entry))))
+                                       'SystemButtonFace))) ;; TK won't allow "" as a way of saying "default color"
                    ;
-                   ; fm^v -> (md-value (fm^ ....
+                   ; As you type in the field, if you key in an invalid (non-digit) character, the background
+                   ; immediately turns red. Delete it and it reverts to the default.
+                   ;
+                   ; The interesting question is, how does the md-value slot of the Lisp instance stay
+                   ; current with the text being edited in the Tk entry widget? Here we have a fundamental
+                   ; difference between Ltk and Celtk. Ltk lets Tk take care of everything, including
+                   ; storing the data. eg, (text my-entry) is an accessor call that asks Tk the value of
+                   ; the -text configuration for the Tk instance mirrored by my-entry. There is no text
+                   ; slot in the Lisp entry instance. Makes for nice, lightweight Lisp instances. But Cells works
+                   ; by having datapoints watching other datapoints, so we want data in the Lisp domain
+                   ; changing automatically as it changes on the TK side (such as when the user is actually
+                   ; typing in the entry widget). See the entry class to see how it uses the TCL "trace write"
+                   ; mechanism to keep the Lisp md-value slot abreast of the Tk entry text configuration
+                   ; keystroke by keystroke. 
+                   ; 
+                   ; I added the entry-warning slot above to demonstrate the mechanism in action. Click
+                   ; on the entry widget and type "123abc", then delete the alpha characters. The background
+                   ; color (as well as the File\Save menu item state) tracks the typing. (And an observer
+                   ; chats away on standard output.)
+                   ;
+
+                   (mk-button-ex ("get!" (format t "~&content of entry: ~A" (fm^v :coord-ct))))
+                   ;
+                   ; (fm^v :coord-ct) -> (md-value (fm^ :coord-ct))
                    ;
                    ; The idea being that every Cells model object has an md-value slot bearing the value
                    ; of the thing being modeled. Here, the entry widget is modelling a place for users
@@ -221,23 +262,7 @@ certainly wrong (or the class should be canvas-scroller).
                    ; Thus each class uses md-value to hold something different, but in all cases it is
                    ; the current value of whatever the instance of that class is understood to hold.
                    ; 
-                   ; The interesting question is, how does the md-value slot of the Lisp instance stay
-                   ; current with the text being edited in the Tk entry widget? Here we have a fundamental
-                   ; difference between Ltk and Celtk. Ltk lets Tk take care of everything, including
-                   ; storing the data. eg, (text my-entry) is an accessor call that asks Tk the value of
-                   ; the -text configuration for the Tk instance mirrored by my-entry. There is no text
-                   ; slot in the Lisp entry instance. But Cells works
-                   ; by having datapoints watching other datapoints, so we want data in the Lisp domain
-                   ; changing automatically as it changes on the TK side (such as when the user is actually
-                   ; typing in the entry widget). See the entry class to see how it uses the TCL "trace write"
-                   ; mechanism to keep the Lisp md-value slot abreast of the Tk entry text configuration
-                   ; keystroke by keystroke. 
-                   ; 
-                   ; I just added the entry-value slot above to demonstrate the mechanism in action. Click
-                   ; on the entry widget and type "abc123", then delete the 3, 2, and 1, keeping an eye
-                   ; on standard output.
-                   ;
-                   (mk-button-ex ("set!" (setf (fm^v :entry) "test of set")))
+                   (mk-button-ex ("set!" (setf (fm^v :coord-ct) "test of set")))
                    ;
                    ; In Ltk one would SETF (text my-entry) and the
                    ; SETF method would communicate with Tk to make the change to the Tk widget -text
@@ -262,7 +287,7 @@ certainly wrong (or the class should be canvas-scroller).
     (if new-value
         (format t "~&User, we have a problem: ~a" new-value)
       (when old-value
-        (format t "~&That looks better: ~a" (fm!v :entry)))))
+        (format t "~&That looks better: ~a" (fm!v :coord-ct)))))
 
 (defmodel ltk-test-canvas (canvas)
   ()
@@ -330,7 +355,13 @@ certainly wrong (or the class should be canvas-scroller).
                ; discussed above when explaining fm^.
   
 (defmodel moire (line)
-  ((angle-1 :initarg :angle-1 :accessor angle-1 :initform (c-in 0)))
+  ((angle-1 :initarg :angle-1 :accessor angle-1 :initform (c-in 0))
+   (coord-ct :initarg :coord-ct :accessor coord-ct
+     :initform (c? (or (unless (entry-warning .tkw)
+                         (let ((ct (read-from-string (fm^v :coord-ct) nil)))
+                           (when (and (numberp ct) (> ct 1))
+                             (max ct 2))))
+                     .cache)))) ;; ie, prior value
   (:default-initargs
       :timers (c? (list (make-instance 'timer
                           ;
@@ -344,12 +375,12 @@ certainly wrong (or the class should be canvas-scroller).
                                     (declare (ignore timer))
                                     (incf (^angle-1) 0.1)))))
     :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
-                       (wx (sin (* 0.1 (^angle-1)))))
-                  (loop for i below 100
-                      for w = (+ (^angle-1) (* i 2.8001))
-                      for x = (+ (* 50 (sin angle-2)) 250 (* 150 (sin w) (1+ wx)))
-                      for y = (+ (* 50 (cos angle-2)) 200 (* 150 (cos w)))
-                      nconcing (list x y))))))
+                             (wx (sin (* 0.1 (^angle-1)))))
+                         (loop for i below (^coord-ct)
+                             for w = (+ (^angle-1) (* i 2.8001))
+                             for x = (+ (* 50 (sin angle-2)) 250 (* 150 (sin w) (1+ wx)))
+                             for y = (+ (* 50 (cos angle-2)) 200 (* 150 (cos w)))
+                             nconcing (list x y))))))
 
 (defun (setf moire-spin) (repeat self)
   (setf (repeat (car (timers self))) repeat)) ;; just hiding the implementation

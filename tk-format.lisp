@@ -56,12 +56,12 @@
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
         (funcall task)))
 
-#+debug
+#+nahh
 (defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
   ;
   ; --- pure debug stuff ---
   ;
-  (let ((yes '( "bind" "invoke")) ;; '("scroll" "pkg-sym"))
+  (let ((yes '( "coords" )) ;; '("scroll" "pkg-sym"))
         (no  '()))
     (declare (ignorable yes no))
     (bwhen (st (search "\"Alt Q\"" tk$))
@@ -77,6 +77,7 @@
   ;
   (format (wish-stream *wish*) "~A~%" tk$)
   (force-output (wish-stream *wish*)))
+
 
 (defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
   ;;(format t "~&tk> ~A~%" tk$)

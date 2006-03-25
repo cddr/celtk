@@ -24,7 +24,9 @@
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
-  (tk-test-class 'ltktest-cells-inside))
+  (tk-test-class 'ltktest-cells-inside)
+  ;;(tk-test-class 'lotsa-widgets)
+  )
 
 (defun tk-test-class (root-class)
   (cells-reset 'tk-user-queue-handler)
@@ -197,7 +199,7 @@
       (mk-popup-menubutton
        :id :font-face
        :initial-value (c? (second (^entry-values)))
-       :entry-values (c? (tk-eval-list self "font families")))
+       :entry-values (c? (eko ("ff") (tk-eval-list self "font families"))))
                           
       (mk-scale :id :font-size
         :md-value (c-in 14)
@@ -301,7 +303,7 @@
                  :from 7 :to 24 
                  :orient 'horizontal)
                (mk-label :id :txt
-                 :text "Four score and seven years ago today"
+                 :text "Four score seven years ago today"
                  :wraplength 600
                  :font (c? (list ;; format nil "{{~{~a~^ ~}} ~a}" ;; eg, {{wp greek century} 24}
                             (md-value (fm^ :font-face))

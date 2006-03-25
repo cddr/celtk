@@ -250,7 +250,7 @@ This parent is ~a, kids-packing ~a" self (list .parent (type-of .parent)) (kids-
 
 (defobserver coords ()
   (when (and (id-no self) new-value)
-    (tk-format `(:coords ,self) 
+    (tk-format `(:configure ,self) 
       "~a coords ~a ~{ ~a~}" (path .parent) (id-no self) new-value)))
 
 (defmethod not-to-be :after ((self item))
