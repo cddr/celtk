@@ -35,18 +35,19 @@
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget
     #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label #:selection #:selector
-    #:mk-checkbutton #:mk-button #:mk-button-ex #:mk-entry #:text
+    #:mk-checkbutton #:mk-button #:mk-button-ex  #:entry #:mk-entry #:text
     #:frame-stack #:mk-frame-stack #:path #:^path
     #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
     #:mk-menu-radio-group #:mk-menu-entry-separator
     #:mk-menu-entry-command #:tk-callback #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
     #:^entry-values #:tk-eval-list #:mk-scale #:mk-popup-menubutton
-    #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-tem #:mk-text-item
+    #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-item #:mk-text-item
     #:rectangle #:mk-rectangle #:bitmap #:mk-bitmap #:canvas #:mk-canvas #:mk-frame-row
     #:mk-scrolled-list #:listbox-item #:mk-spinbox
     #:mk-scroller #:mk-menu-entry-cascade-ex
     #:with-ltk #:tk-format #:send-wish #:value #:.tkw
-    #:tk-user-queue-handler #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps))
+    #:tk-user-queue-handler #:user-errors #:^user-errors
+   #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -57,7 +58,8 @@
 (defmodel tk-object (model)
   ((.md-name :cell nil :initform (gentemp "TK") :initarg :id)
    (tk-class :cell nil :initform nil :initarg :tk-class :reader tk-class)
-   (timers :initarg :timers :accessor timers :initform nil)))
+   (timers :initarg :timers :accessor timers :initform nil)
+   (user-errors :initarg :user-errors :accessor user-errors :initform nil)))
 
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))

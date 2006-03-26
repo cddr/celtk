@@ -47,7 +47,7 @@ Second topic:
 Those questions are different because not everything different about Celtk
 depends on Cells. 
 
-The pattern will be to have explanatory comments appear after the explained code.
+Note: explanatory comments appear after the explained code.
 
 n.b. The paint is very fresh on Celtk, so if something like the Timer class looks
 dumb, well, it may be. Example: the scroller class only scrolls a canvas (well, I have not tried
@@ -66,21 +66,24 @@ certainly wrong (or the class should be canvas-scroller).
   ;
   ; Tk does not like Step 3 going before Step 2. That is, .y will not learn about "Hi, Mom.".
   ; Unfortunately, in a declarative paradigm one does not specify in what order different 
-  ; things should happen, one just specifies the things we want to have happen. That is 
-  ; a big win when it works. But when it did not work for Tk I added to Cells the concept 
-  ; of a "client queue" where client-code could store
-  ; order-sensitive tasks, also allowing the client to specify the handler for
-  ; that queue. This handler gets called at just the right time in the larger scheme of
-  ; state propagation one needs for data integrity. What is that?
+  ; things should happen, one just specifies the things we want to have happen. An underlying
+  ; engine then runs around taking care of making that happen, without bothering the developer
+  ; about how to do that. Including in what order to make those things happen. That is 
+  ; a big win when it works. When it did not work for Tk, and I could see the same thing
+  ; coming up again in other situations, I added to Cells the concept of a "client queue".
+  ; Here client-code can store order-sensitive tasks. The client also can specify the handler for
+  ; that queue. This handler (or the default FIFO handler) gets called at just the right time 
+  ; in the larger scheme of state propagation one needs for data integrity. What is that?
   ;
-  ; Data integrity: when the overall data model gets perturbed by imperative code 
-  ; (such as code processing an event loop) executing a SETF of some datapoint X , we want
-  ; these requirements satisfied:
+  ; Data integrity: when the overall Cells data model gets perturbed by imperative code -- typically an
+  ; event loop -- executing a SETF of some datapoint X, we want these requirements satisfied:
   ;
   ;   - recompute all and only state computed off X (directly or indirectly through some intermediate datapoint);
-  ;   - recomputations must see only datapoint values current with the new value of X. This must
-  ;     work transparently, ie, datapoint accessors are responsible for returning only current values;
+  ;
+  ;   - recomputations must see only datapoint values current with the new value of X;
+  ;
   ;   - similarly, client observers ("on change" callbacks) must see only values current with the new value of X
+  ;
   ;   - a corollary: should a client observer SETF a datapoint Y, all the above must
   ;     happen with values current not just with X, but also with the value of Y /prior/
   ;     to the intended change to Y.
@@ -88,9 +91,14 @@ certainly wrong (or the class should be canvas-scroller).
   ; To achieve the above, Cells2 and now Cells3 have taken to using FIFO "unfinished business" queues 
   ; to defer things until The Right Time. Which brings us back to Tk. Inspect the source of
   ; tk-user-queue-handler and search the Celtk source for "with-integrity (:client" to see how Celtk
-  ; manages to talk to Tk in the order Tk likes. But in short, we just add this requirement:
+  ; manages to talk to Tk in the order Tk likes. And hack the function tk-format-now to have
+  ; Celtk dump the TCL/Tk code being sent to wish during initialization, and notice how un-random it looks. You can
+  ; then comment out the above specification of a Tk-savvy handler to see (a) the order that would have happened
+  ; before Cells3 and (b) the demo collapse in a heap (or not work in vital ways). 
+  ;
+  ; But in short, with Cells3  we just add this requirement:
   ;  
-  ;   - Client code must see only values current with X and not any values current with some
+  ;   - Deferred "client" code must see only values current with X and not any values current with some
   ;     subsequent change to Y queued by an observer
   ; 
   (tk-test-class 'ltktest-cells-inside))
@@ -101,27 +109,17 @@ certainly wrong (or the class should be canvas-scroller).
 ; automatically by the Cells engine. See DEFOBSERVER.
 
 (defmodel ltktest-cells-inside (window)
-  ((entry-warning :reader entry-warning
-     :initform (c? (bwhen (bad-chars (loop for c across (fm!v :coord-ct)
-                                           unless (digit-char-p c)
-                                           collect c))
-                     (format nil "Please! Only digits! I see ~a!!" bad-chars)))
-     ;
-     ; By the time I decided to add this demo I already had a long discussion under the get! and set! buttons, so
-     ; check that out for details.
-     ;
-     :documentation "Demonstrate live tracking key by key of entry widget editing"))
+  ()
 
   (:default-initargs
       :id :ltk-test
       :kids (c?
-             ; c? has one hell of an expansion. In effect one gets:
-             ;   - a first-class anonymous function with the expected body, which will have access to
-             ;   - variables self and .cache (symbol macro, last I looked) for the instance and prior
-             ;     computed value, if any
+             ; c? has quite an expansion. Functionally, one gets:
+             ;   - a first-class anonymous function with the expected body, which will have access to...
+             ;   - lexical variables self and .cache for the instance and prior  computed value, if any
              ;   - guaranteed recomputation when the value of any other cell /used in the most recent computation/ changes
              ;
-             ; If the abbreviation bothers you, look up c-formula.
+             ; If the abbreviation c? alarms you, look up c-formula.
              ;
              (the-kids
                  ;
@@ -131,7 +129,9 @@ certainly wrong (or the class should be canvas-scroller).
                  (ltk-test-menus) ;; hiding some code. see defun below for deets
                  (mk-scroller
                   ;
-                  ; These "mk-" functions do nothing but expand into (make-instance 'scroller <the initarg list>).
+                  ; These "mk-" functions do nothing but expand into (make-instance 'scroller <the initarg list>)
+                  ; and supply the "parent" :initarg necessary in Family trees.
+                  ;
                   ; Where you see, say, mk-button-ex I am (a) poking fun at Microsoft naming of second generation
                   ; library code that did not want to break existing code and (b) adding a little more value (just
                   ; inspect the macro source to see how).
@@ -193,7 +193,6 @@ certainly wrong (or the class should be canvas-scroller).
                      ; ditto
                      ;
 
-
                    (mk-button-ex ("Hallo" (format T "~&Hallo")))
                    (mk-button-ex ("Welt!" (format T "~&Welt")))
                    (mk-row (:borderwidth 2 :relief 'sunken)
@@ -202,31 +201,44 @@ certainly wrong (or the class should be canvas-scroller).
                    ;
                    ; Cells initiata will be surprised to learn the above works twice even if the button is
                    ; clicked twice in a row; Cells is about managing state change, and the second time through
-                   ; there is no change. See the Timer class for the solution to this riddle.
+                   ; there is no change. See the Timer class for the shocking solution to this riddle.
                    ;
-                   (mk-entry :id :coord-ct
+                   (mk-entry-numeric :id :point-ct
+                     :md-value (c-in "42")
                      ;
-                     ; to help motivate "why Cells?" a little more, we start having the widgets take more
-                     ; interesting effect on each other. The boring entry field now determines the number
-                     ; of coordinates to generate for the canvas line item, which originally was fixed at 100.
+                     ; to help motivate "why Cells?" a little more, we deviate from ltktest 'classic" and
+                     ; start having the widgets take more interesting effect: The entry field now determines the number
+                     ; of points to generate for the canvas line item, which originally was fixed at 100.
                      ; see the moire class for details.
                      ;
-                     :md-value (c-in "40")
-                     :background (c? (if (entry-warning .tkw)
-                                         ;
-                                         ; ok, this is silly, the validation is entry-specific
-                                         ; and should be a rule specified to this entry widget. Instead,
-                                         ; while casually hacking away I stuck it on the window (.tkw, explained
-                                         ; in the next paragraph. The Right Way (and coming soon) is an "errors" 
-                                         ; slot on every tk-object, but I 
-                                         ; will leave it silly to make clear that cells of one instance
-                                         ; can depend on cells of other instances. More discussion a few lines down.
-                                         ;
-                                         ; so what is .tkw? A symbol macro for "(nearest self window)".
-                                         ; what is nearest? It searches up the Family tree from
-                                         ; self inclusive searching for something (typep 'window)
-                                         ;
-                                       "red"
+                     :num-parse (c? (eko ("numparse")
+                                      ;
+                                      ; (EKO is a utils-kt debug hack that prints a value along with arbitrary
+                                      ; other info before returning the value to the inquirer)
+                                      ;
+                                      ; Here we supplement the standard entry-numeric parse rule with
+                                      ; our own more stringent rule that knows about the moire task ahead.
+                                      ;
+                                      ; A vital point with this entry-numeric class (invented just now for
+                                      ; this demo) is that Cells does not get in the way of CLOS. We are
+                                      ; subclassing, using initforms, default-initargs, and, what I suspect is
+                                      ; a big reason Cells are such a big win: different instances of the same 
+                                      ; class do not need to have the same rules for the same slot. Or even
+                                      ; have rules at all; other instances can have a constant or be setffable 
+                                      ; from outside the model.
+                                      ;
+                                      (handler-case
+                                          (let ((num (parse-integer (^md-value))))
+                                            (cond
+                                             ((< num 2)
+                                              (list (format nil "Yo, Euclid, at least two, not: ~a!!" num)))
+                                             ((> num 200)
+                                              (list (format nil "Bzzt! ~a points will not look so hot." num)))
+                                             (t num)))
+                                        (parse-error (c)
+                                          (princ-to-string c)))))
+                     :background (c? (if (user-errors (fm! :point-ct)) 
+                                      "red"
                                        'SystemButtonFace))) ;; TK won't allow "" as a way of saying "default color"
                    ;
                    ; As you type in the field, if you key in an invalid (non-digit) character, the background
@@ -244,15 +256,15 @@ certainly wrong (or the class should be canvas-scroller).
                    ; mechanism to keep the Lisp md-value slot abreast of the Tk entry text configuration
                    ; keystroke by keystroke. 
                    ; 
-                   ; I added the entry-warning slot above to demonstrate the mechanism in action. Click
+                   ; I added the :user-errors rule above to demonstrate the mechanism in action. Click
                    ; on the entry widget and type "123abc", then delete the alpha characters. The background
                    ; color (as well as the File\Save menu item state) tracks the typing. (And an observer
                    ; chats away on standard output.)
                    ;
 
-                   (mk-button-ex ("get!" (format t "~&content of entry: ~A" (fm^v :coord-ct))))
+                   (mk-button-ex ("Print" (format t "~&User wants to see ~A points" (fm^v :point-ct))))
                    ;
-                   ; (fm^v :coord-ct) -> (md-value (fm^ :coord-ct))
+                   ; (fm^v :point-ct) -> (md-value (fm^ :point-ct))
                    ;
                    ; The idea being that every Cells model object has an md-value slot bearing the value
                    ; of the thing being modeled. Here, the entry widget is modelling a place for users
@@ -262,7 +274,7 @@ certainly wrong (or the class should be canvas-scroller).
                    ; Thus each class uses md-value to hold something different, but in all cases it is
                    ; the current value of whatever the instance of that class is understood to hold.
                    ; 
-                   (mk-button-ex ("set!" (setf (fm^v :coord-ct) "test of set")))
+                   (mk-button-ex ("Reset" (setf (fm^v :point-ct) "42")))
                    ;
                    ; In Ltk one would SETF (text my-entry) and the
                    ; SETF method would communicate with Tk to make the change to the Tk widget -text
@@ -278,16 +290,6 @@ certainly wrong (or the class should be canvas-scroller).
                    ; ActiveState suggests, Tk also provides automatic propagation: change the
                    ; variable, and anyone with that as its textVariable also changes.
                    )))))
-   
-(defobserver entry-warning ()
-    ;
-    ; This demonstrates ones ability to track the text in a Tk entry while it is being
-    ; edited. As you type you should see the changing values in standard output
-    ;
-    (if new-value
-        (format t "~&User, we have a problem: ~a" new-value)
-      (when old-value
-        (format t "~&That looks better: ~a" (fm!v :coord-ct)))))
 
 (defmodel ltk-test-canvas (canvas)
   ()
@@ -306,43 +308,46 @@ certainly wrong (or the class should be canvas-scroller).
     ; appended.
     ;
     :xscrollcommand (c-in nil) ;; see canvas class for the Tk limitation behind this nonsense
-    :yscrollcommand (c-in nil) ;; in brief, Tk needs the concept of "late binding" on widget names
+    :yscrollcommand (c-in nil) ;; in brief, Tk lacks the concept of "late binding" on widget names
 
     :bindings (c? (list (list "<1>" (lambda (event) 
                                       ;
                                       ; Stolen from the original. It means "when the left button is
                                       ; pressed on this widget, popup this menu where the button was pressed"
+                                      ; The only difference is that here we get to specify this along with
+                                      ; the rest of the configuration of this instance, whereas in the original
+                                      ; the enabling code was just "out there" in a long sequence of other
+                                      ; imperatives setting up this widget and that. ie, It is nice having
+                                      ; everything about X collected in one place. In case you are wondering,
+                                      ; an observer on the bindings slot passes the needed bindings to Tk 
+                                      ; via the client queue.
                                       ;
                                       (pop-up (car (^menus)) ;; (^menus) -> (menus self)
                                         (event-root-x event)
                                         (event-root-y event))))))
-    ;
-    ; an observer on the bindings slot (a) registers a callback and (b) passes along
-    ; to Tk an appropriate BIND command
-    ;
-    :menus
-    ;
-    ; here is a limitation with the declarative paradigm. pop-up menus are free to float about
-    ; unpacked in any parent. One just needs to remember the name of the menu widget to
-    ; pass it to the pop-up function. So imperative code like ltktest "classic" can just make the menus
-    ; saving their name in a closed-over local variable and then refer to them in a callback to pop them up.
-    ;
-    ; in the declarative paradigm we need a slot (defined for any widget or item class) in which
-    ; to build and store such menus:
-    ;
-    (c? (the-kids
-         (mk-menu 
-          :kids (c? (the-kids
-                     (mapcar (lambda (spec)
-                               (destructuring-bind (lbl . out$) spec
-                                 (mk-menu-entry-command
-                                  :label lbl
-                                  :command (c? (tk-callback .tkw (gentemp "MNU")
-                                                 (lambda ()
-                                                   (format t "~&~a" out$)))))))
-                       (list (cons "Option 1" "Popup 1")
-                         (cons "Option 2" "Popup 2")
-                         (cons "Option 3" "Popup 3"))))))))
+    :menus (c? (the-kids
+                ;
+                ; here is a limitation with the declarative paradigm: pop-up menus are free to float about
+                ; unpacked in any parent. One just needs to remember the name of the menu widget to
+                ; pass it to the pop-up function. So imperative code like ltktest "classic" can just make the menus
+                ; saving their name in a closed-over local variable and then refer to them in a callback to pop them up.
+                ;
+                ; in the declarative paradigm we need a slot (defined for any widget or item class) in which
+                ; to build and store such menus. As with bindings, the nice thing again is that we find everything relative
+                ; to this widget specified in one place.
+                ;
+                (mk-menu 
+                 :kids (c? (the-kids
+                            (mapcar (lambda (spec)
+                                      (destructuring-bind (lbl . out$) spec
+                                        (mk-menu-entry-command
+                                         :label lbl
+                                         :command (c? (tk-callback .tkw (gentemp "MNU")
+                                                        (lambda ()
+                                                          (format t "~&~a" out$)))))))
+                              (list (cons "Option 1" "Popup 1")
+                                (cons "Option 2" "Popup 2")
+                                (cons "Option 3" "Popup 3"))))))))
     
     :kids (c? (the-kids
                (mk-text-item
@@ -351,17 +356,13 @@ certainly wrong (or the class should be canvas-scroller).
                 :text "Ltk Demonstration")
                (make-kid 'moire :id :moire-1)))))
                ;
-               ; we give /this/ widget a specific ID so other rules can look it up, as
+               ; we give this widget a specific ID so other rules can look it up, as
                ; discussed above when explaining fm^.
-  
+
 (defmodel moire (line)
   ((angle-1 :initarg :angle-1 :accessor angle-1 :initform (c-in 0))
-   (coord-ct :initarg :coord-ct :accessor coord-ct
-     :initform (c? (or (unless (entry-warning .tkw)
-                         (let ((ct (read-from-string (fm^v :coord-ct) nil)))
-                           (when (and (numberp ct) (> ct 1))
-                             (max ct 2))))
-                     .cache)))) ;; ie, prior value
+   (point-ct :initarg :point-ct :accessor point-ct
+     :initform (c? (num-value (fm^ :point-ct)))))
   (:default-initargs
       :timers (c? (list (make-instance 'timer
                           ;
@@ -376,11 +377,12 @@ certainly wrong (or the class should be canvas-scroller).
                                     (incf (^angle-1) 0.1)))))
     :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
                              (wx (sin (* 0.1 (^angle-1)))))
-                         (loop for i below (^coord-ct)
+                         (loop for i below (^point-ct)
                              for w = (+ (^angle-1) (* i 2.8001))
                              for x = (+ (* 50 (sin angle-2)) 250 (* 150 (sin w) (1+ wx)))
                              for y = (+ (* 50 (cos angle-2)) 200 (* 150 (cos w)))
                              nconcing (list x y))))))
+
 
 (defun (setf moire-spin) (repeat self)
   (setf (repeat (car (timers self))) repeat)) ;; just hiding the implementation
@@ -392,7 +394,7 @@ certainly wrong (or the class should be canvas-scroller).
   ;
   ; Well, another thing which happens not to be visible here... hang on.
   ; OK, I just made the Save menu item contingent upon there being no 
-  ; entry-warning. As you add/remove all digits (considered invalid for
+  ; user-errors. As you add/remove all digits (considered invalid for
   ; demonstration purposes) the menu item becomes available/unavailable
   ; appropriately.
   ;
@@ -406,7 +408,7 @@ certainly wrong (or the class should be canvas-scroller).
                                  (lambda () (format t "~&Load pressed")))))
                                       
                 (mk-menu-entry-command :label "Save"
-                  :state (c? (if (entry-warning (fm^ :ltk-test))
+                  :state (c? (if (user-errors (fm^ :point-ct))
                                  :disabled :normal))
                   :command (c? (tk-callback .tkw 'save
                                  (lambda () (format t "~&Save pressed")))))
@@ -432,3 +434,23 @@ certainly wrong (or the class should be canvas-scroller).
                   :command "exit"))))))
 
 
+(defmodel entry-numeric (entry)
+  ((num-parse :initarg :num-parse :accessor num-parse
+     :initform (c? (eko ("numparse")
+                     (handler-case
+                         (parse-integer (^md-value))
+                       (parse-error (c)
+                         (princ-to-string c))))))
+   (num-value :initarg :num-value :accessor num-value
+     :initform (c? (if (numberp (^num-parse))
+                       (^num-parse)
+                     (or .cache 42)))))
+  (:default-initargs
+      :md-value "42"
+    :user-errors (c? (unless (numberp (^num-parse))
+                       (^num-parse)))))
+  
+ 
+(defun mk-entry-numeric (&rest iargs)
+  (apply 'make-instance 'entry-numeric :fm-parent *parent* iargs))
+  
