@@ -39,7 +39,7 @@
     #:frame-stack #:mk-frame-stack #:path #:^path
     #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
     #:mk-menu-radio-group #:mk-menu-entry-separator
-    #:mk-menu-entry-command #:tk-callback #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
+    #:mk-menu-entry-command #:tk-callback #:menu #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
     #:^entry-values #:tk-eval-list #:mk-scale #:mk-popup-menubutton
     #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-item #:mk-text-item
     #:rectangle #:mk-rectangle #:bitmap #:mk-bitmap #:canvas #:mk-canvas #:mk-frame-row
@@ -47,7 +47,8 @@
     #:mk-scroller #:mk-menu-entry-cascade-ex
     #:with-ltk #:tk-format #:send-wish #:value #:.tkw
     #:tk-user-queue-handler #:user-errors #:^user-errors
-   #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps))
+   #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps
+   #:^widget-menu #:widget-menu))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -149,12 +150,20 @@
    (gridding :reader gridding :initarg :gridding :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
    (bindings :reader bindings :initarg :bindings :initform nil)
-   (menus :reader menus :initarg :menus :initform nil)
+   (menus :reader menus :initarg :menus :initform nil
+     :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
    (selector :reader selector :initarg :selector
      :initform (c? (upper self selector))))
   (:default-initargs
       :id (gentemp "W")))
+
+(defun widget-menu (self key)
+  (or (find key (^menus) :key 'md-name)
+    (break "The only menus I see are~{ ~a,~} not requested ~a" (mapcar 'md-name (^menus)) key)))
+
+(defmacro ^widget-menu (key)
+  `(widget-menu self ,key))
 
 (defmethod make-tk-instance ((self widget))
   (setf (gethash (^path) (dictionary .tkw)) self)

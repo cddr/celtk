@@ -38,7 +38,13 @@ The comments throughout this source file cover two broad topics:
     How is programming with Celtk different from LTk?
 
 Contrast the code below with the excellent ltktest "classic" in ltk.lisp to 
-see how Celtk programming is different.
+see how Celtk programming is different. I won't say better, because some people prefer an
+imperative approach where they can have all the bricks laid out in front of them
+and lay them out carefully one by one to get exactly what they want without thinking
+very hard. The declarative approach makes one think a little harder but in the end
+do less work. The trade-off becomes a big win for the declarative model as the
+interface gets either bigger or more dynamic, such as widgets that come and go as the
+user specifies different things in other widgets.
 
 Second topic:
 
@@ -103,9 +109,13 @@ certainly wrong (or the class should be canvas-scroller).
   ; 
   (tk-test-class 'ltktest-cells-inside))
 
-; That is all the imperative code there is to Celtk application development, aside from widget commands. Tk handles some
-; of the driving imperative logic, and Celtk internals handle the rest. The application works via rules reacting to change,
-; computing new state for the application model, which operates on the outside world via observers (on-change callbacks) triggered
+; That is all the imperative code there is to Celtk application development, aside from widget commands, and those
+; invariably (?) consist of a single setf. So where does the rest of the state change necessary to keep a GUI
+; interface self-consistent get taken care of? 
+
+; Tk handles some of the driving imperative logic -- they call the company ActiveState for a reason -- and Celtk internals 
+; handle the rest. The application works via Cells rules reacting to change by computing new state for the application model, 
+; which operates on the outside world via observers (on-change callbacks) triggered
 ; automatically by the Cells engine. See DEFOBSERVER.
 
 (defmodel ltktest-cells-inside (window)
@@ -295,6 +305,18 @@ certainly wrong (or the class should be canvas-scroller).
   ()
   (:default-initargs
       :id :test-canvas
+    :background (c? (or (selection (fm! :bkg (^menus)))
+                      'SystemButtonFace))
+    ;
+    ; we are taking the demo a little further to make it a little more real world than just
+    ; printing to standard output. A point to make here is the decoupling of the menu from
+    ; its application role, namely allowing the user to specify the background color of
+    ; the spinning lines. The pop-up is now a radio-group menu that does not know how the
+    ; choice it is maintaining will be used. It simply takes care of its business of allowing
+    ; the user to choose exactly one color. Changes get propagated automatically by the Cells 
+    ; engine to any slot whose rule happens to read the radio-group selection slot. And that
+    ; is all they have to do, read the value. No need to code "subscribe" or "notify" code.
+    ;
     :scroll-region '(0 0 500 400)
     :gridding "-row 0 -column 0 -sticky news"
     ;
@@ -309,7 +331,7 @@ certainly wrong (or the class should be canvas-scroller).
     ;
     :xscrollcommand (c-in nil) ;; see canvas class for the Tk limitation behind this nonsense
     :yscrollcommand (c-in nil) ;; in brief, Tk lacks the concept of "late binding" on widget names
-
+    
     :bindings (c? (list (list "<1>" (lambda (event) 
                                       ;
                                       ; Stolen from the original. It means "when the left button is
@@ -322,21 +344,33 @@ certainly wrong (or the class should be canvas-scroller).
                                       ; an observer on the bindings slot passes the needed bindings to Tk 
                                       ; via the client queue.
                                       ;
-                                      (pop-up (car (^menus)) ;; (^menus) -> (menus self)
+                                      (pop-up (^widget-menu :bkg-pop) ;; (^menus) -> (menus self)
                                         (event-root-x event)
                                         (event-root-y event))))))
+    
     :menus (c? (the-kids
                 ;
-                ; here is a limitation with the declarative paradigm: pop-up menus are free to float about
-                ; unpacked in any parent. One just needs to remember the name of the menu widget to
-                ; pass it to the pop-up function. So imperative code like ltktest "classic" can just make the menus
-                ; saving their name in a closed-over local variable and then refer to them in a callback to pop them up.
+                ; we could just build the menu in the rule above for bindings and then close over the variable
+                ; bearing the menu's Tk name in the binding callback in the call to pop-up, but I try to decompose
+                ; these things in the event that the bindings become dynamic over time (meaning the rule to generate
+                ; the binding list will run repeatedly) we are not forever regenerating the same pop-up menu.
+                ; premature optimization? well, it also makes the code clearer, and should the list of menus become
+                ; variable over time allows us to GC (via Tk "destroy") menus, so this is not so much about
+                ; optimization as it is about the Good Things that happen to well-organized code.
                 ;
-                ; in the declarative paradigm we need a slot (defined for any widget or item class) in which
-                ; to build and store such menus. As with bindings, the nice thing again is that we find everything relative
-                ; to this widget specified in one place.
-                ;
+                (mk-menu
+                 :id :bkg-pop
+                 :kids (c? (the-kids
+                            (mk-menu-radio-group
+                             :id :bkg
+                             :selection (c-in nil)
+                             :kids (c? (the-kids
+                                        (mk-menu-entry-radiobutton :label "Crimson Tide" :value "red")
+                                        (mk-menu-entry-radiobutton :label "Oak Tree Ribbon" :value "yellow")
+                                        (mk-menu-entry-radiobutton :label "Sky" :value "blue")))))))
+                
                 (mk-menu 
+                 :id :options
                  :kids (c? (the-kids
                             (mapcar (lambda (spec)
                                       (destructuring-bind (lbl . out$) spec
