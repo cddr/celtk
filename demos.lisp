@@ -32,6 +32,7 @@
   (cells-reset 'tk-user-queue-handler)
   (with-ltk (:debug 0)
     (send-wish "proc trc2 {cb n1 n2 op} {puts \"(:callback \\\"$cb\\\" :name1 $n1 :name2 \\\"$n2\\\" :op $op)\"}")
+    #+notyet (send-wish "package require tile")
     (setf ltk:*debug-tk* nil)
     (with-integrity ()
       (make-instance root-class))
@@ -199,7 +200,7 @@
       (mk-popup-menubutton
        :id :font-face
        :initial-value (c? (second (^entry-values)))
-       :entry-values (c? (eko ("ff") (tk-eval-list self "font families"))))
+       :entry-values (c? (eko (nil "ff") (tk-eval-list "font families"))))
                           
       (mk-scale :id :font-size
         :md-value (c-in 14)
@@ -289,7 +290,7 @@
 (defmodel font-view (frame-stack)
   ()
   (:default-initargs
-      :md-value (c? (tk-eval-list self "font families"))
+      :md-value (c? (tk-eval-list "font families"))
     :pady 2 :padx 4
     :packing-side 'left
     :layout-anchor 'nw

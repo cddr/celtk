@@ -171,6 +171,14 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   ()
   (:tk-spec command -command))
 
+(defmacro mk-menu-entry-command-ex ((&rest menu-command-initargs) lbl callback-body)
+  `(mk-menu-entry-command
+    ,@menu-command-initargs
+    :label ,lbl
+    :command (c? (tk-callback .tkw (gentemp "MNU")
+                   (lambda ()
+                     ,callback-body)))))
+
 (deftk menu-entry-button (menu-entry-command)
   ()
   (:tk-spec command

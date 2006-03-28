@@ -69,6 +69,7 @@
     -validate -validatecommand -width )
   (:default-initargs
       :id (gentemp "ENT")
+    :xscrollcommand (c-in nil)
     :textvariable (c? (^path))
       :md-value (c-in "")))
 
@@ -110,6 +111,8 @@
   (:default-initargs
       :id (gentemp "TXT")
       :md-value (c-in "<your text here>")
+    :xscrollcommand (c-in nil)
+    :yscrollcommand (c-in nil)
     :modified (c-in nil)
     :bindings (c? (list (list "<<Modified>>"
                           (format nil "{callback ~~a}" (^path))

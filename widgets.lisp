@@ -120,6 +120,8 @@
       :id (gentemp "SCL")
       :md-value (c-in nil)
     :tk-variable nil ;;(c? (^path))
+    :xscrollcommand (c-in nil)
+    :yscrollcommand (c-in nil)
     :command (c? (tk-callbackval self 'scale-set
                    (lambda (&rest args)
                      (declare (ignore id))
@@ -143,6 +145,8 @@
     -takefocus -width -xscrollcommand -yscrollcommand)
   (:default-initargs
       :id (gentemp "LBX")
+    :xscrollcommand (c-in nil)
+    :yscrollcommand (c-in nil)
       :bindings (c? (when (selector self) ;; if not? Figure out how listbox tracks own selection
                       (list (list  "<<ListboxSelect>>"
                               (format nil "{callbackval ~~a [~a curselection]}" (^path))
@@ -186,6 +190,7 @@
       :md-value (c-in nil)
       :id (gentemp "SPN")
       :textVariable (c? (^path))
+    :xscrollcommand (c-in nil)
     :command (c? (tk-callbackstring-x self 'vmirror "%s"
                    ;;;(tk-callback self 'vcmd
                    (lambda (text)

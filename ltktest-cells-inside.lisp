@@ -40,11 +40,10 @@ The comments throughout this source file cover two broad topics:
 Contrast the code below with the excellent ltktest "classic" in ltk.lisp to 
 see how Celtk programming is different. I won't say better, because some people prefer an
 imperative approach where they can have all the bricks laid out in front of them
-and lay them out carefully one by one to get exactly what they want without thinking
+and sequence them manually one by one to get exactly what they want without thinking
 very hard. The declarative approach makes one think a little harder but in the end
-do less work. The trade-off becomes a big win for the declarative model as the
-interface gets either bigger or more dynamic, such as widgets that come and go as the
-user specifies different things in other widgets.
+do less work as the responsibility for getting things to work falls on the engine behind
+the declarative interface.
 
 Second topic:
 
@@ -74,25 +73,27 @@ certainly wrong (or the class should be canvas-scroller).
   ; Unfortunately, in a declarative paradigm one does not specify in what order different 
   ; things should happen, one just specifies the things we want to have happen. An underlying
   ; engine then runs around taking care of making that happen, without bothering the developer
-  ; about how to do that. Including in what order to make those things happen. That is 
-  ; a big win when it works. When it did not work for Tk, and I could see the same thing
-  ; coming up again in other situations, I added to Cells the concept of a "client queue".
+  ; about how to do that. That includes deciding in what order to make those things happen. That is 
+  ; a big win when it works. When it did not work for Tk, and I could imagine the same thing
+  ; coming up again in other situations (Tilton's Law: "The first time you run into something
+  ; is just the first time you will run into it"), I added to Cells the concept of a "client queue".
   ; Here client-code can store order-sensitive tasks. The client also can specify the handler for
-  ; that queue. This handler (or the default FIFO handler) gets called at just the right time 
-  ; in the larger scheme of state propagation one needs for data integrity. What is that?
+  ; that queue, here 'tk-user-queue-handler. This handler (or the default FIFO handler) gets called 
+  ; at just the right time in the larger scheme of state propagation one needs for 
+  ; data integrity. What is that?
   ;
   ; Data integrity: when the overall Cells data model gets perturbed by imperative code -- typically an
-  ; event loop -- executing a SETF of some datapoint X, we want these requirements satisfied:
+  ; event loop -- executing a SETF of some datapoint X, we want these requirements met:
   ;
   ;   - recompute all and only state computed off X (directly or indirectly through some intermediate datapoint);
   ;
-  ;   - recomputations must see only datapoint values current with the new value of X;
+  ;   - recomputations, when they read other datapoints, must see only values current with the new value of X;
   ;
-  ;   - similarly, client observers ("on change" callbacks) must see only values current with the new value of X
+  ;   - similarly, client observers ("on change" callbacks) must see only values current with the new value of X; and
   ;
   ;   - a corollary: should a client observer SETF a datapoint Y, all the above must
-  ;     happen with values current not just with X, but also with the value of Y /prior/
-  ;     to the intended change to Y.
+  ;     happen with values current with not just X, but also with the value of Y /prior/
+  ;     to the change to Y.
   ;
   ; To achieve the above, Cells2 and now Cells3 have taken to using FIFO "unfinished business" queues 
   ; to defer things until The Right Time. Which brings us back to Tk. Inspect the source of
@@ -268,8 +269,7 @@ certainly wrong (or the class should be canvas-scroller).
                    ; 
                    ; I added the :user-errors rule above to demonstrate the mechanism in action. Click
                    ; on the entry widget and type "123abc", then delete the alpha characters. The background
-                   ; color (as well as the File\Save menu item state) tracks the typing. (And an observer
-                   ; chats away on standard output.)
+                   ; color (as well as the File\Save menu item state) tracks the typing.
                    ;
 
                    (mk-button-ex ("Print" (format t "~&User wants to see ~A points" (fm^v :point-ct))))
@@ -282,19 +282,19 @@ certainly wrong (or the class should be canvas-scroller).
                    ; keep that information.
                    ;
                    ; Thus each class uses md-value to hold something different, but in all cases it is
-                   ; the current value of whatever the instance of that class is understood to hold.
+                   ; the current value of whatever the instance of that class is understood to hold. 
                    ; 
                    (mk-button-ex ("Reset" (setf (fm^v :point-ct) "42")))
                    ;
-                   ; In Ltk one would SETF (text my-entry) and the
+                   ; Driving home this point again, in Ltk one would SETF (text my-entry) and the
                    ; SETF method would communicate with Tk to make the change to the Tk widget -text
                    ; configuration. In Celtk, the md-value slot of the entry gets changed (possibly
                    ; triggering other slots to update, which is why we do not just talk to Tk) and
                    ; then that value gets propagated to Tk via "set <widget path> <value>". Because
                    ; the textVariable for every entry is the entry itself, the text of the entry
                    ; then changes. If that sounds weird, what we are actually doing is tapping into
-                   ; Tk to a large degree taking the same approach as Cells does with the md-value
-                   ; slot: in Cells, we think of model instances as wrapping some model-specific 
+                   ; the fact that Tk to a large degree takes the same approach as Cells does with md-value:
+                   ; in Cells, we think of model instances as wrapping some model-specific 
                    ; value, which is held in the md-value slot of the model instance. Tk simply
                    ; allows a widget path to be a global variable. Furthermore, as the company name
                    ; ActiveState suggests, Tk also provides automatic propagation: change the
@@ -314,8 +314,9 @@ certainly wrong (or the class should be canvas-scroller).
     ; the spinning lines. The pop-up is now a radio-group menu that does not know how the
     ; choice it is maintaining will be used. It simply takes care of its business of allowing
     ; the user to choose exactly one color. Changes get propagated automatically by the Cells 
-    ; engine to any slot whose rule happens to read the radio-group selection slot. And that
-    ; is all they have to do, read the value. No need to code "subscribe" or "notify" code.
+    ; engine to any slot whose rule happens to read the radio-group selection slot. And the coding 
+    ; is transparent: just read the value. No need to write explicit code to subscribe, notify,
+    ; or unsubscribe.
     ;
     :scroll-region '(0 0 500 400)
     :gridding "-row 0 -column 0 -sticky news"
@@ -328,25 +329,23 @@ certainly wrong (or the class should be canvas-scroller).
     ;
     ; This also simplifies Celtk since it just has to pass the Tk code along with "grid <path> "
     ; appended.
-    ;
-    :xscrollcommand (c-in nil) ;; see canvas class for the Tk limitation behind this nonsense
-    :yscrollcommand (c-in nil) ;; in brief, Tk lacks the concept of "late binding" on widget names
-    
-    :bindings (c? (list (list "<1>" (lambda (event) 
-                                      ;
-                                      ; Stolen from the original. It means "when the left button is
-                                      ; pressed on this widget, popup this menu where the button was pressed"
-                                      ; The only difference is that here we get to specify this along with
-                                      ; the rest of the configuration of this instance, whereas in the original
-                                      ; the enabling code was just "out there" in a long sequence of other
-                                      ; imperatives setting up this widget and that. ie, It is nice having
-                                      ; everything about X collected in one place. In case you are wondering,
-                                      ; an observer on the bindings slot passes the needed bindings to Tk 
-                                      ; via the client queue.
-                                      ;
-                                      (pop-up (^widget-menu :bkg-pop) ;; (^menus) -> (menus self)
-                                        (event-root-x event)
-                                        (event-root-y event))))))
+    ;    
+    :bindings (c? (list
+                   (list "<1>" (lambda (event) 
+                                 ;
+                                 ; Stolen from the original. It means "when the left button is
+                                 ; pressed on this widget, popup this menu where the button was pressed"
+                                 ; The only difference is that here we get to specify this along with
+                                 ; the rest of the configuration of this instance, whereas in the original
+                                 ; the enabling code was just "out there" in a long sequence of other
+                                 ; imperatives setting up this widget and that. ie, It is nice having
+                                 ; everything about X collected in one place. In case you are wondering,
+                                 ; an observer on the bindings slot passes the needed bindings to Tk 
+                                 ; via the client queue.
+                                 ;
+                                 (pop-up (^widget-menu :bkg-pop) ;; (^menus) -> (menus self)
+                                   (event-root-x event)
+                                   (event-root-y event))))))
     
     :menus (c? (the-kids
                 ;
@@ -356,32 +355,19 @@ certainly wrong (or the class should be canvas-scroller).
                 ; the binding list will run repeatedly) we are not forever regenerating the same pop-up menu.
                 ; premature optimization? well, it also makes the code clearer, and should the list of menus become
                 ; variable over time allows us to GC (via Tk "destroy") menus, so this is not so much about
-                ; optimization as it is about the Good Things that happen to well-organized code.
+                ; optimization as it is about Good Things happening to well-organized code.
                 ;
                 (mk-menu
                  :id :bkg-pop
                  :kids (c? (the-kids
                             (mk-menu-radio-group
                              :id :bkg
-                             :selection (c-in nil)
+                             :selection (c-in nil) ;; this will start us off with the Tk default
                              :kids (c? (the-kids
                                         (mk-menu-entry-radiobutton :label "Crimson Tide" :value "red")
                                         (mk-menu-entry-radiobutton :label "Oak Tree Ribbon" :value "yellow")
-                                        (mk-menu-entry-radiobutton :label "Sky" :value "blue")))))))
-                
-                (mk-menu 
-                 :id :options
-                 :kids (c? (the-kids
-                            (mapcar (lambda (spec)
-                                      (destructuring-bind (lbl . out$) spec
-                                        (mk-menu-entry-command
-                                         :label lbl
-                                         :command (c? (tk-callback .tkw (gentemp "MNU")
-                                                        (lambda ()
-                                                          (format t "~&~a" out$)))))))
-                              (list (cons "Option 1" "Popup 1")
-                                (cons "Option 2" "Popup 2")
-                                (cons "Option 3" "Popup 3"))))))))
+                                        (mk-menu-entry-radiobutton :label "Sky" :value 'blue)
+                                        (mk-menu-entry-radiobutton :label "Factory" :value 'SystemButtonFace)))))))))
     
     :kids (c? (the-kids
                (mk-text-item
@@ -437,25 +423,14 @@ certainly wrong (or the class should be canvas-scroller).
   (mk-menubar
    :kids (c? (the-kids
               (mk-menu-entry-cascade-ex (:label "File")
-                (mk-menu-entry-command :label "Load"
-                  :command (c? (tk-callback .tkw 'load
-                                 (lambda () (format t "~&Load pressed")))))
-                                      
-                (mk-menu-entry-command :label "Save"
-                  :state (c? (if (user-errors (fm^ :point-ct))
-                                 :disabled :normal))
-                  :command (c? (tk-callback .tkw 'save
-                                 (lambda () (format t "~&Save pressed")))))
+                (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
+                (mk-menu-entry-command-ex (:state (c? (if (user-errors (fm^ :point-ct))
+                                                          :disabled :normal)))
+                  "Save" (format t "~&Save pressed"))
                 (mk-menu-entry-separator)
                 (mk-menu-entry-cascade-ex (:id :export :label "Export...")
-                  (mk-menu-entry-command 
-                   :label "jpeg"
-                   :command (c? (tk-callback .tkw 'jpeg
-                                  (lambda () (format t "~&Jpeg pressed")))))
-                  (mk-menu-entry-command
-                   :label "png"
-                   :command (c? (tk-callback .tkw 'png
-                                  (lambda () (format t "~&Png pressed"))))))
+                  (mk-menu-entry-command-ex () "jpeg" (format t "~&Jpeg pressed"))
+                  (mk-menu-entry-command-ex () "png" (format t "~&Png pressed")))
                 (mk-menu-entry-separator)
                 (mk-menu-entry-command :label "Quit"
                   :accelerator "Alt-q"

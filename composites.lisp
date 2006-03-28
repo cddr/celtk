@@ -75,7 +75,7 @@
 (defmodel window (composite-widget)
   ((wish :initarg :wish :accessor wish
      :initform (wish-stream *wish*)
-     #+(or) (c? (do-execute "wish84 -name testwindow" 
+     #+(or) (c? (do-execute "wish85 -name testwindow" 
                      nil #+not (list (format nil "-name ~s" (title$ self))))))
    (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
    (title$ :initarg :title$ :accessor title$

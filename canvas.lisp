@@ -33,7 +33,9 @@
     -closeenough -confine -height (scroll-region -scrollregion) -width 
     -xscrollincrement -yscrollincrement)
   (:default-initargs
-      :id (gentemp "CV")))
+      :xscrollcommand (c-in nil)
+    :yscrollcommand (c-in nil)
+    :id (gentemp "CV")))
 
 (deftk arc (item)
   ()

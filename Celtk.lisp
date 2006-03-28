@@ -23,32 +23,33 @@
 (defpackage :celtk
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells)
-
+  
   (:import-from #:ltk
     #:wish-stream #:*wish* #:widget-path
     #:read-data #:event-root-x #:event-root-y
     #:send-wish #:tkescape #:after #:after-cancel #:bind
     #:with-ltk #:do-execute #:add-callback)
-
+  
   (:export
-    #:pop-up #:event-root-x #:event-root-y
+   #:pop-up #:event-root-x #:event-root-y
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget
-    #:mk-panedwindow
+   #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label #:selection #:selector
-    #:mk-checkbutton #:mk-button #:mk-button-ex  #:entry #:mk-entry #:text
-    #:frame-stack #:mk-frame-stack #:path #:^path
-    #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
-    #:mk-menu-radio-group #:mk-menu-entry-separator
-    #:mk-menu-entry-command #:tk-callback #:menu #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
-    #:^entry-values #:tk-eval-list #:mk-scale #:mk-popup-menubutton
-    #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-item #:mk-text-item
-    #:rectangle #:mk-rectangle #:bitmap #:mk-bitmap #:canvas #:mk-canvas #:mk-frame-row
-    #:mk-scrolled-list #:listbox-item #:mk-spinbox
-    #:mk-scroller #:mk-menu-entry-cascade-ex
-    #:with-ltk #:tk-format #:send-wish #:value #:.tkw
-    #:tk-user-queue-handler #:user-errors #:^user-errors
+   #:mk-checkbutton #:mk-button #:mk-button-ex  #:entry #:mk-entry #:text
+   #:frame-stack #:mk-frame-stack #:path #:^path
+   #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
+   #:mk-menu-radio-group #:mk-menu-entry-separator
+   #:mk-menu-entry-command #:mk-menu-entry-command-ex #:tk-callback
+   #:menu #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
+   #:^entry-values #:tk-eval-list #:mk-scale #:mk-popup-menubutton
+   #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc #:text-item #:mk-text-item
+   #:rectangle #:mk-rectangle #:bitmap #:mk-bitmap #:canvas #:mk-canvas #:mk-frame-row
+   #:mk-scrolled-list #:listbox-item #:mk-spinbox
+   #:mk-scroller #:mk-menu-entry-cascade-ex
+   #:with-ltk #:tk-format #:send-wish #:value #:.tkw
+   #:tk-user-queue-handler #:user-errors #:^user-errors
    #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps
-   #:^widget-menu #:widget-menu))
+   #:^widget-menu #:widget-menu #:tk-format-now))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -365,8 +366,7 @@ This parent is ~a, kids-packing ~a" self (list .parent (type-of .parent)) (kids-
   (tk-format :grouped "senddatastring [set ~a]" var)
   (read-data))
 
-(defun tk-eval-list (self form$)
-  (declare (ignore self))
+(defun tk-eval-list (form$)
   (tk-format :grouped "senddatastrings [~a]" form$)
   (read-data))
 
