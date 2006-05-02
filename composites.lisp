@@ -23,9 +23,11 @@
 
 (in-package :Celtk)
 
+
+
 ;;; --- toplevel ---------------------------------------------
 
-(deftk toplevel ()
+(deftk toplevel (widget)
   ()
   (:tk-spec toplevel
     -borderwidth -cursor -highlightbackground -highlightcolor
@@ -38,7 +40,7 @@
 
 ;; --- panedwindow -----------------------------------------
 
-(deftk panedwindow ()
+(deftk panedwindow (widget)
   ()
   (:tk-spec panedwindow
     -background -borderwidth -cursor -height
@@ -56,7 +58,7 @@
       :packing nil))
 
 (defmethod make-tk-instance ((self panedwindow))
-  (tk-format `(:make-tk ,self) "panedwindow ~a -orient ~(~a~)"
+  (tk-format-now "panedwindow ~a -orient ~(~a~)"
     (^path) (or (orient self) "vertical"))
   (tk-format `(:pack ,self) "pack ~a -expand yes -fill both" (^path)))
 
@@ -72,138 +74,59 @@
 (defmodel composite-widget (widget)
   ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
 
+(eval-when (compile load eval)
+  (export '(title$ active)))
+
 (defmodel window (composite-widget)
-  ((wish :initarg :wish :accessor wish
+  (#+wishful (wish :initarg :wish :accessor wish
      :initform (wish-stream *wish*)
      #+(or) (c? (do-execute "wish85 -name testwindow" 
-                     nil #+not (list (format nil "-name ~s" (title$ self))))))
-   (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
+                  nil #+not (list (format nil "-name ~s" (title$ self))))))
+   #+wishful (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
    (title$ :initarg :title$ :accessor title$
-     :initform (c? (string (class-name (class-of self)))))
-   (dictionary :initarg :dictionary :initform (make-hash-table) :accessor dictionary)
+     :initform (c? (string-capitalize (class-name (class-of self)))))
+   (dictionary :initarg :dictionary :initform (make-hash-table :test 'string-equal) :accessor dictionary)
    (callbacks :initarg :callbacks :accessor callbacks
      :initform (make-hash-table :test #'eq))
-   (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))))
+   (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
+   (tk-scaling :initarg :tk-scaling :accessor tk-scaling
+     :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
+   (fonts-to-load :initarg :fonts-to-load :accessor fonts-to-load :initform nil)
+   (font-sizes-to-load :initarg :font-sizes-to-load :accessor font-sizes-to-load :initform nil)
+   (font-info :initarg :font-info :accessor font-info
+     :initform (font-info-loader))
+   (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil))
+  )
+
+(defobserver initial-focus ()
+  (when new-value
+    (tk-format '(:fini new-value) "focus ~a" (path new-value))))
+
+(defun font-info-loader ()
+    (c? (eko (nil "finfo")
+          (loop with scaling = (^tk-scaling)
+              for (font fname) in (^fonts-to-load)
+              collect (cons font
+                        (apply 'vector
+                          (loop for fsize in (^font-sizes-to-load)
+                                for id = (format nil "~(~a-~2,'0d~)" font fsize)
+                              for tkf = (tk-eval "font create ~a -family {~a} -size ~a"
+                                          id fname fsize)
+                              for (nil ascent nil descent nil linespace nil fixed) = (tk-eval-list "font metrics ~a" tkf)
+                              collect (make-finfo :ascent (round (parse-integer ascent) scaling)
+                                        :id id
+                                        :family fname
+                                        :size fsize
+                                        :descent (round (parse-integer descent) scaling)
+                                        :linespace (round (parse-integer linespace) scaling)
+                                        :fixed (plusp (parse-integer fixed))
+                                        :em (round (parse-integer
+                                                    (tk-eval "font measure ~(~a~) \"m\"" font))
+                                              scaling)))))))))
+
+(defobserver title$ ((self window))
+   (tk-format '(:configure "title") "wm title . ~s" (or new-value "Untitled")))
 
 (defmethod path ((self window)) ".")
 (defmethod parent-path ((self window)) "")
-
-
-;--- group geometry -----------------------------------------
-
-(defmodel inline-mixin (composite-widget)
-  ((padx :initarg :padx :accessor padx :initform 0)
-   (pady :initarg :pady :accessor pady :initform 0)
-   (packing-side :initarg :packing-side :accessor packing-side :initform 'left)
-   (layout-anchor :initarg :layout-anchor :accessor layout-anchor :initform 'nw))
-  (:default-initargs
-      :kid-slots (lambda (self)
-                   (declare (ignore self))
-                   (list
-                    (mk-kid-slot (packing :if-missing t)
-                      nil))) ;; suppress default
-    :kids-packing (c? (when (^kids)
-                        (format nil "pack~{ ~a~} -side ~a -anchor ~a -padx ~a -pady ~a"
-                          (mapcar 'path (^kids))
-                          (down$ (^packing-side))
-                          (down$ (^layout-anchor))
-                          (^padx)(^pady))))))
-
-(defobserver kids-packing ()
-  (when new-value
-    (tk-format `(:pack ,self kids-packing) new-value)))
-
-(defmodel row-mixin (inline-mixin)
-  ()
-  (:default-initargs
-    :packing-side 'left))
-
-(defmodel stack-mixin (inline-mixin)
-  ()
-  (:default-initargs
-    :packing-side 'top))
-
-
-;--- f r a m e --------------------------------------------------
-
-(deftk frame (composite-widget)
-  ()
-  (:tk-spec frame -borderwidth -cursor	-highlightbackground -highlightcolor
-    -highlightthickness -padx -pady -relief
-    -takefocus -background (tk-class -class) 
-    -colormap -container -height -visual -width)
-  (:default-initargs
-      :id (gentemp "F")))
-
-(deftk frame-selector (selector frame) ())
-(deftk frame-row (row-mixin frame-selector)())
-(deftk frame-stack (stack-mixin frame-selector)())
-
-
-;--- l a b e l f r a m e ----------------------------------------------
-
-(deftk labelframe ()
-  ()
-  (:tk-spec labelframe -borderwidth -cursor -highlightbackground -highlightcolor
-    -highlightthickness -padx -pady -relief
-    -takefocus -background (tk-class -class) -colormap -container -height -visual -width
-    -text -labelanchor -labelwidget)
-  (:default-initargs
-      :id (gentemp "LF")))
-
-(deftk labelframe-selector (selector labelframe)())
-(deftk labelframe-row (row-mixin labelframe-selector)())
-(deftk labelframe-stack (stack-mixin labelframe-selector)())
-
-;;; --- handy macros
-
-(defmacro def-mk-inline (name (unlabelled labelled))
-  `(defmacro ,name ((&rest initargs) &rest kids)
-     (if (evenp (length initargs))
-         `(make-instance ',',unlabelled
-            :fm-parent *parent*
-            ,@initargs
-            :kids (c? (the-kids ,@kids)))
-       `(make-instance ',',labelled
-          :fm-parent *parent*
-          :text ,(car initargs)
-          ,@(cdr initargs)
-          :kids (c? (the-kids ,@kids))))))
-
-(def-mk-inline mk-row (frame-row labelframe-row))
-(def-mk-inline mk-stack (frame-stack labelframe-stack))
-
-;--- scroller (of canvas; need to generalize this) ----------
-
-(defmodel scroller (grid-manager frame)
-  ((canvas :initarg :canvas :accessor canvas :initform nil))
-  (:default-initargs
-      :id :cv-scroller
-    :kids-packing nil
-    :gridding '(:columns ("-weight {1}" "-weight {0}")
-                 :rows ("-weight {1}" "-weight {0}"))
-    :kids (c? (the-kids
-               (^canvas)
-               (mk-scrollbar :id :hscroll
-                 :orient "horizontal"
-                 :gridding "-row 1 -column 0 -sticky we"
-                 :command (c? (format nil "~a xview" (path (kid1 .parent)))))
-               (mk-scrollbar :id :vscroll
-                 :orient "vertical"
-                 :gridding "-row 0 -column 1 -sticky ns"
-                 :command (c? (format nil "~a yview" (path (kid1 .parent)))))))))
-
-(defmacro mk-scroller (&rest iargs)
-  `(make-instance 'scroller
-     :fm-parent self
-     ,@iargs))
-
-(defmethod initialize-instance :after ((self scroller) &key)
-  ;
-  ; Tk does not do late binding on widget refs, so the canvas cannot mention the scrollbars
-  ; in x/y scrollcommands since the canvas gets made first
-  ;
-  (with-integrity (:client `(:post-make-tk ,self))
-    (setf (xscrollcommand (kid1 self)) (format nil "~a set" (path (fm! :hscroll))))
-    (setf (yscrollcommand (kid1 self)) (format nil "~a set" (path (fm! :vscroll))))))
 

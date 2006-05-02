@@ -1,23 +1,41 @@
-;; -*- lisp-version: "8.0 [Windows] (Mar 19, 2006 10:49)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Apr 21, 2006 10:24)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
 (defpackage :CELTK)
 
 (define-project :name :celtk
-  :modules (list (make-instance 'module :name "ltk-kt.lisp")
-                 (make-instance 'module :name "Celtk.lisp")
-                 (make-instance 'module :name "tk-format.lisp")
+  :modules (list (make-instance 'module :name "Celtk.lisp")
+                 (make-instance 'module :name "tk-interp.lisp")
+                 (make-instance 'module :name "tk-object.lisp")
+                 (make-instance 'module :name "widget.lisp")
+                 (make-instance 'module :name "font.lisp")
+                 (make-instance 'module :name "layout.lisp")
+                 (make-instance 'module :name "timer.lisp")
                  (make-instance 'module :name "menu.lisp")
-                 (make-instance 'module :name "textual.lisp")
-                 (make-instance 'module :name "widgets.lisp")
+                 (make-instance 'module :name "label.lisp")
+                 (make-instance 'module :name "entry.lisp")
+                 (make-instance 'module :name "button.lisp")
+                 (make-instance 'module :name "multichoice.lisp")
+                 (make-instance 'module :name "scroll.lisp")
                  (make-instance 'module :name "canvas.lisp")
+                 (make-instance 'module :name "text-item.lisp")
+                 (make-instance 'module :name "item-pictorial.lisp")
+                 (make-instance 'module :name "item-shaped.lisp")
                  (make-instance 'module :name "composites.lisp")
+                 (make-instance 'module :name "frame.lisp")
+                 (make-instance 'module :name "load-cl-opengl.lisp")
+                 (make-instance 'module :name "togl.lisp")
+                 (make-instance 'module :name "run.lisp")
                  (make-instance 'module :name "demos.lisp")
+                 (make-instance 'module :name "gears-demo.lisp")
+                 (make-instance 'module :name "gears.lisp")
                  (make-instance 'module :name
                                 "ltktest-cells-inside.lisp"))
   :projects (list (make-instance 'project-module :name
-                                 "..\\cells\\cells"))
+                                 "..\\cells\\cells")
+                  (make-instance 'project-module :name
+                                 "C:\\0devtools\\cffi\\cffi"))
   :libraries nil
   :distributed-files nil
   :internally-loaded-files nil

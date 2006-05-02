@@ -22,39 +22,35 @@
 
 (in-package :Celtk)
 
-(deftk canvas (widget)
-  ((active :initarg :active :accessor active :initform (c-in t))   
-   )
-  (:tk-spec canvas
-    -background -borderwidth -cursor
-    -highlightbackground -highlightcolor -highlightthickness
-    -insertbackground -insertborderwidth -insertofftime -insertontime -insertwidth
-    -relief -selectbackground -selectborderwidth -selectforeground
-    -state -takefocus -xscrollcommand -yscrollcommand
-    -closeenough -confine -height (scroll-region -scrollregion) -width 
-    -xscrollincrement -yscrollincrement)
-  (:default-initargs
-      :xscrollcommand (c-in nil)
-    :yscrollcommand (c-in nil)
-    :id (gentemp "CV")
-    :bindings (c? (list
-                   (focusIn->active self)
-                   (focusOut->active self)))))
-
-(defun focusIn->active (self)
-  (list "<FocusIn>" (lambda (event)
-                      (declare (ignorable event))
-                      (trc nil "focus in activating" self)
-                      (setf (^active) t))))
-
-(defun focusOut->active (self)
-  (list "<FocusOut>" (lambda (event) 
-                       (declare (ignorable event))
-                       (setf (^active) nil))))
-
-(deftk arc (item)
+(deftk oval (item)
   ()
-  (:tk-spec arc
+  (:tk-spec oval
+    -dash
+   -activedash
+   -disableddash
+   -dashoffset
+   (tk-fill -fill)
+   -activefill
+   -disabledfill
+   -offset
+   -outline
+   -activeoutline
+   -disabledoutline
+   -outlinestipple
+   -activeoutlinestipple
+   -disabledoutlinestipple
+   -stipple
+   -activestipple
+   -disabledstipple
+   -state
+   -tags
+   -width
+   -activewidth
+   -disabledwidth))
+
+(deftk polygon (item)
+  ()
+  (:tk-spec polygon
     -dash
     -activedash
     -disableddash
@@ -76,26 +72,30 @@
     -tags
     -width
     -activewidth
-    -disabledwidth
-    -extent -start -style))
+    -joinstyle -smooth -splinesteps))
 
-(deftk line (item)
+(deftk rectangle (item)
   ()
-  (:tk-spec line
+  (:tk-spec rectangle
     -dash
-    -activedash
-    -disableddash
-    -dashoffset
-    (tk-fill -fill)
-    -activefill
-    -disabledfill
-    -stipple
-    -activestipple
-    -disabledstipple
-    -state
-    -tags
-    -width
-    -activewidth
-    -disabledwidth
-    -arrow -arrowshape -capstyle -joinstyle -smooth -splinesteps))
-
+   -activedash
+   -disableddash
+   -dashoffset
+   (tk-fill -fill)
+   -activefill
+   -disabledfill
+   -offset
+   -outline
+   -activeoutline
+   -disabledoutline
+   -outlinestipple
+   -activeoutlinestipple
+   -disabledoutlinestipple
+   -stipple
+   -activestipple
+   -disabledstipple
+   -state
+   -tags
+   -width
+   -activewidth
+   -disabledwidth))

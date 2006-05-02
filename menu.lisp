@@ -39,12 +39,13 @@ dynamic add/remove
     inits))
 
 (defmethod make-tk-instance ((self menubar))
-  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0 -type menubar" (^path))
+  (tk-format-now "menu ~a -tearoff 0 -type menubar" (^path))
+  ;; I doubt this will work...
   (tk-format `(:configure ,self) ". configure -menu ~a" (^path)))
 
 ;;; --- menus -------------------------------------------
 
-(deftk menu ()
+(deftk menu (widget)
   ((label :initarg :label :initform nil :accessor label))
   (:tk-spec menu -activebackground -activeborderwidth -activeforeground -background
     -borderwidth -cursor -disabledforeground -font
@@ -57,7 +58,7 @@ dynamic add/remove
 (defmethod make-tk-instance ((self menu))
   (trc nil "maketkinstance menu" self :parent .parent (type-of .parent)
     :grandpar (fm-parent .parent) (type-of (fm-parent .parent)))
-  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0" (^path)))
+  (tk-format-now "menu ~a -tearoff 0" (^path)))
 
 (defmacro mk-menu-ex (&rest submenus)
   `(mk-menu :kids (c? (the-kids ,@submenus))))
@@ -131,7 +132,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   ()
   (:tk-spec separator -columnbreak))
 
-(deftk menu-entry-usable (menu-entry)
+(deftk menu-entry-usable (commander menu-entry)
   ()
   (:tk-spec menu -activebackground -activeforeground -accelerator -background
     -bitmap -columnbreak -command
@@ -167,7 +168,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
       (if (listp new-value) "set ~(~a~) {~{~a~^ ~}}" "set ~(~a~) ~s")
       (^path) new-value)))
 
-(deftk menu-entry-command (menu-entry-usable)
+(deftk menu-entry-command (commander menu-entry-usable)
   ()
   (:tk-spec command -command))
 
@@ -175,9 +176,9 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   `(mk-menu-entry-command
     ,@menu-command-initargs
     :label ,lbl
-    :command (c? (tk-callback .tkw (gentemp "MNU")
-                   (lambda ()
-                     ,callback-body)))))
+    :on-command (lambda (self)
+                  (declare (ignorable self))
+                  ,callback-body)))
 
 (deftk menu-entry-button (menu-entry-command)
   ()
@@ -195,10 +196,8 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   (:default-initargs
     :md-value (c-in nil)
     :tk-variable (c? (format nil "~a.~(~a~)" (path .parent)(md-name self)))
-    :command  (c? (tk-callback self 'cmd
-                    (lambda () ;; (self key &rest args)
-                      (declare (ignore key args))
-                      (setf (^md-value) (not (^md-value))))))))
+    :on-command  (lambda (self)
+                   (setf (^md-value) (not (^md-value))))))
 
 (defobserver .md-value ((self menu-entry-checkbutton))
   (trc nil "defobserver md-value menu-entry-checkbutton" self new-value old-value-boundp)
@@ -214,12 +213,11 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     -value)
   (:default-initargs
     :tk-variable (c? (down$ (path (upper self selector))))
-    :command  (c? (tk-callback self 'cmd
-                    (lambda () ;; (self key &rest args)
-                      (declare (ignore key args))
-                      (trc nil "menu radio button command firing" self (^value) (upper self selector))
-                      (setf (selection (upper self selector))
-                        (^value)))))))
+    :on-command  (lambda (self)
+                   (declare (ignore key args))
+                   (trc nil "menu radio button command firing" self (^value) (upper self selector))
+                   (setf (selection (upper self selector))
+                     (^value)))))
 
 (defmodel menu-radio-group (selector family)
   ((.md-name :cell nil :initform (gentemp "RG") :initarg :id))
@@ -242,7 +240,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   (unless old-value-boundp ;; just needed for initialization; Tk manages variable afterwards
     (tk-format `(:variable ,self) "set ~(~a~) ~a" (^path) (tk-send-value new-value))))
 
-(deftk menubutton ()
+(deftk menubutton (widget)
   ((menu-values :initarg :menu-values :accessor menu-values :initform nil))
   (:tk-spec menubutton -activebackground -activeforeground -anchor -background
     -bitmap -borderwidth -cursor -disabledforeground

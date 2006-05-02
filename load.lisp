@@ -25,4 +25,4 @@
 (ctk::tk-test)
 
 #+ortestceltk
-(celtk-user::tk-test-class 'celtk-user::lotsa-widgets)
+(ctk:test-window 'celtk-user::lotsa-widgets)

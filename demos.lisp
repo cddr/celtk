@@ -24,23 +24,23 @@
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
-  (tk-test-class 'ltktest-cells-inside)
-  ;;(tk-test-class 'lotsa-widgets)
-  )
+  (test-window 'one-button))
 
-(defun tk-test-class (root-class)
-  (cells-reset 'tk-user-queue-handler)
-  (with-ltk (:debug 0)
-    (send-wish "proc trc2 {cb n1 n2 op} {puts \"(:callback \\\"$cb\\\" :name1 $n1 :name2 \\\"$n2\\\" :op $op)\"}")
-    #+notyet (send-wish "package require tile")
-    (setf ltk:*debug-tk* nil)
-    (with-integrity ()
-      (make-instance root-class))
-    (tk-format `(:fini) "wm deiconify .")))
-
-(defun tk-test-all ()(tk-test-class 'lotsa-widgets))
-(defun mk-font-view ()
-  (make-instance 'font-view))
+(defmodel one-button (window)
+  ()
+  (:default-initargs
+      :kids (c? (the-kids                
+                 (mk-stack (:packing (c?pack-self))
+                   (make-instance 'button
+                     :fm-parent *parent*
+                     :text "time now?"
+                     :on-command (c? (lambda (self)
+                                       (trc "we got callbacks" self))))
+                   (make-instance 'scale
+                     :fm-parent *parent*
+                     :tk-label "Boots"
+                     :on-command (c? (lambda (self value)
+                                       (trc "we got scale callbacks" self value)))))))))
 
 (defmodel lotsa-widgets (window)
   ()
@@ -126,6 +126,7 @@
                                 (pkg (find-package (string-upcase item))))
                            (when pkg
                              (loop for sym being the symbols in pkg
+                                   for n below 25
                                    counting sym into symct
                                    collecting sym into syms
                                    finally (trc "syms found !!!" symct)
@@ -153,6 +154,7 @@
      :list-height 6
      :list-item-keys (c? (bwhen (pkg (selection (fm^ :pkg-list)))
                            (loop  for sym being the present-symbols in pkg
+                                 for n below 25
                                collecting sym)))
      :list-item-factory (lambda (sym)
                           (make-instance 'listbox-item
@@ -243,9 +245,8 @@
                            :id 'editmenu
                            :kids (c? (the-kids
                                       (mk-menu-entry-command :label "Undo"
-                                        :command (c? (tk-callback .tkw 'undo
-                                                       (lambda () 
-                                                         (trc "edit menu undo" self)))))
+                                        :on-command  (lambda (self) 
+                                                         (trc "edit menu undo" self)))
                                       (mk-menu-entry-separator)
                                       (mk-menu-entry-command :label "Cut" :command "exit")
                                       (mk-menu-entry-command :label "Copy" :command "exit")
@@ -286,6 +287,9 @@
                   :kids  (c? (the-kids
                               (loop repeat 2
                                   collecting (make-instance 'font-view :fm-parent *parent*)))))))))
+
+(defun mk-font-view ()
+  (make-instance 'font-view))
 
 (defmodel font-view (frame-stack)
   ()
