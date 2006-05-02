@@ -5,7 +5,7 @@
   (declaim (optimize (debug 3) (speed 3) (safety 1) (compilation-speed 0))))
 
 (asdf:defsystem :celtk
-  :name "celtk"
+    :name "celtk"
   :author "Kenny Tilton <ktilton@nyc.rr.com>"
   :version "2.0"
   :maintainer "Kenny Tilton <ktilton@nyc.rr.com>"
@@ -15,12 +15,28 @@
   :depends-on (:ltk :cells)
   :serial t
   :components ((:file "Celtk")
-               (:file "tk-format")
+               (:file "tk-interp")
+               (:file "tk-object")
+               (:file "widget")
+               (:file "font")
+               (:file "layout")
+               (:file "timer")
                (:file "menu")
-               (:file "textual")
-               (:file "widgets")
+               (:file "label")
+               (:file "entry")
+               (:file "button")
+               (:file "multichoice")
+               (:file "scroll")
                (:file "canvas")
+               (:file "text-item")
+               (:file "item-pictorial")
+               (:file "item-shaped")
                (:file "composites")
+               (:file "frame")
+               (:file "load-cl-opengl")
+               (:file "togl")
+               (:file "run")
                (:file "demos")
+               (:file "gears-demo")
+               (:file "gears")
                (:file "ltktest-cells-inside")))
-
