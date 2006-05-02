@@ -47,6 +47,7 @@
   (:default-initargs
       :command (c? (format nil "call-back ~(~a~)" (^path)))))
 
+
 (defun widget-menu (self key)
   (or (find key (^menus) :key 'md-name)
     (break "The only menus I see are~{ ~a,~} not requested ~a" (mapcar 'md-name (^menus)) key)))
