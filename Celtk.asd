@@ -6,12 +6,12 @@
 
 (asdf:defsystem :celtk
     :name "celtk"
-  :author "Kenny Tilton <ktilton@nyc.rr.com>"
+  :author "Kenny Tilton <kentilton@gmail.com>"
   :version "2.0"
-  :maintainer "Kenny Tilton <ktilton@nyc.rr.com>"
+  :maintainer "Kenny Tilton <kentilton@gmail.com>"
   :licence "MIT Style"
-  :description "Tk via LTk with Cells Inside(tm)"
-  :long-description "A Cells-driven portable GUI built atop the LTk core, ultimately implmented by Tk"
+  :description "Tcl/Tk with Cells Inside(tm)"
+  :long-description "A Cells-driven portable GUI, ultimately implmented by Tk"
   :depends-on (:ltk :cells)
   :serial t
   :components ((:file "Celtk")
