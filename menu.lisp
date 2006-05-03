@@ -218,8 +218,8 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     :on-command  (lambda (self)
                    (declare (ignore key args))
                    (trc nil "menu radio button command firing" self (^value) (upper self selector))
-                   (setf (selection (upper self selector))
-                     (^value)))))
+                   (with-integrity (:change)
+                     (setf (selection (upper self selector)) (^value))))))
 
 (defmodel menu-radio-group (selector family)
   ((.md-name :cell nil :initform (gentemp "RG") :initarg :id))

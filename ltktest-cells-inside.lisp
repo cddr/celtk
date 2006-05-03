@@ -353,7 +353,7 @@ certainly wrong (or the class should be canvas-scroller).
                                  ; via the client queue.
                                  ;
                                  (pop-up (^widget-menu :bkg-pop) root-x root-y))
-                     "%x %y")))
+                     "%X %Y")))
     
     :menus (c? (the-kids
                 ;
