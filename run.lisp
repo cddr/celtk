@@ -72,7 +72,8 @@
 
 (defun tcl-do-one-event-loop ()
   (loop with start-time = (get-internal-real-time)
-        while (> 10 (floor (- (get-internal-real-time) start-time) internal-time-units-per-second))
+        while (and (plusp (tk-get-num-main-windows))
+                (> 10 (floor (- (get-internal-real-time) start-time) internal-time-units-per-second)))
         do
         (bif (events (prog1
                          (tk-eval-list "set tk-events")
@@ -80,6 +81,7 @@
           (progn
             #+shhh (loop for e in events
               do (trc "event preview" e))
+            (trc "main windows count =" (tk-get-num-main-windows))
             (loop for e in events
               do (setf start-time (get-internal-real-time))
             (tk-process-event e)))

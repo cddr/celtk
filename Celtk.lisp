@@ -124,7 +124,7 @@
   ;
   ; --- debug stuff ---
   ;
-  (let ((yes '("pop" "menu" "mnu"))
+  (let ((yes '("bind" "pop" "menu" "mnu"))
         (no  '("tk-events")))
 
     (declare (ignorable yes no))

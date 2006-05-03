@@ -165,6 +165,8 @@
 
     (defcfun ("Tcl_GetStringResult" tcl-get-string-result) :string
       (interp      :pointer))
+
+    (defcfun ("Tk_GetNumMainWindows" tk-get-num-main-windows) :int)
     
     (defun Tcl_Eval (interp script)
       (with-foreign-string (script-cstr script)
@@ -388,11 +390,11 @@
     (trc "tk-eval result:" (tk-eval "tk scaling"))
     (trc "tk-eval-list result:" (tk-eval-list "font families"))))
 
-(defun exec-main ()
-  (main "\\0devtools\\frgotk\\psu-rc-gui.tcl"))
-
-#+test
-(exec-main)
+;;;(defun exec-main ()
+;;;  (main "\\0devtools\\frgotk\\psu-rc-gui.tcl"))
+;;;
+;;;#+test
+;;;(exec-main)
 
 ;;; Togl stuff
 
