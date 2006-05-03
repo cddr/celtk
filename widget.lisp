@@ -34,11 +34,13 @@
    (gridding :reader gridding :initarg :gridding :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
    (bindings :reader bindings :initarg :bindings :initform nil)
+   (event-handlers :reader event-handlers :initarg :event-handlers :initform (make-hash-table))
    (menus :reader menus :initarg :menus :initform nil
      :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
    (selector :reader selector :initarg :selector
-     :initform (c? (upper self selector))))
+     :initform (c? (upper self selector)))
+   (on-event :initform nil :initarg :on-event :accessor on-event))
   (:default-initargs
       :id (gentemp "W")))
 
@@ -58,7 +60,7 @@
 (defmethod make-tk-instance ((self widget)) 
   (setf (gethash (^path) (dictionary .tkw)) self)
   (when (tk-class self)
-    (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
+    (tk-format `(:make-tk ,self) "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
       (tk-class self) (path self)(tk-configurations self)) :stdfctry))
 
 (defmethod tk-configure ((self widget) option value)
@@ -71,38 +73,18 @@
 
 ;;; --- bindings ------------------------------------------------------------
 
-;;;(defobserver bindings () ;;; (w widget) event fun)
-;;;  ;
-;;;  ; when we get dynamic with this cell we will have to do the kids
-;;;  ; thing and worry about extant new-values, de-bind lost old-values
-;;;  ;
-;;;  ; /// think about trying again to wrap this whole thing in one (with-integrity '(:client...
-;;;  ; to avoid separate enqueues for each binding (but then to tk-format-now so one does not
-;;;  ; simpy enqueue again when dispatched.
-;;;  ;
-;;;  (dolist (bspec new-value)
-;;;    (if (eql (length bspec) 3) ;; getting wierd here
-;;;        (destructuring-bind (event fmt fn) bspec
-;;;          (let ((name (gentemp "BNDG")))
-;;;            (tk-format `(:bind ,self) "bind ~a ~a ~a" ;; {puts {:callback ~a}}"
-;;;              (^path) event (format nil fmt (register-callback self name fn)))))
-;;;      (destructuring-bind (event fn) bspec
-;;;        (bind (^path) event fn)))))
-
 (defobserver bindings () ;;; (w widget) event fun)
   ;
   ; when we get dynamic with this cell we will have to do the kids
   ; thing and worry about extant new-values, de-bind lost old-values
   ;
-  #+wait (with-integrity (:client `(:bind ,self))
-    (dolist (bspec new-value)
-      (if (eql (length bspec) 3) ;; getting wierd here
-          (destructuring-bind (event fmt fn) bspec
-            (let ((name (gentemp "BNDG")))
-              (tk-format-now "bind ~a ~a ~a" ;; {puts {:callback ~a}}"
-                (^path) event (format nil fmt (register-callback self name fn)))))
-        (destructuring-bind (event fn) bspec
-          (bind (^path) event fn))))))
+  ; /// think about trying again to wrap this whole thing in one (with-integrity '(:client...
+  ; to avoid separate enqueues for each binding (but then to tk-format-now so one does not
+  ; simpy enqueue again when dispatched.
+  ;
+  (dolist (bspec new-value)
+    (destructuring-bind (event fn &optional event-info) bspec
+        (bind self event fn event-info))))
 
 ;;; --- items -----------------------------------------------------------------------
 
@@ -153,12 +135,13 @@
 
 (defmethod make-tk-instance ((self item))
   (when (tk-class self)
-    (progn ;; with-integrity (:client `(:make-tk ,self))
+    (with-integrity (:client `(:make-tk ,self))
       (ASSERT (^coords) () "Item ~a missing req'd coords" self)
-      (tk-format-now "senddata [~a create ~a ~{ ~a~}  ~{~(~a~) ~a~^ ~}]"
-        (path (upper self canvas)) (down$ (tk-class self)) (coords self) (tk-configurations self))
-      (setf (id-no self) (read-data))
-      (trc nil "created item, id:" self (id-no self))))) ;; *tk-last*)))))
+      (setf (id-no self) (tk-eval "~a create ~a ~{ ~a~}  ~{~(~a~) ~a~^ ~}"
+                           (path (upper self canvas))
+                           (down$ (tk-class self))
+                           (coords self)
+                           (tk-configurations self))))))
 
 (defmethod tk-configure ((self item) option value)
   (assert (id-no self) () "cannot configure item ~a until instantiated and id obtained" self)
@@ -231,4 +214,5 @@
 ;;; --- menus ---------------------------------
 
 (defun pop-up (menu x y)
+  (trc "popping up" menu x y)
   (tk-format-now "tk_popup ~A ~A ~A" (path menu) x y))

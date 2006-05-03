@@ -24,23 +24,53 @@
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
-  (test-window 'one-button))
+  ;;(test-window 'one-button)
+  (test-window 'ltktest-cells-inside)
+  )
 
 (defmodel one-button (window)
   ()
   (:default-initargs
-      :kids (c? (the-kids                
-                 (mk-stack (:packing (c?pack-self))
-                   (make-instance 'button
-                     :fm-parent *parent*
-                     :text "time now?"
-                     :on-command (c? (lambda (self)
-                                       (trc "we got callbacks" self))))
-                   (make-instance 'scale
-                     :fm-parent *parent*
-                     :tk-label "Boots"
-                     :on-command (c? (lambda (self value)
-                                       (trc "we got scale callbacks" self value)))))))))
+      :on-event (lambda (self &rest event-args)
+                  (trc "we got events" self event-args))
+    :kids (c? (the-kids                
+               (mk-frame-stack
+                :packing (c?pack-self)
+                :kids (c? (the-kids
+                           (mk-scrolled-list
+                            :id :spinpkg-sym-list
+                            :list-height 6
+                            :list-item-keys (c? (loop for sym being the symbols in (find-package "CELTK")
+                                                    for n below 5
+                                                    counting sym into symct
+                                                    collecting sym into syms
+                                                    finally (trc "syms found !!!" symct)
+                                                      (return syms)))
+                            :list-item-factory (lambda (sym)
+                                                 (trc "make list item" sym *parent*)
+                                                 (make-instance 'listbox-item
+                                                   :fm-parent *parent*
+                                                   :md-value sym
+                                                   :item-text (down$ (symbol-name sym)))))
+                           (mk-text-widget
+                            :id :my-text
+                            :md-value (c?n "hello, world")
+                            :height 3
+                            :width 25)
+                           (make-instance 'button
+                             :fm-parent *parent*
+                             :text "time now?"
+                             :on-command (c? (lambda (self)
+                                               (trc "we got callbacks" self))))
+                           (make-instance 'scale
+                             :fm-parent *parent*
+                             :tk-label "Boots"
+                             :on-command (c? (lambda (self value)
+                                               (trc "we got scale callbacks" self value))))
+                           (make-instance 'entry
+                             :fm-parent *parent*
+                             :md-value (c-in "Boots")
+                             ))))))))
 
 (defmodel lotsa-widgets (window)
   ()

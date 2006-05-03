@@ -4,7 +4,7 @@
 ;; GLOBAL VARS AND PARAMS
 ;;------------------------------------------------------------------------------
 
-(defparameter *event-loop-delay* 0.05 "Delay [s] in event loop to make IDEs happy ;-)")
+
 (defvar *tki* nil)
 ;;------------------------------------------------------------------------------
 ;; External LIBRARIES

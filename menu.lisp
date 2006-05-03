@@ -39,8 +39,7 @@ dynamic add/remove
     inits))
 
 (defmethod make-tk-instance ((self menubar))
-  (tk-format-now "menu ~a -tearoff 0 -type menubar" (^path))
-  ;; I doubt this will work...
+  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0 -type menubar" (^path))
   (tk-format `(:configure ,self) ". configure -menu ~a" (^path)))
 
 ;;; --- menus -------------------------------------------
@@ -58,7 +57,7 @@ dynamic add/remove
 (defmethod make-tk-instance ((self menu))
   (trc nil "maketkinstance menu" self :parent .parent (type-of .parent)
     :grandpar (fm-parent .parent) (type-of (fm-parent .parent)))
-  (tk-format-now "menu ~a -tearoff 0" (^path)))
+  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0" (^path)))
 
 (defmacro mk-menu-ex (&rest submenus)
   `(mk-menu :kids (c? (the-kids ,@submenus))))
@@ -97,15 +96,16 @@ dynamic add/remove
                 (return-from count-to-self i)))))))))
 
 (defmethod make-tk-instance ((self menu-entry))
-  "Parent has to do this to get them in the right order")
+  "Parent has to do this to get them in the right order"
+  (setf (gethash (path-index self) (dictionary .tkw)) self))
 
 (defmethod parent-path ((self menu-entry))
   (path .parent))
+
 (defmethod path-index ((self menu-entry))
+  "This method hopefully gets used only internally and not given to Tcl qua thing name, which will not recognize it"
   (assert (index self))
   (format nil "~a.~a" (path (upper self menu))(index self)))
-
-
 
 (defun fm-menu-traverse (family fn)
   "Traverse family arbitrarily deep as need to reach all menu-entries
@@ -132,7 +132,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   ()
   (:tk-spec separator -columnbreak))
 
-(deftk menu-entry-usable (commander menu-entry)
+(deftk menu-entry-usable (menu-entry)
   ()
   (:tk-spec menu -activebackground -activeforeground -accelerator -background
     -bitmap -columnbreak -command
@@ -168,9 +168,11 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
       (if (listp new-value) "set ~(~a~) {~{~a~^ ~}}" "set ~(~a~) ~s")
       (^path) new-value)))
 
-(deftk menu-entry-command (commander menu-entry-usable)
+(deftk menu-entry-command (menu-entry-usable)
   ()
-  (:tk-spec command -command))
+  (:tk-spec command -command)
+  (:default-initargs
+      :command (c? (format nil "call-back ~(~a~)" (path-index self)))))
 
 (defmacro mk-menu-entry-command-ex ((&rest menu-command-initargs) lbl callback-body)
   `(mk-menu-entry-command

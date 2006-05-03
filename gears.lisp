@@ -36,20 +36,20 @@
                    :width 400
                    :height 400
                    :timer-interval nil #+tki (c? (or .cache ;; comment out just ".cache" for some fun
-                                                 (eko ("vtime is")
-                                                   (md-value (fm-other :vtime)))))
+                                                   (eko ("vtime is")
+                                                     (md-value (fm-other :vtime)))))
                    :double "yes"
-                   :bindings nil #+wait (c? (list
-                                             (list "<Button-1>"
-                                               (lambda (event) 
-                                                 (RotStart self
-                                                   (event-root-x event)
-                                                   (event-root-y event))))
-                                             (list "<B1-Motion>"
-                                               (lambda (event) 
-                                                 (RotMove self
-                                                   (event-root-x event)
-                                                   (event-root-y event))) )))))))))
+                   :bindings (c? (list
+                                  (list '|<Button-1>|
+                                    (lambda (self event root-x root-y)
+                                      (declare (ignore event))
+                                      (RotStart self root-x root-y))
+                                    "%X %Y")
+                                  (list '|<B1-Motion>|
+                                    (lambda (self event root-x root-y)
+                                      (declare (ignore event))
+                                      (RotMove self root-x root-y))
+                                    "%X %Y")))))))))
 
 (defun RotStart (self x y)
   (setf *startx* x)

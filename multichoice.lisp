@@ -69,18 +69,19 @@
     :yscrollcommand (c-in nil)
       :bindings (c? (assert (selector self))
                   (when (selector self) ;; if not? Figure out how listbox tracks own selection
-                      (list (list  "<<ListboxSelect>>"
-                              (format nil "{callbackval ~~a [~a curselection]}" (^path))
-                              (lambda (selection)
-                                (trc nil "listbox callback firing" self selection)
-                                (setf (selection (selector self))
-                                  (md-value (elt (^kids) selection))))))))))
+                      (list (list '|<<ListboxSelect>>|
+                              (lambda (self event &rest args)
+                                (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
+                                  (trc "NEW listbox callback firing" self event selection)
+                                  (setf (selection (selector self))
+                                    (md-value (elt (^kids) selection)))))))))))
 
 (defmodel listbox-item (tk-object)
   ((item-text :initarg :item-text :accessor item-text
      :initform (c? (format nil "~a" (^md-value))))))
 
 (defmethod make-tk-instance ((self listbox-item))
+  (trc "make-tk-instance listbox-item insert" self)
   (tk-format `(:post-make-tk ,self) "~A insert end ~s" (path .parent) (^item-text)))
 
 (defobserver .kids ((self listbox))

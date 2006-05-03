@@ -58,7 +58,7 @@
       :packing nil))
 
 (defmethod make-tk-instance ((self panedwindow))
-  (tk-format-now "panedwindow ~a -orient ~(~a~)"
+  (tk-format `(:make-tk ,self) "panedwindow ~a -orient ~(~a~)"
     (^path) (or (orient self) "vertical"))
   (tk-format `(:pack ,self) "pack ~a -expand yes -fill both" (^path)))
 
@@ -79,23 +79,24 @@
 
 (defmodel window (composite-widget)
   (#+wishful (wish :initarg :wish :accessor wish
-     :initform (wish-stream *wish*)
-     #+(or) (c? (do-execute "wish85 -name testwindow" 
-                  nil #+not (list (format nil "-name ~s" (title$ self))))))
-   #+wishful (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
-   (title$ :initarg :title$ :accessor title$
-     :initform (c? (string-capitalize (class-name (class-of self)))))
-   (dictionary :initarg :dictionary :initform (make-hash-table :test 'string-equal) :accessor dictionary)
-   (callbacks :initarg :callbacks :accessor callbacks
-     :initform (make-hash-table :test #'eq))
-   (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
-   (tk-scaling :initarg :tk-scaling :accessor tk-scaling
-     :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
-   (fonts-to-load :initarg :fonts-to-load :accessor fonts-to-load :initform nil)
-   (font-sizes-to-load :initarg :font-sizes-to-load :accessor font-sizes-to-load :initform nil)
-   (font-info :initarg :font-info :accessor font-info
-     :initform (font-info-loader))
-   (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil))
+               :initform (wish-stream *wish*)
+               #+(or) (c? (do-execute "wish85 -name testwindow" 
+                            nil #+not (list (format nil "-name ~s" (title$ self))))))
+    #+wishful (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
+    (title$ :initarg :title$ :accessor title$
+      :initform (c? (string-capitalize (class-name (class-of self)))))
+    (dictionary :initarg :dictionary :initform (make-hash-table :test 'string-equal) :accessor dictionary)
+    (callbacks :initarg :callbacks :accessor callbacks
+      :initform (make-hash-table :test #'eq))
+    (after-timers :initarg :after-timers :accessor after-timers :initform (make-hash-table))
+    (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
+    (tk-scaling :initarg :tk-scaling :accessor tk-scaling
+      :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
+    (fonts-to-load :initarg :fonts-to-load :accessor fonts-to-load :initform nil)
+    (font-sizes-to-load :initarg :font-sizes-to-load :accessor font-sizes-to-load :initform nil)
+    (font-info :initarg :font-info :accessor font-info
+      :initform (font-info-loader))
+    (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil))
   )
 
 (defobserver initial-focus ()

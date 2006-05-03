@@ -180,7 +180,8 @@ certainly wrong (or the class should be canvas-scroller).
                 ; the Tk doc documents Celtk. The advantage to the developer is that neither LTk nor
                 ; Celtk introduce a new API to be mastered, widget-wise.
                 ;
-                (mk-button-ex ("Start" (setf (moire-spin (fm^ :moire-1)) t)))
+                (mk-button-ex ("Start" (with-integrity (:change)
+                                         (setf (moire-spin (fm^ :moire-1)) t))))
                 ;
                 ; You were warned about mk-button-ex and its ilk above. Just expand or inspect to
                 ; see what they do, which is pretty much just hide some boilerplate.
@@ -198,7 +199,8 @@ certainly wrong (or the class should be canvas-scroller).
                 ; ltktest. How it accomplishes that will be explained below in the moire class
                 ; definition.
                 ;
-                (mk-button-ex ("Stop" (setf (moire-spin (fm^ :moire-1)) nil))))
+                (mk-button-ex ("Stop" (with-integrity (:change)
+                                        (setf (moire-spin (fm^ :moire-1)) nil)))))
               ;
               ; ditto
               ;
@@ -207,7 +209,12 @@ certainly wrong (or the class should be canvas-scroller).
               (mk-button-ex ("Welt!" (format T "~&Welt")))
               (mk-row (:borderwidth 2 :relief 'sunken)
                 (mk-label :text "Test:")
-                (mk-button-ex ("OK:" (setf (moire-spin (fm^ :moire-1)) 200))))
+                (mk-button-ex ("OK:" (progn
+                                       (trc "MAYBE setting moire-spin" self (fm^ :moire-1))
+                                       (with-integrity (:change self)
+                                         (progn
+                                           (trc "setting moire-spin" self (fm^ :moire-1))
+                                           (setf (moire-spin (fm^ :moire-1)) 10)))))))
               ;
               ; Cells initiata will be surprised to learn the above works twice even if the button is
               ; clicked twice in a row; Cells is about managing state change, and the second time through
@@ -283,7 +290,8 @@ certainly wrong (or the class should be canvas-scroller).
               ; Thus each class uses md-value to hold something different, but in all cases it is
               ; the current value of whatever the instance of that class is understood to hold. 
               ; 
-              (mk-button-ex ("Reset" (setf (fm^v :point-ct) "42")))
+              (mk-button-ex ("Reset" (with-integrity (:change)
+                                       (setf (fm^v :point-ct) "42"))))
               ;
               ; Driving home this point again, in Ltk one would SETF (text my-entry) and the
               ; SETF method would communicate with Tk to make the change to the Tk widget -text
@@ -330,7 +338,9 @@ certainly wrong (or the class should be canvas-scroller).
     ; appended.
     ;    
     :bindings (c? (list
-                   (list "<1>" (lambda (event) 
+                   (list '|<1>| (lambda (self event root-x root-y) 
+                                  (declare (ignore event))
+                                  
                                  ;
                                  ; Stolen from the original. It means "when the left button is
                                  ; pressed on this widget, popup this menu where the button was pressed"
@@ -342,18 +352,17 @@ certainly wrong (or the class should be canvas-scroller).
                                  ; an observer on the bindings slot passes the needed bindings to Tk 
                                  ; via the client queue.
                                  ;
-                                 (pop-up (^widget-menu :bkg-pop) ;; (^menus) -> (menus self)
-                                   (event-root-x event)
-                                   (event-root-y event))))))
+                                 (pop-up (^widget-menu :bkg-pop) root-x root-y))
+                     "%X %Y")))
     
     :menus (c? (the-kids
                 ;
                 ; we could just build the menu in the rule above for bindings and then close over the variable
                 ; bearing the menu's Tk name in the binding callback in the call to pop-up, but I try to decompose
-                ; these things in the event that the bindings become dynamic over time (meaning the rule to generate
-                ; the binding list will run repeatedly) we are not forever regenerating the same pop-up menu.
+                ; these things in the event that the bindings become dynamic over time (esp. such that the rule to generate
+                ; the binding list runs repeatedly) so we are not forever regenerating the same pop-up menu.
                 ; premature optimization? well, it also makes the code clearer, and should the list of menus become
-                ; variable over time allows us to GC (via Tk "destroy") menus, so this is not so much about
+                ; variable over time this allows us to GC (via Tk "destroy") menus, so this is not so much about
                 ; optimization as it is about Good Things happening to well-organized code.
                 ;
                 (mk-menu
@@ -392,8 +401,9 @@ certainly wrong (or the class should be canvas-scroller).
                           :repeat (c-in nil)
                           :delay 1 ;; milliseconds since this gets passed unvarnished to TK after
                           :action (lambda (timer)
-                                    (declare (ignore timer))
-                                    (incf (^angle-1) 0.1)))))
+                                    (declare (ignorable timer))
+                                    (with-integrity (:change)
+                                      (incf (^angle-1) 0.1))))))
     :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
                              (wx (sin (* 0.1 (^angle-1)))))
                          (loop for i below (^point-ct)

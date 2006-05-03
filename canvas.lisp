@@ -38,18 +38,19 @@
     :yscrollcommand (c-in nil)
     :id (gentemp "CV")
     :bindings (c? (list
-                   (focusIn->active self)
-                   (focusOut->active self)))))
+                   (focusIn->active)
+                   (focusOut->active)))))
 
-(defun focusIn->active (self)
-  (list "<FocusIn>" (lambda (event)
+(defun focusIn->active ()
+  (list '|<FocusIn>| (lambda (self event &rest args)
                       (declare (ignorable event))
-                      (trc nil "focus in activating" self)
+                      (trc "focus in activating" self event args)
                       (setf (^active) t))))
 
-(defun focusOut->active (self)
-  (list "<FocusOut>" (lambda (event) 
+(defun focusOut->active ()
+  (list '|<FocusOut>| (lambda (self event &rest args) 
                        (declare (ignorable event))
+                        (trc "focus out de-activating" self event args)
                        (setf (^active) nil))))
 
 (deftk arc (item)

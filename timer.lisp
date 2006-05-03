@@ -52,8 +52,8 @@
   (export '(repeat ^repeat)))
 
 (defmodel timer ()
-  ((id :cell nil :initarg :id :accessor id :initform nil
-     :documentation "New one assigned by TCL for each AFTER issued. Use to cancel.")
+  ((id :cell nil :initarg :id :accessor id :initform :anon
+     :documentation "A debugging aid")
    (tag :cell nil :initarg :tag :accessor tag :initform :anon
      :documentation "A debugging aid")
    (elapsed :cell nil :initarg :elapsed :accessor elapsed :initform 0
@@ -70,36 +70,43 @@
      :documentation "Internal boolean: set after an execution")
    (executions :initarg :executions :accessor executions
      :documentation "Number of times timer has had its action run since the last change to  the repeat slot"
-     :initform (c? (if (null (^repeat))
+     :initform (c? (eko (nil ">>> executions")
+                     (if (null (^repeat))
                        0 ;; ok, repeat is off, safe to reset the counter here
                      (if (^executed)
                          (1+ (or .cache 0)) ;; obviously (.cache is the prior value, and playing it safe in case unset)
-                       0)))) ;; hunh? executed is ephemeral. we are here only if repeat is changed, so reset
+                       0))))) ;; hunh? executed is ephemeral. we are here only if repeat is changed, so reset
    
-   (after-factory
-    :documentation "Pure implementation"
-    :initform (c? (bwhen (rpt (when (eq (^state) :on)
-                                (^repeat)))
-                    (when (or (zerop (^executions)) (^executed)) ;; dispatch initially or after an execution
-                      (if (zerop (^executions))
-                          (setf (elapsed self) (now))
-                        (when (and (numberp rpt)
-                                (>= (^executions) rpt))
-                          (print `(stop timer!!! ,(* 1.0 (- (now) (elapsed self)))))))
-                      (when (if (numberp rpt)
-                                (< (^executions) rpt)
-                              rpt) ;; playing it safe/robust: redundant with initial bwhen check that rpt is not nil
-                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
-                          (setf (id self) (after (^delay) (lambda ()
-                                                            (when (eq (^state) :on)
-                                                              (assert (^action))
-                                                              (funcall (^action) self)
-                                                              (setf (^executed) t)))))))))))))
+   (on-command :reader on-command
+     :initform (lambda (self)
+                 (with-integrity (:change self)
+                   (when (eq (^state) :on)
+                     (assert (^action))
+                     (funcall (^action) self)
+                     (setf (^executed) t)))))
+   (after-factory :reader after-factory
+     :initform (c? (bwhen (rpt (eko (nil ">>> repeat") (when (eq (^state) :on)
+                               (^repeat))))
+                   (when (or (zerop (^executions)) (^executed)) ;; dispatch initially or after an execution
+                     (if (zerop (^executions))
+                         (setf (elapsed self) (now))
+                       (when (and (numberp rpt)
+                               (>= (^executions) rpt))
+                         (print `(stop timer!!! ,(* 1.0 (- (now) (elapsed self)))))))
+                     (when (if (numberp rpt)
+                               (< (^executions) rpt)
+                             rpt) ;; playing it safe/robust: redundant with initial bwhen check that rpt is not nil
+                       (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
+                         (setf (id self) (set-timer self (^delay)))))))))))
 
+(defun set-timer (self time)
+  (let ((lookup-id (gentemp "AFTER")))
+    (setf (gethash lookup-id (dictionary *tkw*)) self)
+    (tk-eval "after ~a {call-back ~a}" time lookup-id)))
 
 (defobserver timers ((self tk-object) new-value old-value)
   (dolist (k (set-difference old-value new-value))
     (setf (state k) :off)
-    (when (id self)
-      (after-cancel (id k))))) ;; Tk doc says OK if cancelling already executed
+    (when (id k)
+      (tk-format-now "after cancel ~a" (id k))))) ;; Tk doc says OK if cancelling already executed
 

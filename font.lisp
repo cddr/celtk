@@ -54,7 +54,7 @@
 
 (defmethod make-tk-instance ((self font))
   (setf (gethash (^path) (dictionary .tkw)) self)
-  (tk-format-now "font create ~a ~{~(~a~) ~a~^ ~}"
+  (tk-format `(:make-tk ,self) "font create ~a ~{~(~a~) ~a~^ ~}"
       (font-id self)(tk-configurations self)))
 
 (defmethod tk-configure ((self font) option value)

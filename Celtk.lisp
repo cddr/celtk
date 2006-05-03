@@ -23,13 +23,6 @@
 (defpackage :celtk
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
-  
-  #+nomass (:import-from #:ltk
-    #:wish-stream #:*wish* #:widget-path
-    #:read-data #:event-root-x #:event-root-y
-    #:send-wish #:tkescape #:after #:after-cancel #:bind
-    #:with-ltk #:do-execute #:add-callback)
-  
   (:export
    #:title$ #:pop-up #:event-root-x #:event-root-y
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
@@ -40,7 +33,7 @@
    #:frame-stack #:mk-frame-stack #:path #:^path
    #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
    #:mk-menu-radio-group #:mk-menu-entry-separator
-   #:mk-menu-entry-command #:mk-menu-entry-command-ex #:tk-callback
+   #:mk-menu-entry-command #:mk-menu-entry-command-ex
    #:menu #:mk-menu #:^menus #:mk-menu-entry-cascade #:mk-menubar
    #:^entry-values #:tk-eval #:tk-eval-list #:scale #:mk-scale #:mk-popup-menubutton
    #:item #:polygon #:mk-polygon #:oval #:mk-oval #:line #:mk-line #:arc #:mk-arc
@@ -93,6 +86,8 @@
 
 
 (defun tk-user-queue-handler (user-q)
+  #+shh (loop for (defer-info . nil) in (sort (copy-list (fifo-data user-q)) 'tk-user-queue-sort :key 'car)
+        do (trc "user-q-handler sees" defer-info))
   (loop for (nil #+not defer-info . task) in (prog1
                                                  (sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
                                                (fifo-clear user-q))
@@ -129,7 +124,7 @@
   ;
   ; --- debug stuff ---
   ;
-  (let ((yes '("-command"))
+  (let ((yes '("popup" "menu" "bkg-pop"))
         (no  '("menu")))
 
     (declare (ignorable yes no))
@@ -137,7 +132,7 @@
       (break "Hey, fix this.")
       (replace tk$ "{Alt Q}" :start1 st))
 
-    (when (and (find-if (lambda (s) (search s tk$)) yes)
+    (when t #+not (and (find-if (lambda (s) (search s tk$)) yes)
             (not (find-if (lambda (s) (search s tk$)) no)))
       (format t "~&tk> ~a~%" tk$)))
   
@@ -147,13 +142,6 @@
   ;
   (setf *tk-last* tk$)
   (eval-script *tki* tk$))
-
-#+nahh
-(defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
-  (format t "~&tk> ~A~%" tk$)
-  (setf *tk-last* tk$)
-  (format (wish-stream *wish*) "~A~%" tk$)
-  (force-output (wish-stream *wish*)))
 
 (defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"
@@ -223,24 +211,30 @@
   (parse-tcl-list-result (tcl-get-string-result *tki*)))
 
 (defun parse-tcl-list-result (result &aux item items)
-  (labels ((is-spaces (s)
-           (every (lambda (c) (eql c #\space)) s))
-         (gather-item ()
-           (unless (is-spaces item)
-             (push (coerce (nreverse item) 'string) items)
-             (setf item nil))))
-    (loop with inside-braces
-        for ch across result
-        if (eql ch #\{)
-        do (setf inside-braces t)
-        else if (eql ch #\})
-        do (setf inside-braces nil)
-          (gather-item)
-          (setf item nil)
-        else if (eql ch #\space)
-        if inside-braces do (push ch item)
-        else do (gather-item)
-          (setf item nil)
-        else do (push ch item)
-        finally (return (nreverse items)))))
+  (when (plusp (length result))
+    (trc nil "parse-tcl-list-result" result)
+    (labels ((is-spaces (s)
+               (every (lambda (c) (eql c #\space)) s))
+             (gather-item ()
+               (unless (is-spaces item)
+                 ;(trc "item chars" (reverse item))
+                 ;(trc "item string" (coerce (reverse item) 'string))
+                 (push (coerce (nreverse item) 'string) items)
+                 (setf item nil))))
+      (loop with inside-braces
+          for ch across result
+          if (eql ch #\{)
+          do (if inside-braces
+                 (break "whoa, nested braces: ~a" result)
+               (setf inside-braces t))
+          else if (eql ch #\})
+          do (setf inside-braces nil)
+            (gather-item)
+            (setf item nil)
+          else if (eql ch #\space)
+          if inside-braces do (push ch item)
+          else do (gather-item)
+            (setf item nil)
+          else do (push ch item)
+          finally (return (nreverse items))))))
         

@@ -42,18 +42,18 @@
       :id (gentemp "ENT")
     :xscrollcommand (c-in nil)
     :textvariable (c? (^path))
-      :md-value (c-in "")))
+    :md-value (c-in "")))
 
-(defmethod md-awaken :after ((self entry))
-  (tk-format `(:trace ,self) "trace add variable ~a write \"trc2 ~a\""
-    (^path)
-    (register-callback self 'tracewrite
-      (lambda (&key name1 name2 op)
-        (declare (ignorable name1 name2 op))
-        (trc nil "tracewrite BINGO!!!!" (^path) (tk-eval-var (^path)))
-        (let ((new-value (tk-eval-var (^path))))
-          (unless (string= new-value (^md-value))
-            (setf (^md-value) new-value)))))))
+(defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
+  (with-integrity (:client `(:trace ,self))
+    (tk-format-now "trace add variable ~a write TraceOP" (^path))
+    (setf (gethash '|write| (event-handlers self))
+      (lambda (self event-type) ;; &rest args)
+        (declare (ignorable event-type))
+        (with-integrity (:change)
+          (let ((new-value (tk-eval-var (^path))))
+            (unless (string= new-value (^md-value))
+              (setf (^md-value) new-value))))))))
  
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks
@@ -85,10 +85,9 @@
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :modified (c-in nil)
-    :bindings (c? (list (list "<<Modified>>"
-                          (format nil "{callback ~~a}" (^path))
-                          (lambda () ;;(self key &rest args)
-                            (eko ("<<Modified>> !!!!!!!!!!!!!!!!!!TK value for text-widget" self)
+    :bindings (c? (list (list '|<<Modified>>|
+                          (lambda (self event &rest args)
+                            (eko ("<<Modified>> !!TK value for text-widget" self event args)
                               (setf (^modified) t))))))))
 
 
