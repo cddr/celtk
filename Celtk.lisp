@@ -124,15 +124,15 @@
   ;
   ; --- debug stuff ---
   ;
-  (let ((yes '("popup" "menu" "bkg-pop"))
-        (no  '("menu")))
+  (let ((yes '("pop" "menu" "mnu"))
+        (no  '("tk-events")))
 
     (declare (ignorable yes no))
     (bwhen (st (search "\"Alt Q\"" tk$))
       (break "Hey, fix this.")
       (replace tk$ "{Alt Q}" :start1 st))
 
-    (when t #+not (and (find-if (lambda (s) (search s tk$)) yes)
+    (when (and (find-if (lambda (s) (search s tk$)) yes)
             (not (find-if (lambda (s) (search s tk$)) no)))
       (format t "~&tk> ~a~%" tk$)))
   

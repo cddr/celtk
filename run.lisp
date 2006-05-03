@@ -80,7 +80,7 @@
 
 (defun tcl-do-one-event-loop ()
   (loop with start-time = (get-internal-real-time)
-        while (> 1 (floor (- (get-internal-real-time) start-time) internal-time-units-per-second))
+        while (> 10 (floor (- (get-internal-real-time) start-time) internal-time-units-per-second))
         do
         (bif (events (prog1
                          (tk-eval-list "set tk-events")

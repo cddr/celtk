@@ -214,7 +214,7 @@ certainly wrong (or the class should be canvas-scroller).
                                        (with-integrity (:change self)
                                          (progn
                                            (trc "setting moire-spin" self (fm^ :moire-1))
-                                           (setf (moire-spin (fm^ :moire-1)) 10)))))))
+                                           (setf (moire-spin (fm^ :moire-1)) 100)))))))
               ;
               ; Cells initiata will be surprised to learn the above works twice even if the button is
               ; clicked twice in a row; Cells is about managing state change, and the second time through
@@ -339,7 +339,7 @@ certainly wrong (or the class should be canvas-scroller).
     ;    
     :bindings (c? (list
                    (list '|<1>| (lambda (self event root-x root-y) 
-                                  (declare (ignore event))
+                                  (declare (ignorable event root-x root-y))
                                   
                                  ;
                                  ; Stolen from the original. It means "when the left button is
@@ -353,7 +353,7 @@ certainly wrong (or the class should be canvas-scroller).
                                  ; via the client queue.
                                  ;
                                  (pop-up (^widget-menu :bkg-pop) root-x root-y))
-                     "%X %Y")))
+                     "%x %y")))
     
     :menus (c? (the-kids
                 ;
