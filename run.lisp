@@ -35,14 +35,6 @@
   (tk-format `(:bind ,self) "bind ~a ~a {call-back-event %W ~:*\"~a\" ~a}"
     (^path) binding-key (or desired-event-info "")))
 
-#+reference
-(defun bind (self event-type handler &optional (desired-event-info "")
-              &aux (binding-key (intern (symbol-name event-type)))) ;; lookup on rebound will have been read in this package
-  (trc "bind registering" self binding-key)
-  (setf (gethash binding-key (event-handlers self)) handler)
-  (tk-format `(:bind ,self) "bind ~a ~a {call-back-event %W ~:*\"~a\" ~a}"
-    (^path) binding-key (or desired-event-info "")))
-
 (defun run-window (root-class)
   (declare (ignorable root-class))
   (setf *tkw* nil)
