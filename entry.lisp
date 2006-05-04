@@ -50,10 +50,9 @@
     (setf (gethash '|write| (event-handlers self))
       (lambda (self event-type) ;; &rest args)
         (declare (ignorable event-type))
-        (with-integrity (:change)
-          (let ((new-value (tk-eval-var (^path))))
+        (let ((new-value (tk-eval-var (^path))))
             (unless (string= new-value (^md-value))
-              (setf (^md-value) new-value))))))))
+              (setf (^md-value) new-value)))))))
  
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks

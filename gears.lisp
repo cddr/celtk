@@ -1,3 +1,7 @@
+;;;; -*- Mode: lisp; indent-tabs-mode: nil -*-
+;;; gears.lisp --- Celtk/Togl version of cl-opengl Lisp version of gears.c (GLUT Mesa demos).
+;;;
+;;; Simple program with rotating 3-D gear wheels.
 
 (in-package :celtk-user)
 
@@ -33,13 +37,13 @@
                          (mk-button-ex ("Remove" (when (plusp (gear-ct .tkw))
                                                    (decf (gear-ct .tkw)))))
                          (mk-entry :id :vtime
-                           :md-value (c-in "100"))
+                           :md-value (c-in "10"))
                          (mk-button-ex (" Quit " (tk-eval "destroy ."))))
                  (make-instance 'gears
                    :fm-parent *parent*
                    :width 400 :height 400
                    :timer-interval (c? (let ((n$ (md-value (fm-other :vtime))))
-                                         (format nil "~a" (or (parse-integer n$ :junk-allowed t) 0))))
+                                         (format nil "~a" (max 1 (or (parse-integer n$ :junk-allowed t) 0)))))
                    :double 1 ;; "yes"
                    :bindings (c? (list
                                   (list '|<1>| (lambda (self event root-x root-y) 
@@ -50,8 +54,7 @@
                                   (list '|<B1-Motion>|
                                     (lambda (self event root-x root-y)
                                       (declare (ignore event))
-                                      (with-integrity (:change)
-                                        (RotMove self root-x root-y))
+                                      (RotMove self root-x root-y)
                                       0)
                                     "%X %Y")))))))))
 
@@ -67,17 +70,36 @@
   (setf *xangle* (+ *xangle0* (- x *startx*)))
   (setf *yangle* (+ *yangle0* (- y *starty*)))
   (setf (rotx self) *xangle*)
-  (setf (roty self) *yangle*))
+  (assert (eql *xangle* (rotx self)))
+  (setf (roty self) *yangle*)
+  (trc "RotMove x y" *xangle* *yangle*))
 
 (defconstant +pif+ (coerce pi 'single-float))
 
 (defmodel gears (togl)
-  ((rotx :initform (c-in 0.2) :accessor rotx :initarg :rotx)
-   (roty :initform (c-in 0.5) :accessor roty :initarg :roty)
-   (rotz :initform (c-in 0.8) :accessor rotz :initarg :rotz)
-   (gear1 :accessor gear1 :initform (c-in nil))
-   (gear2 :accessor gear2 :initform (c-in nil))
-   (gear3 :accessor gear3 :initform (c-in nil))
+  ((rotx :initform (c-in 40) :accessor rotx :initarg :rotx)
+   (roty :initform (c-in 25) :accessor roty :initarg :roty)
+   (rotz :initform (c-in 10) :accessor rotz :initarg :rotz)
+   (gear1 :initarg :gear1 :accessor gear1
+     :initform (c_? (trc "making list!!!!! 1")
+                 (let ((dl (gl:gen-lists 1)))
+                   (gl:with-new-list (dl :compile)
+                     (gl:material :front :ambient-and-diffuse #(0.8 0.1 0.0 1.0))
+                     (draw-gear 1.0 4.0 1.0 20 0.7))
+                   dl)))
+   (gear2 :initarg :gear2 :accessor gear2
+     :initform (c_? (let ((dl (gl:gen-lists 1)))
+                      (gl:with-new-list (dl :compile)
+                        (gl:material :front :ambient-and-diffuse #(0.0 0.8 0.2 1.0))
+                        (draw-gear 0.5 2.0 2.0 10 0.7))
+                      dl)))
+   (gear3 :initarg :gear3 :accessor gear3
+     :initform (c_? (let ((dl (gl:gen-lists 1)))
+                      (gl:with-new-list (dl :compile)
+                        (gl:material :front :ambient-and-diffuse #(0.2 0.2 1.0 1.0))
+                        (draw-gear 1.3 2.0 0.5 10 0.7))
+                      dl)))
+
    (angle :initform (c-in 0.0) :accessor angle :initarg :angle)
    (frame-count :cell nil :initform 0 :accessor frame-count)
    (t0 :cell nil :initform 0 :accessor t0)
@@ -87,9 +109,8 @@
 
 (defmethod togl-timer-using-class ((self gears))
   (trc nil "enter gear timer" self (togl-ptr self) (get-internal-real-time))
-  (with-integrity (:change)
-    (incf (^angle) 2.0)
-    (Togl_PostRedisplay (togl-ptr self))))
+  (incf (^angle) 2.0)
+  (Togl_PostRedisplay (togl-ptr self)))
 
 (defmethod togl-reshape-using-class ((self gears))
   (let ((width (Togl_width (togl-ptr self)))
@@ -106,56 +127,38 @@
 
 (defmethod togl-display-using-class ((self gears) &aux (scale (scale (upper self gears-demo))))
   (declare (ignorable scale))
-  (with-slots (rotx roty rotz angle gear1 gear2 gear3)
-      self
-    
-    (gl:clear-color 0 0 0 1)
-    (gl:clear :color-buffer-bit :depth-buffer-bit)
+  
+  (gl:clear-color 0 0 0 1)
+  (gl:clear :color-buffer-bit :depth-buffer-bit)
+  
+  (gl:with-pushed-matrix
+      (gl:rotate (^rotx) 1 0 0)
+    (gl:rotate (^roty) 0 1 0)
+    (gl:rotate (^rotz) 0 0 1)
+  
+    (gl:with-pushed-matrix
+        (gl:translate -3 -2 0)
+      (gl:rotate (^angle) 0 0 1)
+      (gl:call-list (^gear1)))
     
     (gl:with-pushed-matrix
-      (gl:rotate rotx 1 0 0)
-      (gl:rotate roty 0 1 0)
-      (gl:rotate rotz 0 0 1)
-      
-      (gl:with-pushed-matrix ; gear1
-        (gl:translate -3 -2 0)
-        (gl:rotate angle 0 0 1)
-        (gl:call-list gear1)) 
-
-      (gl:with-pushed-matrix ; gear2
         (gl:translate 3.1 -2 0)
-        (gl:rotate (- (* -2 angle) 9) 0 0 1)
-        (gl:call-list gear2))
-
-      (gl:with-pushed-matrix ; gear3
+      (gl:rotate (- (* -2 (^angle)) 9) 0 0 1)
+      (gl:call-list (^gear2)))
+    
+    (gl:with-pushed-matrix ; gear3
         (gl:translate -3.1 4.2 0.0)
-        (gl:rotate (- (* -2 angle) 25) 0 0 1)
-        (gl:call-list gear3)))
-    
-    (Togl_SwapBuffers (togl-ptr self))
-    
-    #+shhh (print-frame-rate self)))
+      (gl:rotate (- (* -2 (^angle)) 25) 0 0 1)
+      (gl:call-list (^gear3))))
+  
+  (Togl_SwapBuffers (togl-ptr self))
+  
+  #+shhh (print-frame-rate self))
 
 (defmethod togl-create-using-class ((self gears))
   (gl:light :light0 :position #(5.0 5.0 10.0 0.0))
   (gl:enable :cull-face :lighting :light0 :depth-test)
-
-  ;; gear 1
-  (setf (^gear1) (gl:gen-lists 1))
-  (gl:with-new-list ((^gear1) :compile)
-    (gl:material :front :ambient-and-diffuse #(0.8 0.1 0.0 1.0)) ; red
-    (draw-gear 1.0 4.0 1.0 20 0.7))
-
-  ;; gear 2
-  (setf (^gear2) (gl:gen-lists 1))
-  (gl:with-new-list ((^gear2) :compile)
-    (gl:material :front :ambient-and-diffuse #(0.0 0.8 0.2 1.0)) ; green
-    (draw-gear 0.5 2.0 2.0 10 0.7))
-  ;; gear 3
-  (setf (^gear3) (gl:gen-lists 1))
-  (gl:with-new-list ((^gear3) :compile)
-    (gl:material :front :ambient-and-diffuse #(0.2 0.2 1.0 1.0)) ; blue
-    (draw-gear 1.3 2.0 0.5 10 0.7))
+  (gl:material :front :ambient-and-diffuse #(0.8 0.1 0.0 1.0))
   (gl:enable :normalize))
 
 (defun draw-gear (inner-radius outer-radius width n-teeth tooth-depth)

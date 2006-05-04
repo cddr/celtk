@@ -76,7 +76,7 @@ certainly wrong (or the class should be canvas-scroller).
   ; about how to do that. That includes deciding in what order to make those things happen. That is 
   ; a big win when it works. When it did not work for Tk, and I could imagine the same thing
   ; coming up again in other situations (Tilton's Law: "The first time you run into something
-  ; is just the first time you will run into it"), I added to Cells the concept of a "client queue",
+  ; is just the first time you ran into it"), I added to Cells the concept of a "client queue",
   ; where client-code can store order-sensitive tasks. The client also can specify the handler for
   ; that queue, here 'tk-user-queue-handler. This handler (or the default FIFO handler) gets called 
   ; at just the right time in the larger scheme of state propagation one needs for 
@@ -85,7 +85,7 @@ certainly wrong (or the class should be canvas-scroller).
   ; Data integrity: when the overall Cells data model gets perturbed by imperative code -- typically an
   ; event loop -- executing a SETF of some datapoint X, we want these requirements met:
   ;
-  ;   - recompute all and only state computed off X (directly or indirectly through some intermediate datapoint);
+  ;   - recompute all and (for efficiency) only state computed off X (directly or indirectly through some intermediate datapoint);
   ;
   ;   - recomputations, when they read other datapoints, must see only values current with the new value of X;
   ;
@@ -101,7 +101,7 @@ certainly wrong (or the class should be canvas-scroller).
   ; manages to talk to Tk in the order Tk likes. And hack the function tk-format-now to have
   ; Celtk dump the TCL/Tk code being sent to wish during initialization, and notice how un-random it looks. You can
   ; then comment out the above specification of a Tk-savvy handler to see (a) the order that would have happened
-  ; before Cells3 and (b) the demo collapse in a heap (or not work in vital ways). 
+  ; before Cells3 and (b) the demo collapse in a broken heap. 
   ;
   ; But in short, with Cells3  we just add this requirement:
   ;  
@@ -180,8 +180,7 @@ certainly wrong (or the class should be canvas-scroller).
                 ; the Tk doc documents Celtk. The advantage to the developer is that neither LTk nor
                 ; Celtk introduce a new API to be mastered, widget-wise.
                 ;
-                (mk-button-ex ("Start" (with-integrity (:change)
-                                         (setf (moire-spin (fm^ :moire-1)) t))))
+                (mk-button-ex ("Start" (setf (moire-spin (fm^ :moire-1)) t)))
                 ;
                 ; You were warned about mk-button-ex and its ilk above. Just expand or inspect to
                 ; see what they do, which is pretty much just hide some boilerplate.
@@ -199,26 +198,18 @@ certainly wrong (or the class should be canvas-scroller).
                 ; ltktest. How it accomplishes that will be explained below in the moire class
                 ; definition.
                 ;
-                (mk-button-ex ("Stop" (with-integrity (:change)
-                                        (setf (moire-spin (fm^ :moire-1)) nil)))))
-              ;
-              ; ditto
-              ;
+                (mk-button-ex ("Stop" (setf (moire-spin (fm^ :moire-1)) nil)))) ;; ditto
               
               (mk-button-ex ("Hallo" (format T "~&Hallo")))
-              (mk-button-ex ("Welt!" (format T "~&Welt")))
+              (mk-button-ex ("Welt!" (format T "~&Welt!")))
               (mk-row (:borderwidth 2 :relief 'sunken)
                 (mk-label :text "Test:")
-                (mk-button-ex ("OK:" (progn
-                                       (trc "MAYBE setting moire-spin" self (fm^ :moire-1))
-                                       (with-integrity (:change self)
-                                         (progn
-                                           (trc "setting moire-spin" self (fm^ :moire-1))
-                                           (setf (moire-spin (fm^ :moire-1)) 100)))))))
+                (mk-button-ex ("OK:" (setf (moire-spin (fm^ :moire-1)) 100))))
               ;
               ; Cells initiata will be surprised to learn the above works twice even if the button is
               ; clicked twice in a row; Cells is about managing state change, and the second time through
-              ; there is no change. See the Timer class for the shocking solution to this riddle.
+              ; there is no change. But the system still reacts! See the Timer class for the shocking 
+              ; solution to this riddle.
               ;
               (mk-entry-numeric :id :point-ct
                 :md-value (c-in "42")
@@ -258,7 +249,7 @@ certainly wrong (or the class should be canvas-scroller).
                                     "red"
                                   'SystemButtonFace))) ;; TK won't allow "" as a way of saying "default color"
               ;
-              ; As you type in the field, if you key in an invalid (non-digit) character, the background
+              ; As you edit the field, if you key in an invalid (non-digit) character, the background
               ; immediately turns red. Delete it and it reverts to the default.
               ;
               ; The interesting question is, how does the md-value slot of the Lisp instance stay
@@ -290,8 +281,7 @@ certainly wrong (or the class should be canvas-scroller).
               ; Thus each class uses md-value to hold something different, but in all cases it is
               ; the current value of whatever the instance of that class is understood to hold. 
               ; 
-              (mk-button-ex ("Reset" (with-integrity (:change)
-                                       (setf (fm^v :point-ct) "42"))))
+              (mk-button-ex ("Reset" (setf (fm^v :point-ct) "42")))
               ;
               ; Driving home this point again, in Ltk one would SETF (text my-entry) and the
               ; SETF method would communicate with Tk to make the change to the Tk widget -text
@@ -402,8 +392,7 @@ certainly wrong (or the class should be canvas-scroller).
                           :delay 1 ;; milliseconds since this gets passed unvarnished to TK after
                           :action (lambda (timer)
                                     (declare (ignorable timer))
-                                    (with-integrity (:change)
-                                      (incf (^angle-1) 0.1))))))
+                                    (incf (^angle-1) 0.1)))))
     :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
                              (wx (sin (* 0.1 (^angle-1)))))
                          (loop for i below (^point-ct)

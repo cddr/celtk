@@ -124,8 +124,7 @@
 
 (defobserver initial-value ((self spinbox))
   (when new-value
-    (with-integrity (:change)
-      (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
-      (setf (^md-value) new-value))))
+    (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
+    (setf (^md-value) new-value)))
 
 

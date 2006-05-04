@@ -79,11 +79,10 @@
    
    (on-command :reader on-command
      :initform (lambda (self)
-                 (with-integrity (:change self)
-                   (when (eq (^state) :on)
+                 (when (eq (^state) :on)
                      (assert (^action))
                      (funcall (^action) self)
-                     (setf (^executed) t)))))
+                     (setf (^executed) t))))
    (after-factory :reader after-factory
      :initform (c? (bwhen (rpt (eko (nil ">>> repeat") (when (eq (^state) :on)
                                (^repeat))))

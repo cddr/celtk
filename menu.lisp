@@ -218,8 +218,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     :on-command  (lambda (self)
                    (declare (ignore key args))
                    (trc nil "menu radio button command firing" self (^value) (upper self selector))
-                   (with-integrity (:change)
-                     (setf (selection (upper self selector)) (^value))))))
+                   (setf (selection (upper self selector)) (^value)))))
 
 (defmodel menu-radio-group (selector family)
   ((.md-name :cell nil :initform (gentemp "RG") :initarg :id))
@@ -276,8 +275,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
 
 (defobserver initial-value ((self popup-menubutton))
   (when new-value
-    (with-integrity (:change self)
-      (setf (selection self) new-value))))
+    (setf (selection self) new-value)))
 
 (defmethod tk-output-selection ((self popup-menubutton) new-value old-value old-value-boundp)
   (declare (ignorable old-value old-value-boundp))
