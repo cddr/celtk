@@ -52,6 +52,8 @@
 
 (in-package :Celtk)
 
+(defvar *tki* nil)
+
 (defparameter *tk-last* nil "Debug aid. Last recorded command send to Tk")
 
 (defparameter *tkw* nil)

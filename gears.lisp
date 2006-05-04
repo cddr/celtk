@@ -1,7 +1,6 @@
 
-(in-package :celtk)
+(in-package :celtk-user)
 
-(in-package :celtk)
 
 (defparameter *startx* nil)
 (defparameter *starty* nil)
@@ -13,8 +12,13 @@
 (defparameter *vTime* 100)
 
 (defun gears () ;; ACL project manager needs a zero-argument function, in project package
-  (test-window 'gears-demo))
-
+  (let ((*startx* nil)
+        (*starty* nil)
+        (*xangle0* nil)
+        (*yangle0* nil)
+        (*xangle* 0.0)
+        (*yangle* 0.0))
+    (test-window 'gears-demo)))
 
 (defmodel gears-demo (window)
   ((gear-ct :initform (c-in 1) :accessor gear-ct :initarg :gear-ct)
@@ -40,35 +44,39 @@
                                                      (md-value (fm-other :vtime)))))
                    :double "yes"
                    :bindings (c? (list
-                                  (list '|<Button-1>|
-                                    (lambda (self event root-x root-y)
-                                      (declare (ignore event))
-                                      (RotStart self root-x root-y))
+                                  (list '|<1>| (lambda (self event root-x root-y) 
+                                                 (declare (ignorable self event root-x root-y))
+                                                 (RotStart self root-x root-y)
+                                                 0)
                                     "%X %Y")
                                   (list '|<B1-Motion>|
                                     (lambda (self event root-x root-y)
                                       (declare (ignore event))
-                                      (RotMove self root-x root-y))
+                                      (with-integrity (:change)
+                                        (RotMove self root-x root-y))
+                                      0)
                                     "%X %Y")))))))))
 
 (defun RotStart (self x y)
+  ;(trc "Rotstart!!!" self x y)
   (setf *startx* x)
   (setf *starty* y)
-  (let ((vPos (tk-eval-list "~a position" (^path)))) ;; this fails for me -- command not recognized, it seems
-    (trc "got vpos" vpos)
-    (setf *xangle0* (read-from-string (nth 0 vpos)))
-    (setf *yangle0* (read-from-string (nth 1 vpos)))))
+  (setf *xangle0* (rotx self))
+  (setf *yangle0* (roty self)))
 
 (defun RotMove (self x y)
+  ;(trc "RotMove!!!!" self x y)
   (setf *xangle* (+ *xangle0* (- x *startx*)))
   (setf *yangle* (+ *yangle0* (- y *starty*)))
-  (tk-format-now "~a rotate ~a ~a" (^path) *xangle* *yangle*))
+  (setf (rotx self) *xangle*)
+  (setf (roty self) *yangle*))
+
 (defconstant +pif+ (coerce pi 'single-float))
 
 (defmodel gears (togl)
-  ((view-rotx :initform (c-in 20.0) :accessor view-rotx :initarg :view-rotx)
-   (view-roty :initform (c-in 30.0) :accessor view-roty :initarg :view-roty)
-   (view-rotz :initform (c-in 0.0) :accessor view-rotz :initarg :view-rotz)
+  ((rotx :initform (c-in 0.0) :accessor rotx :initarg :rotx)
+   (roty :initform (c-in 0.0) :accessor roty :initarg :roty)
+   (rotz :initform (c-in 0.0) :accessor rotz :initarg :rotz)
    (gear1 :accessor gear1 :initform (c-in nil))
    (gear2 :accessor gear2 :initform (c-in nil))
    (gear3 :accessor gear3 :initform (c-in nil))
@@ -81,32 +89,35 @@
 
 (defmethod togl-timer-using-class ((self gears))
   (trc nil "enter gear timer" self (togl-ptr self) (get-internal-real-time))
-  (incf (^angle) 2.0)
-  (Togl_PostRedisplay (togl-ptr self)))
+  (with-integrity (:change)
+    (incf (^angle) 2.0)
+    (Togl_PostRedisplay (togl-ptr self))))
 
-(defmethod togl-reshape-using-class ((self gears) width height)
-  (trc "enter gear reshape" self width :height (type-of height) :voila height)
-  (gl:viewport 0 0 width height)
-  (gl:matrix-mode :projection)
-  (gl:load-identity)
-  (let ((h (/ height width)))
-    (gl:frustum -1 1 (- h) h 5 60))
-  (gl:matrix-mode :modelview)
-  (gl:load-identity)
-  (gl:translate 0 0 -40))
+(defmethod togl-reshape-using-class ((self gears))
+  (let ((width (Togl_width (togl-ptr self)))
+        (height (Togl_height (togl-ptr self))))
+    (trc "enter gear reshape" self width :height (type-of height) :voila height)
+    (gl:viewport 0 0 width height)
+    (gl:matrix-mode :projection)
+    (gl:load-identity)
+    (let ((h (/ height width)))
+      (gl:frustum -1 1 (- h) h 5 60))
+    (gl:matrix-mode :modelview)
+    (gl:load-identity)
+    (gl:translate 0 0 -40)))
 
 (defmethod togl-display-using-class ((self gears) &aux (scale (scale (upper self gears-demo))))
   (declare (ignorable scale))
-  (with-slots (view-rotx view-roty view-rotz angle gear1 gear2 gear3)
+  (with-slots (rotx roty rotz angle gear1 gear2 gear3)
       self
-    (trc nil "in gear display" self (togl-ptr self)gear1 gear2 gear3 scale)
+    
     (gl:clear-color 0 0 0 1)
     (gl:clear :color-buffer-bit :depth-buffer-bit)
     
     (gl:with-pushed-matrix
-      (gl:rotate (incf view-rotx) 1 0 0)
-      (gl:rotate view-roty 0 1 0)
-      (gl:rotate view-rotz 0 0 1)
+      (gl:rotate rotx 1 0 0)
+      (gl:rotate roty 0 1 0)
+      (gl:rotate rotz 0 0 1)
       
       (gl:with-pushed-matrix ; gear1
         (gl:translate -3 -2 0)
@@ -125,21 +136,7 @@
     
     (Togl_SwapBuffers (togl-ptr self))
     
-    (print-frame-rate self)))
-
-(defun print-frame-rate (window)
-  (with-slots (frame-count t0) window
-    (incf frame-count)
-    (let ((time (get-internal-real-time)))
-      (when (= t0 0)
-        (setq t0 time))
-      (when (>= (- time t0) (* 1 internal-time-units-per-second))
-        (let* ((seconds (/ (- time t0) internal-time-units-per-second))
-               (fps (/ frame-count seconds)))
-          (format *terminal-io* "~D frames in ~3,1F seconds = ~6,3F FPS~%"
-                  frame-count seconds fps))
-        (setq t0 time)
-        (setq frame-count 0)))))
+    #+shhh (print-frame-rate self)))
 
 (defmethod togl-create-using-class ((self gears))
   (gl:light :light0 :position #(5.0 5.0 10.0 0.0))
@@ -265,3 +262,18 @@
           (gl:normal (- (cos angle)) (- (sin angle)) 0.0)
           (gl:vertex (* r0 (cos angle)) (* r0 (sin angle)) (* (- width) 0.5))
           (gl:vertex (* r0 (cos angle)) (* r0 (sin angle)) (* width 0.5)))))))
+
+(defun print-frame-rate (window)
+  (with-slots (frame-count t0) window
+    (incf frame-count)
+    (let ((time (get-internal-real-time)))
+      (when (= t0 0)
+        (setq t0 time))
+      (when (>= (- time t0) (* 5 internal-time-units-per-second))
+        (let* ((seconds (/ (- time t0) internal-time-units-per-second))
+               (fps (/ frame-count seconds)))
+          (declare (ignorable fps))
+          #+shh (format *terminal-io* "~D frames in ~3,1F seconds = ~6,3F FPS~%"
+                  frame-count seconds fps))
+        (setq t0 time)
+        (setq frame-count 0)))))

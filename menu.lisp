@@ -79,12 +79,12 @@ dynamic add/remove
 ;;;
 
 (defmodel menu-entry (tk-object)
-  ((index :cell nil :initarg :index :accessor index :initform nil))
+  ((idx :cell nil :initarg :idx :accessor idx :initform nil))
   (:documentation "e.g, New, Open, Save in a File menu"))
 
-(defmethod index :around ((self menu-entry))
+(defmethod idx :around ((self menu-entry))
   (or (call-next-method)
-    (setf (index self)
+    (setf (idx self)
       (block count-to-self
         (let ((i -1)
               (menu (upper self menu)))
@@ -97,15 +97,15 @@ dynamic add/remove
 
 (defmethod make-tk-instance ((self menu-entry))
   "Parent has to do this to get them in the right order"
-  (setf (gethash (path-index self) (dictionary .tkw)) self))
+  (setf (gethash (path-idx self) (dictionary .tkw)) self))
 
 (defmethod parent-path ((self menu-entry))
   (path .parent))
 
-(defmethod path-index ((self menu-entry))
+(defmethod path-idx ((self menu-entry))
   "This method hopefully gets used only internally and not given to Tcl qua thing name, which will not recognize it"
-  (assert (index self))
-  (format nil "~a.~a" (path (upper self menu))(index self)))
+  (assert (idx self))
+  (format nil "~a.~a" (path (upper self menu))(idx self)))
 
 (defun fm-menu-traverse (family fn)
   "Traverse family arbitrarily deep as need to reach all menu-entries
@@ -121,12 +121,12 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
 
 (defmethod not-to-be :after ((self menu-entry))
   (trc nil "whacking menu-entry" self)
-  (tk-format `(:destroy ,self) "~a delete ~a" (path .parent) (index self)))
+  (tk-format `(:destroy ,self) "~a delete ~a" (path .parent) (idx self)))
 
 (defmethod tk-configure ((self menu-entry) option value)
-  (assert (>= (index self) 0) () "cannot configure menu-entry ~a until instantiated and index decided" self)
+  (assert (>= (idx self) 0) () "cannot configure menu-entry ~a until instantiated and index decided" self)
   (tk-format `(:configure ,self) "~A entryconfigure ~a ~(~a~) ~a"
-    (path (upper self menu)) (index self) option (tk-send-value value)))
+    (path (upper self menu)) (idx self) option (tk-send-value value)))
 
 (deftk menu-entry-separator (menu-entry)
   ()
@@ -143,7 +143,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   (call-next-method)
   (with-integrity (:client '(:bind nil))
     (when new-value
-      (tk-format-now "bind . <~a> {~a invoke ~a}" new-value (path (upper self menu)) (index self)))))
+      (tk-format-now "bind . <~a> {~a invoke ~a}" new-value (path (upper self menu)) (idx self)))))
 
 
 (deftk menu-entry-cascade (selector family menu-entry-usable)
@@ -172,7 +172,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   ()
   (:tk-spec command -command)
   (:default-initargs
-      :command (c? (format nil "call-back ~(~a~)" (path-index self)))))
+      :command (c? (format nil "call-back ~(~a~)" (path-idx self)))))
 
 (defmacro mk-menu-entry-command-ex ((&rest menu-command-initargs) lbl callback-body)
   `(mk-menu-entry-command

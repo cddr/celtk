@@ -28,7 +28,10 @@
 ;;;(defcfun ("Togl_Init" togl-init) tcl-retcode
 ;;;  (interp :pointer))
 
-
+(eval-when (compile load eval)
+  (export '(togl_swapbuffers togl_postredisplay togl-ptr togl-reshape-func
+             togl togl-timer-using-class Togl_PostRedisplay togl-reshape-using-class
+             togl-display-using-class togl_width togl_height togl-create-using-class)))
 
 ;; --- gotta call this bad boy during initialization, I guess any time after we have an interpreter
 ;;
@@ -121,28 +124,20 @@
 
 (defvar *togl*)
 (defvar *togls*)
+
 (def-togl-callback create
     (setf (togl-ptr *togl*) togl)
     (push (cons togl *togl*) *togls*))
 (def-togl-callback display)
-
-#+nah (def-togl-callback reshape)
-(progn (defcfun ("Togl_ReshapeFunc" togl-reshape-func) :void (callback :pointer))
-  (defcallback togl-reshape :void ((togl :pointer))
-    (trc "reshape cb sees" togl)
-    (togl-reshape-using-class (cdr (assoc togl *togls*)) 400 400))
-  (defmethod togl-reshape-using-class :around ((self togl) width height)
-    (trc "reshape-uc cb sees" self width height)
-    (if (cb-reshape self)
-        (funcall (cb-reshape self) self width height)
-      (call-next-method)))
-  (defmethod togl-reshape-using-class ((self togl) width height)
-    (declare (ignore width height))))
-
+(def-togl-callback reshape)
 (def-togl-callback destroy)
-(def-togl-callback timer)
+(def-togl-callback timer
+    (check-faux-events))
 
-(defmethod make-tk-instance :around ((self togl))
-  (let ((*togl* self))
-    (call-next-method))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
+(defmethod make-tk-instance ((self togl))
+  (with-integrity (:client `(:make-tk ,self))
+    (let ((*togl* self))
+      (setf (gethash (^path) (dictionary .tkw)) self)
+      (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
+        (path self)(tk-configurations self))))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
 

@@ -24,17 +24,18 @@
                  (make-instance 'module :name "item-shaped.lisp")
                  (make-instance 'module :name "composites.lisp")
                  (make-instance 'module :name "frame.lisp")
-                 (make-instance 'module :name "load-cl-opengl.lisp")
                  (make-instance 'module :name "togl.lisp")
                  (make-instance 'module :name "run.lisp")
                  (make-instance 'module :name "demos.lisp")
-                 (make-instance 'module :name "gears.lisp")
                  (make-instance 'module :name
-                                "ltktest-cells-inside.lisp"))
+                                "ltktest-cells-inside.lisp")
+                 (make-instance 'module :name "gears.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name
-                                 "C:\\0devtools\\cffi\\cffi"))
+                                 "C:\\0devtools\\cffi\\cffi")
+                  (make-instance 'project-module :name
+                                 "C:\\0devtools\\cl-opengl\\glu"))
   :libraries nil
   :distributed-files nil
   :internally-loaded-files nil

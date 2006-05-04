@@ -5,7 +5,6 @@
 ;;------------------------------------------------------------------------------
 
 
-(defvar *tki* nil)
 ;;------------------------------------------------------------------------------
 ;; External LIBRARIES
 ;;------------------------------------------------------------------------------
@@ -116,7 +115,7 @@
 
       ;; Togl Initialization
 
-      (Togl_Init interp)            
+      ;;(Togl_Init interp)            
       
       ;; Say hello
 
@@ -143,9 +142,12 @@
     ;; Tcl_CreateInterp
       
     (defcfun ("Tcl_CreateInterp" %Tcl_CreateInterp) :pointer)
-
     (defun Tcl_CreateInterp ()
       (%Tcl_CreateInterp))
+
+    (defcfun ("Tcl_DeleteInterp" tcl-delete-interp)
+        :void
+      (interp        :pointer))
 
     ;; Tcl_EvalFile
 
@@ -335,9 +337,8 @@
     (use-foreign-library Tcl)
     (use-foreign-library Tk)
     (use-foreign-library Togl)
-    (prog1
-      (Tcl_FindExecutable)
-      (set-initialized))))
+    (Tcl_FindExecutable)
+    (set-initialized)))
 
 ;; Send a script to a piven Tcl/Tk interpreter
 

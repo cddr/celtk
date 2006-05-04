@@ -35,8 +35,7 @@
   (:documentation "Root class for widgets and (canvas) items"))
 
 (defmethod md-awaken :before ((self tk-object))
-  (progn ;; sorry, some next need more granularity in client queueso no: with-integrity (:client `(:make-tk ,self))
-    (make-tk-instance self)))
+  (make-tk-instance self))
 
 ;;; --- deftk --------------------
 

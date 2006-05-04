@@ -52,14 +52,10 @@
   ;; (tk-format-now "bind . <Escape> {call-back-event %W :type <Escape> :time %t}")
     
   (with-integrity ()
-    (setf *tkw* (make-instance root-class))
-    (bind *tkw* '|<Escape>|
-      (lambda (self &rest args)
-        (trc "better event handler!!!!" self args))
-      ":time %t"))
+    (setf *tkw* (make-instance root-class)))
 
   (tk-format `(:fini) "wm deiconify .")
-    
+  (tk-format-now "bind . <Escape> {destroy .}")
   ;; one or the other of...
   (tcl-do-one-event-loop)
   #+either-or (Tk_MainLoop)
@@ -70,24 +66,29 @@
 
 (defparameter *event-loop-delay* 0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
-(defun tcl-do-one-event-loop ()
-  (loop with start-time = (get-internal-real-time)
-        while (and (plusp (tk-get-num-main-windows))
-                (> 10 (floor (- (get-internal-real-time) start-time) internal-time-units-per-second)))
-        do
-        (bif (events (prog1
+(let ((last-check nil)
+      (check-interval (floor internal-time-units-per-second 100)))
+  (defun check-faux-events ()
+    (let ((now (get-internal-real-time)))
+      (when (or (null last-check) (> (- now last-check) check-interval))
+        (setf last-check now)
+        (bwhen (events (prog2 (trc nil "tcl-do-one-event-loop checking for events" (get-internal-real-time))
                          (tk-eval-list "set tk-events")
                        (tk-eval "set tk-events {}")))
-          (progn
-            #+shhh (loop for e in events
-              do (trc "event preview" e))
-            (trc "main windows count =" (tk-get-num-main-windows))
-            (loop for e in events
-              do (setf start-time (get-internal-real-time))
-            (tk-process-event e)))
-          (sleep *event-loop-delay*))
-        (loop until (zerop (Tcl_DoOneEvent 2)))
-        finally (trc "tcl-do-one-event-loop has left the building")))
+          (loop for e in events
+                do (tk-process-event e))))
+      (progn
+        (trc nil "tcl-do-one-event-loop sees no events" (get-internal-real-time))
+        #+iwantmyide (sleep *event-loop-delay*)))))
+
+(defun tcl-do-one-event-loop ()
+  (loop while (plusp (tk-get-num-main-windows))
+      do (check-faux-events)
+        (loop  until (zerop (Tcl_DoOneEvent 2))) ;; 2== TCL_DONT_WAIT
+      finally ;;(tk-eval "exit")
+        (tcl-delete-interp *tki*)
+        (setf *tki* nil)
+        (trc "tcl-do-one-event-loop has left the building")))
 
 (defun tk-process-event (event)
   (destructuring-bind (fn w-name &rest args)
@@ -103,7 +104,7 @@
 
 (defmethod do-on-event (self event-type$ &rest args &aux (event-type (intern event-type$)))
   (assert (symbolp event-type))
-  (trc "on event!!!" self event-type args)
+  (trc nil "on event!!!" self event-type args)
   (bif (ecb (gethash event-type (event-handlers self)))
     (apply ecb self event-type args)
     (progn
