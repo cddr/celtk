@@ -2,12 +2,12 @@
 (in-package :celtk-user)
 
 
-(defparameter *startx* nil)
-(defparameter *starty* nil)
-(defparameter *xangle0* nil)
-(defparameter *yangle0* nil)
-(defparameter *xangle* 0.0)
-(defparameter *yangle* 0.0)
+(defvar *startx*)
+(defvar *starty*)
+(defvar *xangle0*)
+(defvar *yangle0*)
+(defvar *xangle*)
+(defvar *yangle*)
 
 (defparameter *vTime* 100)
 
@@ -16,7 +16,7 @@
         (*starty* nil)
         (*xangle0* nil)
         (*yangle0* nil)
-        (*xangle* 0.0)
+        (*xangle* 0.2)
         (*yangle* 0.0))
     (test-window 'gears-demo)))
 
@@ -28,21 +28,19 @@
     :kids (c? (the-kids
                (mk-stack (:packing (c?pack-self))
                  (mk-label :text "Click and drag to rotate image")
-                 #+tki (mk-row ()
+                 (mk-row ()
                          (mk-button-ex ("  Add " (incf (gear-ct .tkw))))
                          (mk-button-ex ("Remove" (when (plusp (gear-ct .tkw))
                                                    (decf (gear-ct .tkw)))))
                          (mk-entry :id :vtime
                            :md-value (c-in "100"))
-                         (mk-button-ex (" Quit " (progn))))
+                         (mk-button-ex (" Quit " (tk-eval "destroy ."))))
                  (make-instance 'gears
                    :fm-parent *parent*
-                   :width 400
-                   :height 400
-                   :timer-interval nil #+tki (c? (or .cache ;; comment out just ".cache" for some fun
-                                                   (eko ("vtime is")
-                                                     (md-value (fm-other :vtime)))))
-                   :double "yes"
+                   :width 400 :height 400
+                   :timer-interval (c? (let ((n$ (md-value (fm-other :vtime))))
+                                         (format nil "~a" (or (parse-integer n$ :junk-allowed t) 0))))
+                   :double 1 ;; "yes"
                    :bindings (c? (list
                                   (list '|<1>| (lambda (self event root-x root-y) 
                                                  (declare (ignorable self event root-x root-y))
@@ -74,9 +72,9 @@
 (defconstant +pif+ (coerce pi 'single-float))
 
 (defmodel gears (togl)
-  ((rotx :initform (c-in 0.0) :accessor rotx :initarg :rotx)
-   (roty :initform (c-in 0.0) :accessor roty :initarg :roty)
-   (rotz :initform (c-in 0.0) :accessor rotz :initarg :rotz)
+  ((rotx :initform (c-in 0.2) :accessor rotx :initarg :rotx)
+   (roty :initform (c-in 0.5) :accessor roty :initarg :roty)
+   (rotz :initform (c-in 0.8) :accessor rotz :initarg :rotz)
    (gear1 :accessor gear1 :initform (c-in nil))
    (gear2 :accessor gear2 :initform (c-in nil))
    (gear3 :accessor gear3 :initform (c-in nil))
@@ -104,7 +102,7 @@
       (gl:frustum -1 1 (- h) h 5 60))
     (gl:matrix-mode :modelview)
     (gl:load-identity)
-    (gl:translate 0 0 -40)))
+    (gl:translate 0 0 -30)))
 
 (defmethod togl-display-using-class ((self gears) &aux (scale (scale (upper self gears-demo))))
   (declare (ignorable scale))

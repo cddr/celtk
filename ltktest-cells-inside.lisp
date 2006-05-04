@@ -398,7 +398,7 @@ certainly wrong (or the class should be canvas-scroller).
                           ; around the TCL after command. See the class definition of timer
                           ; for the fireworks (in terms of Cells) that resulted
                           ;
-                          :repeat (c-in nil)
+                          :repeat (c-in t)
                           :delay 1 ;; milliseconds since this gets passed unvarnished to TK after
                           :action (lambda (timer)
                                     (declare (ignorable timer))

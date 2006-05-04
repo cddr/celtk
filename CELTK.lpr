@@ -27,8 +27,7 @@
                  (make-instance 'module :name "togl.lisp")
                  (make-instance 'module :name "run.lisp")
                  (make-instance 'module :name "demos.lisp")
-                 (make-instance 'module :name
-                                "ltktest-cells-inside.lisp")
+                 (make-instance 'module :name "ltktest-ci.lisp")
                  (make-instance 'module :name "gears.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")

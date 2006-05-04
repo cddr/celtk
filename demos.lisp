@@ -24,9 +24,10 @@
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
-  ;;(test-window 'one-button)
-  (test-window 'gears-demo)
-  )
+  (test-window ;; 'one-button
+    ;;'ltktest-cells-inside
+    'gears-demo
+  ))
 
 (defmodel one-button (window)
   ()
