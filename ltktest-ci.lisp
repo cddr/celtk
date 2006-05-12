@@ -328,22 +328,22 @@ certainly wrong (or the class should be canvas-scroller).
     ; appended.
     ;    
     :bindings (c? (list
-                   (list '|<1>| (lambda (self event root-x root-y) 
-                                  (declare (ignorable event root-x root-y))
-                                  
-                                 ;
-                                 ; Stolen from the original. It means "when the left button is
-                                 ; pressed on this widget, popup this menu where the button was pressed"
-                                 ; The only difference is that here we get to specify this along with
-                                 ; the rest of the configuration of this instance, whereas in the original
-                                 ; the enabling code was just "out there" in a long sequence of other
-                                 ; imperatives setting up this widget and that. ie, It is nice having
-                                 ; everything about X collected in one place. In case you are wondering,
-                                 ; an observer on the bindings slot passes the needed bindings to Tk 
-                                 ; via the client queue.
-                                 ;
-                                 (pop-up (^widget-menu :bkg-pop) root-x root-y))
-                     "%X %Y")))
+                   (list '(|<1>| "%X %Y")
+                     (lambda (self event root-x root-y) 
+                       (declare (ignorable event root-x root-y))
+                       
+                       ;
+                       ; Stolen from the original. It means "when the left button is
+                       ; pressed on this widget, popup this menu where the button was pressed"
+                       ; The only difference is that here we get to specify this along with
+                       ; the rest of the configuration of this instance, whereas in the original
+                       ; the enabling code was just "out there" in a long sequence of other
+                       ; imperatives setting up this widget and that. ie, It is nice having
+                       ; everything about X collected in one place. In case you are wondering,
+                       ; an observer on the bindings slot passes the needed bindings to Tk 
+                       ; via the client queue.
+                       ;
+                       (pop-up (^widget-menu :bkg-pop) root-x root-y)))))
     
     :menus (c? (the-kids
                 ;

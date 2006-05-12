@@ -12,7 +12,7 @@
   :licence "MIT Style"
   :description "Tcl/Tk with Cells Inside(tm)"
   :long-description "A Cells-driven portable GUI, ultimately implmented by Tk"
-  :depends-on (:ltk :cells)
+  :depends-on (:cells :cl-opengl :cl-glu)
   :serial t
   :components ((:file "Celtk")
                (:file "tk-interp")
@@ -33,10 +33,8 @@
                (:file "item-shaped")
                (:file "composites")
                (:file "frame")
-               (:file "load-cl-opengl")
                (:file "togl")
                (:file "run")
                (:file "demos")
-               (:file "gears-demo")
-               (:file "gears")
-               (:file "ltktest-cells-inside")))
+               (:file "ltktest-ci")
+               (:file "gears")))

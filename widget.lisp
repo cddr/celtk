@@ -82,15 +82,18 @@
   ; to avoid separate enqueues for each binding (but then to tk-format-now so one does not
   ; simpy enqueue again when dispatched.
   ;
-  (dolist (bspec new-value)
-    (destructuring-bind (event fn &optional event-info) bspec
-        (bind self event fn event-info))))
+  (loop for (event-info fn) in new-value
+        do (if (atom event-info) ;; could also be "if symbolp"
+               (bind self event-info fn)
+             (destructuring-bind (event event-info) event-info
+               (bind self event fn event-info)))))
 
 ;;; --- items -----------------------------------------------------------------------
 
 (eval-when (compile load eval)
   (export '(canvas-offset ^canvas-offset coords-tweak ^coords-tweak caret-tweak ^caret-tweak
              decorations ^decorations)))
+
 
 (defmodel item-geometer () ;; mix-in
   ((canvas-offset :initarg :canvas-offset :accessor canvas-offset
@@ -154,20 +157,9 @@
     (tk-format `(:configure ,self) 
       "~a coords ~a ~{ ~a~}" (path .parent) (id-no self) new-value)))
 
-(defmethod not-to-be :before ((self item))
-  (dolist (k (^decorations))
-    (trc nil "dying item nails decoration" k)
-    (not-to-be k)))
-
 (defmethod not-to-be :after ((self item))
   (trc nil "whacking item" self)
   (tk-format `(:delete ,self) "~a delete ~a" (path (upper self widget)) (id-no self)))
-
-(defobserver decorations ((self item) new-kids old-kids)
-  ;; (trc "decorations" self new-kids old-kids)
-  (dolist (k (set-difference old-kids new-kids))
-    (trc "kids change nailing lost decoration" k)
-    (not-to-be k)))
 
 ;;; --- widget mixins ------------------------------
 

@@ -92,10 +92,10 @@
     (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
     (tk-scaling :initarg :tk-scaling :accessor tk-scaling
       :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
-    (fonts-to-load :initarg :fonts-to-load :accessor fonts-to-load :initform nil)
-    (font-sizes-to-load :initarg :font-sizes-to-load :accessor font-sizes-to-load :initform nil)
-    (font-info :initarg :font-info :accessor font-info
-      :initform (font-info-loader))
+    (tkfonts-to-load :initarg :tkfonts-to-load :accessor tkfonts-to-load :initform nil)
+    (tkfont-sizes-to-load :initarg :tkfont-sizes-to-load :accessor tkfont-sizes-to-load :initform nil)
+    (tkfont-info :initarg :tkfont-info :accessor tkfont-info
+      :initform (tkfont-info-loader))
     (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil))
   )
 
@@ -103,18 +103,18 @@
   (when new-value
     (tk-format '(:fini new-value) "focus ~a" (path new-value))))
 
-(defun font-info-loader ()
-    (c? (eko (nil "finfo")
+(defun tkfont-info-loader ()
+    (c? (eko (nil "tkfinfo")
           (loop with scaling = (^tk-scaling)
-              for (font fname) in (^fonts-to-load)
-              collect (cons font
+              for (tkfont fname) in (^tkfonts-to-load)
+              collect (cons tkfont
                         (apply 'vector
-                          (loop for fsize in (^font-sizes-to-load)
-                                for id = (format nil "~(~a-~2,'0d~)" font fsize)
+                          (loop for fsize in (^tkfont-sizes-to-load)
+                                for id = (format nil "~(~a-~2,'0d~)" tkfont fsize)
                               for tkf = (tk-eval "font create ~a -family {~a} -size ~a"
                                           id fname fsize)
                               for (nil ascent nil descent nil linespace nil fixed) = (tk-eval-list "font metrics ~a" tkf)
-                              collect (make-finfo :ascent (round (parse-integer ascent) scaling)
+                              collect (make-tkfinfo :ascent (round (parse-integer ascent) scaling)
                                         :id id
                                         :family fname
                                         :size fsize
@@ -122,7 +122,7 @@
                                         :linespace (round (parse-integer linespace) scaling)
                                         :fixed (plusp (parse-integer fixed))
                                         :em (round (parse-integer
-                                                    (tk-eval "font measure ~(~a~) \"m\"" font))
+                                                    (tk-eval "font measure ~(~a~) \"m\"" tkfont))
                                               scaling)))))))))
 
 (defobserver title$ ((self window))

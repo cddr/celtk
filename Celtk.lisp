@@ -45,7 +45,8 @@
    #:tk-user-queue-handler #:user-errors #:^user-errors
    #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps
    #:^widget-menu #:widget-menu #:tk-format-now
-   #:coords #:^coords #:tk-translate-keysym))
+   #:coords #:^coords #:tk-translate-keysym
+   #:do-on-event #:*tkw*))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))
@@ -65,7 +66,7 @@
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it stuff in the order it needs to work properly."
   (let ((priority '(:delete :forget :destroy 
-                     :pre-make-tk :make-tk :post-make-tk 
+                     :pre-make-tk :make-tk :make-tk-menubutton :post-make-tk 
                      :variable :bind :selection :trace :configure :grid :pack :fini)))
     (destructuring-bind (type1 self1 &rest dbg) task1
       (declare (ignorable dbg))
@@ -126,7 +127,7 @@
   ;
   ; --- debug stuff ---
   ;
-  (let ((yes '("bind" "pop" "menu" "mnu"))
+  (let ((yes '( ))
         (no  '("tk-events")))
 
     (declare (ignorable yes no))
@@ -134,7 +135,7 @@
       (break "Hey, fix this.")
       (replace tk$ "{Alt Q}" :start1 st))
 
-    (when (and (find-if (lambda (s) (search s tk$)) yes)
+    (when nil #+not (and (or (null yes) (find-if (lambda (s) (search s tk$)) yes))
             (not (find-if (lambda (s) (search s tk$)) no)))
       (format t "~&tk> ~a~%" tk$)))
   

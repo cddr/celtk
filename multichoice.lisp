@@ -28,7 +28,7 @@
   ()
   (:tk-spec scale
     -activestyle  -background -borderwidth -cursor
-    -font -foreground
+    (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness
     -relief -state
     -takefocus -troughcolor -width -xscrollcommand -yscrollcommand
@@ -58,7 +58,7 @@
   ()  
   (:tk-spec listbox
     -activestyle  -background -borderwidth -cursor
-    -disabledforeground -exportselection -font -foreground
+    -disabledforeground -exportselection (tkfont -font) -foreground
     -height -highlightbackground -highlightcolor -highlightthickness
     -listvariable -relief -selectmode -selectbackground
     -selectborderwidth -selectforeground -setgrid -state
@@ -81,7 +81,7 @@
      :initform (c? (format nil "~a" (^md-value))))))
 
 (defmethod make-tk-instance ((self listbox-item))
-  (trc "make-tk-instance listbox-item insert" self)
+  (trc nil "make-tk-instance listbox-item insert" self)
   (tk-format `(:post-make-tk ,self) "~A insert end ~s" (path .parent) (^item-text)))
 
 (defobserver .kids ((self listbox))
@@ -92,13 +92,13 @@
 
 ; --- spinbox ---------------------------------------------
 
-(deftk spinbox (widget)
+(deftk spinbox (commander widget)
   ((initial-value :initform nil :initarg :initial-value :reader initial-value))
   (:tk-spec spinbox
     -activebackground -background -borderwidth -cursor
     -buttonbackground -buttoncursor -buttondownrelief -buttonuprelief
     -disabledforeground  -disabledbackground -exportselection
-    -font (spin-format -format) -foreground -from
+    (tkfont -font) (spin-format -format) -foreground -from
     -command -invalidcommand -increment
     -highlightbackground -highlightcolor -highlightthickness 
     -insertbackground -insertborderwidth -insertofftime -insertontime
@@ -114,9 +114,10 @@
       :id (gentemp "SPN")
       :textVariable (c? (^path))
     :xscrollcommand (c-in nil)
-    :on-command (lambda (self text)
-                  (eko (nil "variable mirror command fired !!!!!!!" text)
-                    (setf (^md-value) text)))))
+    :command (c? (format nil "call-back ~(~a~) %s" (^path)))
+    :on-command (c? (lambda (self text)
+                      (eko ("variable mirror command fired !!!!!!!" text)
+                        (setf (^md-value) text))))))
 
 (defobserver .md-value ((self spinbox))
   (when new-value

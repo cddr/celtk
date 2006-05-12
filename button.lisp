@@ -30,7 +30,7 @@
   (:tk-spec button
     -activebackground  -activeforeground  -anchor
     -background -bitmap -borderwidth -cursor
-    -disabledforeground    -font -foreground
+    -disabledforeground    (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
     -justify 
     -padx -pady -relief -repeatdelay
@@ -56,7 +56,7 @@
   (:tk-spec radiocheck
     -activebackground  -activeforeground  -anchor
     -background -bitmap -borderwidth -compound -cursor
-    -disabledforeground   -font -foreground
+    -disabledforeground   (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
     -justify -padx -pady -relief -takefocus -text -textvariable
     -underline -wraplength 

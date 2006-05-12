@@ -28,7 +28,7 @@
   (:tk-spec label
     -activebackground   -activeforeground  -anchor
     -background -bitmap -borderwidth -compound -cursor
-    -disabledforeground   -font -foreground
+    -disabledforeground   (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
     -justify
     -padx -pady -relief -takefocus -text -textvariable -underline
@@ -43,7 +43,7 @@
   (:tk-spec message
     -activebackground   -activeforeground  -anchor
     -background -bitmap -borderwidth -compound -cursor
-    -disabledforeground    -font -foreground
+    -disabledforeground    (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
     -justify 
     -padx -pady -relief 

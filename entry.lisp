@@ -29,7 +29,7 @@
   ((text :initarg :text :accessor text :initform nil))
   (:tk-spec entry
     -background -borderwidth -cursor
-    -disabledforeground  -disabledbackground -exportselection -font -foreground
+    -disabledforeground  -disabledbackground -exportselection (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness
     -insertbackground -insertborderwidth -insertofftime -insertontime
     -insertwidth  -justify 
@@ -47,7 +47,7 @@
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
     (tk-format-now "trace add variable ~a write TraceOP" (^path))
-    (setf (gethash '|write| (event-handlers self))
+    (setf (gethash 'ctk::|write| (event-handlers self))
       (lambda (self event-type) ;; &rest args)
         (declare (ignorable event-type))
         (let ((new-value (tk-eval-var (^path))))
@@ -67,7 +67,7 @@
   ((modified :initarg :modified :accessor modified :initform nil))
   (:tk-spec text
     -background -borderwidth -cursor
-    -exportselection -font -foreground
+    -exportselection (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness 
     -insertbackground -insertborderwidth -insertofftime -insertontime
     -insertwidth -padx -pady -relief 

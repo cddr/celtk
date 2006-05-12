@@ -51,7 +51,7 @@
                    :kids (c? (the-kids
                               (mapcar (list-item-factory .parent)
                                 (list-item-keys .parent))))
-                   :font '(courier 9)
+                   :tkfont '(courier 9)
                    :state (c? (if (enabled .parent) 'normal 'disabled))
                    :takefocus (c? (if (enabled .parent) 1 0))
                    :height (c? (list-height .parent))

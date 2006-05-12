@@ -101,9 +101,10 @@
                   ;    NOT SIGNIFICANT FOR WINDOWS 95/NT.
     )
   (:default-initargs
-      :id (gentemp "TOGL")))
+      :id (gentemp "TOGL")
+    :ident (c? (^path))))
 
-(defmacro def-togl-callback (root &body preamble)
+(defmacro def-togl-callback (root (&optional (ptr-var 'togl-ptr)(self-var 'self)) &body preamble)
   (let ((register$ (format nil "TOGL-~a-FUNC" root))
         (cb$ (format nil "TOGL-~a" root))
         (cb-slot$ (format nil "CB-~a" root))
@@ -112,32 +113,28 @@
        (defcfun (,(format nil "Togl_~:(~a~)Func" root) ,(intern register$))
            :void
          (callback :pointer))
-       (defcallback ,(intern cb$) :void ((togl :pointer))
+       (defcallback ,(intern cb$) :void ((,ptr-var :pointer))
          (unless (c-stopped)
-           ,@preamble
-           (,(intern uc$) (cdr (assoc togl *togls*)))))
+           (let ((,self-var (gethash (togl-ident ,ptr-var)(dictionary *tkw*))))
+             ,@preamble
+             (,(intern uc$) ,self-var))))
        (defmethod ,(intern uc$) :around ((self togl))
          (if (,(intern cb-slot$) self)
                (funcall (,(intern cb-slot$) self) self)
              (call-next-method)))
        (defmethod ,(intern uc$) ((self togl))))))
 
-(defvar *togl*)
-(defvar *togls*)
-
-(def-togl-callback create
-    (setf (togl-ptr *togl*) togl)
-    (push (cons togl *togl*) *togls*))
-(def-togl-callback display)
-(def-togl-callback reshape)
-(def-togl-callback destroy)
-(def-togl-callback timer
+(def-togl-callback create ()
+    (setf (togl-ptr self) togl-ptr))
+(def-togl-callback display ())
+(def-togl-callback reshape ())
+(def-togl-callback destroy ())
+(def-togl-callback timer ()
     (check-faux-events))
 
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))
-    (let ((*togl* self))
-      (setf (gethash (^path) (dictionary .tkw)) self)
-      (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
-        (path self)(tk-configurations self))))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
+    (setf (gethash (^path) (dictionary .tkw)) self)
+    (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
+      (path self)(tk-configurations self)))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
 

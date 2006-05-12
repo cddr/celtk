@@ -4,13 +4,22 @@
         :name "asdf"
         :type "lisp"))
 
-(push (make-pathname #+lispworks :host #-lispworks :device "c"
-                     :directory '(:absolute "0dev" "cells"))
-    asdf:*central-registry*)
+(progn
+  (push (make-pathname #+lispworks :host #-lispworks :device "c"
+                       :directory '(:absolute "0dev" "cells"))
+        asdf:*central-registry*)
 
-(push (make-pathname #+lispworks :host #-lispworks :device "c"
-                     :directory '(:absolute "0dev" "Celtk"))
-    asdf:*central-registry*)
+  (push (make-pathname #+lispworks :host #-lispworks :device "c"
+                       :directory '(:absolute "0devtools" "cffi"))
+        asdf:*central-registry*)
+
+  (push (make-pathname #+lispworks :host #-lispworks :device "c"
+                       :directory '(:absolute "0devtools" "cl-opengl"))
+        asdf:*central-registry*)
+
+  (push (make-pathname #+lispworks :host #-lispworks :device "c"
+                       :directory '(:absolute "0dev" "Celtk"))
+        asdf:*central-registry*))
 
 #-runtestsuite
 (ASDF:OOS 'ASDF:LOAD-OP :CELLS)
@@ -18,11 +27,10 @@
 #+runtestsuite
 (ASDF:OOS 'ASDF:LOAD-OP :CELLS-TEST)
 
-#+checkoutceltk
 (ASDF:OOS 'ASDF:LOAD-OP :CELTK)
 
-#+testceltk
-(ctk::tk-test)
-
 #+ortestceltk
-(ctk:test-window 'celtk-user::lotsa-widgets)
+(ctk:test-window 'celtk-user::ltktest-cells-inside)
+
+#+opengl
+(celtk-user::gears)

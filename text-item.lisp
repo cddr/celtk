@@ -22,7 +22,7 @@
 
 (in-package :Celtk)
 
-(deftk text-item (fontified item)
+(deftk text-item (tkfontified item)
   ()
   (:tk-spec text
     (tk-fill -fill)
@@ -35,7 +35,7 @@
     -tags
     ;; -- special ---
     -anchor
-    -font
+    (tkfont -font)
     -justify
     -text
     -underline
@@ -43,4 +43,4 @@
   (:default-initargs
       :l-coords '(0 0) ;; the p-offset will positon the text
       :coords-tweak (c_? (eko (nil "coords tweak" self)
-                          (list 0 0 #+not (- (* (tk-scaling .tkw) (^font-ascent))))))))
+                          (list 0 0 #+not (- (* (tk-scaling .tkw) (^tkfont-ascent))))))))

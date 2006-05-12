@@ -23,14 +23,14 @@
 
 (in-package :Celtk)
 
-;;; --- fonts ---------------
+;;; --- fonts obtained from Tk-land ---------------
 
 (eval-when (compile load eval)
-  (export '(make-finfo finfo-family finfo-size finfo-slant finfo-ascent  finfo-linespace finfo-fixed
-             font-id font-info bounds-offset finfo-ascent font-height font-ascent 
-             finfo-descent ^font-descent ^font-find
-             finfo finfo-em ^font-em 
-             line-up line-down font-size-info)))
+  (export '(make-tkfinfo tkfinfo-family tkfinfo-size tkfinfo-slant tkfinfo-ascent  tkfinfo-linespace tkfinfo-fixed
+             tkfont-id tkfont-info bounds-offset tkfinfo-ascent tkfont-height tkfont-ascent 
+             tkfinfo-descent ^tkfont-descent ^tkfont-find
+             tkfinfo tkfinfo-em ^tkfont-em 
+             line-up line-down tkfont-size-info)))
 
 (defmacro def^macros (&rest fn-names)
   `(progn ,@(loop for fn-name in fn-names
@@ -41,63 +41,63 @@
                                   (defmacro ,(intern ^name) ()
                                     `(,',fn-name self)))))))
 
-(def^macros line-up line-down font-height font-ascent finfo-descent)
+(def^macros line-up line-down tkfont-height tkfont-ascent tkfinfo-descent)
 
-(defstruct finfo id family size slant ascent descent linespace fixed em)
+(defstruct tkfinfo id family size slant ascent descent linespace fixed em)
 
-(deftk font (widget)
+(deftk tkfont (widget)
   ()
   (:tk-spec font
     -family -size -weight -slant -underline -overstrike)
   (:default-initargs
       :id (gentemp "fnt")))
 
-(defmethod make-tk-instance ((self font))
+(defmethod make-tk-instance ((self tkfont))
   (setf (gethash (^path) (dictionary .tkw)) self)
   (tk-format `(:make-tk ,self) "font create ~a ~{~(~a~) ~a~^ ~}"
-      (font-id self)(tk-configurations self)))
+      (tkfont-id self)(tk-configurations self)))
 
-(defmethod tk-configure ((self font) option value)
+(defmethod tk-configure ((self tkfont) option value)
   (tk-format `(:configure ,self ,option) "font configure ~(~a~) ~(~a~) ~a"
     (path self) option (tk-send-value value)))
 
-(defun font-id (font) (md-name font))
+(defun tkfont-id (tkfont) (md-name tkfont))
 
-(defmethod path ((self font))
-  (font-id self))
+(defmethod path ((self tkfont))
+  (tkfont-id self))
 
-(defmacro ^font-find (font-id)
-  `(cdr (assoc ,font-id (font-info .tkw))))
+(defmacro ^tkfont-find (tkfont-id)
+  `(cdr (assoc ,tkfont-id (tkfont-info .tkw))))
       
-(defmodel fontified ()
+(defmodel tkfontified ()
   ((fkey :initarg :fkey :accessor fkey :initform nil)
    (f-size-step :initarg :f-size-step :accessor f-size-step
      :initform 0)
-   (finfo :initarg :finfo :accessor finfo
+   (tkfinfo :initarg :tkfinfo :accessor tkfinfo
      :initform (c_? (bwhen (fkey (^fkey))
-                       (let ((fkey-table (cdr (assoc fkey (font-info .tkw)))))
-                         (ASSERT fkey-table () "no such font: ~a ~a" fkey (symbol-package fkey))
+                       (let ((fkey-table (cdr (assoc fkey (tkfont-info .tkw)))))
+                         (ASSERT fkey-table () "no such tkfont: ~a ~a" fkey (symbol-package fkey))
                          (svref fkey-table (^f-size-step)))))))
   (:default-initargs
-      :font (c_? (bwhen (fi (^finfo))
-                  (finfo-id fi)))))
+      :tkfont (c_? (bwhen (fi (^tkfinfo))
+                  (tkfinfo-id fi)))))
 
-(defun font-size-info (self font decrements)
-  (let ((font-size-table (cdr (assoc font (font-info .tkw)))))
-    (ASSERT font-size-table () "no such font: ~a ~a" font (symbol-package font))
-    (svref font-size-table (+ 2 decrements)))) ;; we allow -decrements as a guess that it will be needed. dumb. :)
+(defun tkfont-size-info (self tkfont decrements)
+  (let ((tkfont-size-table (cdr (assoc tkfont (tkfont-info .tkw)))))
+    (ASSERT tkfont-size-table () "no such tkfont: ~a ~a" tkfont (symbol-package tkfont))
+    (svref tkfont-size-table (+ 2 decrements)))) ;; we allow -decrements as a guess that it will be needed. dumb. :)
 
-(defun font-ascent (self)
-  (finfo-ascent (^finfo)))
+(defun tkfont-ascent (self)
+  (tkfinfo-ascent (^tkfinfo)))
 
-(defun font-height (self)
-  (finfo-linespace (^finfo)))
+(defun tkfont-height (self)
+  (tkfinfo-linespace (^tkfinfo)))
 
 (defun line-up (self)
-  (ceiling (font-height self) -2))
+  (ceiling (tkfont-height self) -2))
 
 (defun line-down (self)
-  (floor (font-height self) 2))
+  (floor (tkfont-height self) 2))
 
 
 

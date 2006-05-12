@@ -3,8 +3,10 @@
 ;;;
 ;;; Simple program with rotating 3-D gear wheels.
 
-(in-package :celtk-user)
+(defpackage :gears
+  (:use :common-lisp :utils-kt :cells :celtk))
 
+(in-package :gears)
 
 (defvar *startx*)
 (defvar *starty*)
@@ -46,17 +48,16 @@
                                          (format nil "~a" (max 1 (or (parse-integer n$ :junk-allowed t) 0)))))
                    :double 1 ;; "yes"
                    :bindings (c? (list
-                                  (list '|<1>| (lambda (self event root-x root-y) 
-                                                 (declare (ignorable self event root-x root-y))
-                                                 (RotStart self root-x root-y)
-                                                 0)
-                                    "%X %Y")
-                                  (list '|<B1-Motion>|
+                                  (list '(|<1>| "%X %Y")
+                                    (lambda (self event root-x root-y) 
+                                      (declare (ignorable self event root-x root-y))
+                                      (RotStart self root-x root-y)
+                                      0))
+                                  (list '(|<B1-Motion>| "%X %Y")
                                     (lambda (self event root-x root-y)
                                       (declare (ignore event))
                                       (RotMove self root-x root-y)
-                                      0)
-                                    "%X %Y")))))))))
+                                      0))))))))))
 
 (defun RotStart (self x y)
   ;(trc "Rotstart!!!" self x y)

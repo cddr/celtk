@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (Apr 21, 2006 10:24)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (May 11, 2006 6:29)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -28,13 +28,11 @@
                  (make-instance 'module :name "run.lisp")
                  (make-instance 'module :name "demos.lisp")
                  (make-instance 'module :name "ltktest-ci.lisp")
-                 (make-instance 'module :name "gears.lisp"))
+                 (make-instance 'module :name "lotsa-widgets.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name
-                                 "C:\\0devtools\\cffi\\cffi")
-                  (make-instance 'project-module :name
-                                 "C:\\0devtools\\cl-opengl\\glu"))
+                                 "C:\\0devtools\\cffi\\cffi"))
   :libraries nil
   :distributed-files nil
   :internally-loaded-files nil
