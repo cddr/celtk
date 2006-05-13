@@ -328,7 +328,7 @@ certainly wrong (or the class should be canvas-scroller).
     ; appended.
     ;    
     :bindings (c? (list
-                   (list '(|<1>| "%X %Y")
+                   (list '(<1> "%X %Y")
                      (lambda (self event root-x root-y) 
                        (declare (ignorable event root-x root-y))
                        

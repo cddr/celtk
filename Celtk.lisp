@@ -24,6 +24,7 @@
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
   (:export
+   #:<1>
    #:title$ #:pop-up #:event-root-x #:event-root-y
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
    #:mk-panedwindow
@@ -127,7 +128,7 @@
   ;
   ; --- debug stuff ---
   ;
-  (let ((yes '( ))
+  (let ((yes '("bind" "entry"))
         (no  '("tk-events")))
 
     (declare (ignorable yes no))
@@ -135,7 +136,7 @@
       (break "Hey, fix this.")
       (replace tk$ "{Alt Q}" :start1 st))
 
-    (when nil #+not (and (or (null yes) (find-if (lambda (s) (search s tk$)) yes))
+    (when (and (or (null yes) (find-if (lambda (s) (search s tk$)) yes))
             (not (find-if (lambda (s) (search s tk$)) no)))
       (format t "~&tk> ~a~%" tk$)))
   
@@ -144,7 +145,7 @@
   ; --- serious stuff ---
   ;
   (setf *tk-last* tk$)
-  (eval-script *tki* tk$))
+  (tcl-eval-ex *tki* tk$))
 
 (defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"

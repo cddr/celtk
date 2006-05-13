@@ -29,10 +29,10 @@
 
 (define-foreign-library Tcl
     (:darwin (:framework "Tcl"))
-  (:windows (:or "/tcl/bin/Tcl84.dll")))
+  (:windows (:or "/tcl/bin/Tcl85.dll")))
 (define-foreign-library Tk
     (:darwin (:framework "Tk"))
-  (:windows (:or "/tcl/bin/tk84.dll")))
+  (:windows (:or "/tcl/bin/tk85.dll")))
     
 ;; Togl
 (define-foreign-library Togl
@@ -47,7 +47,7 @@
     
 (defmethod translate-from-foreign (value (type (eql 'tcl-retcode)))
   (unless (eq value (foreign-enum-value 'tcl-retcode-values :tcl-ok))
-    (error "*** Tcl error !"))
+    (error "Tcl error: ~a" (tcl-get-string-result *tki*)))
   value)
     
 ;; --- initialization ----------------------------------------
@@ -129,44 +129,31 @@
   (with-foreign-string (filename-cstr filename)
     (%Tcl_EvalFile interp filename-cstr)))
 
-;; Tcl_Eval
-
-(defcfun ("Tcl_Eval" %Tcl_Eval) tcl-retcode
+(defcfun ("Tcl_Eval" tcl-eval) tcl-retcode
   (interp      :pointer)
-  (script-cstr :pointer))
+  (script-cstr :string))
+
+(defcfun ("Tcl_EvalEx" tcl_evalex) tcl-retcode
+  (interp      :pointer)
+  (script-cstr :string)
+  (num-bytes :int)
+  (flags :int))
+
+(defun tcl-eval-ex (i s)
+  (tcl_evalex i s -1 0))
 
 (defcfun ("Tcl_GetStringResult" tcl-get-string-result) :string
   (interp      :pointer))
 
 (defcfun ("Tk_GetNumMainWindows" tk-get-num-main-windows) :int)
+(defcfun ("Tk_MainWindow" tk-main-window) :pointer (interp :pointer))
+(defcfun ("Tk_NameToWindow" tk-name-to-window) :pointer
+  (interp :pointer)
+  (pathName :string)
+  (related-tkwin :pointer))
 
-(defun Tcl_Eval (interp script)
-  (with-foreign-string (script-cstr script)
-    (%Tcl_Eval interp script-cstr)))
-
-(defcenum tcl-event-flag-values
-    (:tcl-dont-wait         2)
-  (:tcl-window-events     4)
-  (:tcl-file-events       8)
-  (:tcl-timer-events     16)
-  (:tcl-idle-events      32)
-  (:tcl-all-events       -3))
-
-(defcfun ("Tcl_DoOneEvent" Tcl_DoOneEvent) :int
-  (flags :int))
-
-(defcfun ("Tcl_DoWhenIdle" tcl-do-when-idle) :void
-  (tcl-idle-proc :pointer)
-  (client-data :int))
-
-(defcallback tcl-idle-proc :void ((client-data :int))
-  (unless (c-stopped)
-    (print (list :idle-proc :client-data client-data))))
-
-;; Tk_MainLoop
-
-(defcfun ("Tk_MainLoop" Tk_MainLoop) :void)
-
+(defun widget-to-tkwin (self)
+  (tk-name-to-window *tki* (^path) (tk-main-window *tki*)))
 
 ;;; --- Togl (Version 1.7 and above needed!) -----------------------------
 
@@ -257,7 +244,7 @@
   (assert interp)
   (assert script)
 
-  (Tcl_Eval interp script))
+  (tcl-eval interp script))
 
 #+testing
 (defun exec-button ()

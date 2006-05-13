@@ -44,13 +44,14 @@
   ;; not recommended by Tcl doc (tcl-do-when-idle (get-callback 'tcl-idle-proc) 42)
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
-
   (tk-format-now "proc TraceOP {n1 n2 op} {call-back-event $n1 $op}")
   (tk-format-now "set tk-events {}")
+  (tk-format-now "event add <<kenny>> <Meta-Alt-Control-X><Control-S>")
   (tk-format-now "proc call-back {w args} {global tk-events; lappend tk-events [concat do-on-command \\\"$w\\\" $args]}")
   (tk-format-now "proc call-back-event {w e args} {global tk-events; lappend tk-events [concat do-on-event \\\"$w\\\" \\\"$e\\\" $args]}")
   ;; (tk-format-now "bind . <Escape> {call-back-event %W :type <Escape> :time %t}")
-    
+  (tk-create-event-handler (tk-main-window *tki*) (expt 2 30) (callback tk-event-proc) 42)
+
   (with-integrity ()
     (setf *tkw* (make-instance root-class)))
 
@@ -88,7 +89,7 @@
                 do (tk-process-event e))))
       (progn
         (trc nil "tcl-do-one-event-loop sees no events" (get-internal-real-time))
-        (sleep *event-loop-delay*)))))
+        #+nah (sleep *event-loop-delay*)))))
 
 (defun tk-process-event (event)
   (trc nil "tk-process-event >" event *package*)

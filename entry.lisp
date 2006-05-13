@@ -84,11 +84,25 @@
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :modified (c-in nil)
-    :bindings (c? (list (list '|<<Modified>>|
+    :borderwidth (c? (if (^modified) 8 2))
+    :bindings nil #+not (c? (list (list '|<<Modified>>|
                           (lambda (self event &rest args)
                             (eko ("<<Modified>> !!TK value for text-widget" self event args)
-                              (setf (^modified) t))))))))
+                              nil #+not (setf (^modified) t))))))))
 
+
+
+(defcallback entry-modified-handler :void  ((self-tkwin :int)(XEvent :pointer))
+  (trc "yowza entry-modified-handler" self-tkwin XEvent (mem-aref XEvent :int)
+    (TK-EVENT-TYPE (mem-aref XEvent :int))))
+
+(defmethod make-tk-instance :after ((self text-widget))
+  (with-integrity(:client `(:post-make-tk ,self))
+    ;;(tk-format-now "bind ~a <<Modified>> {set bxbxbxbx}" (^path)) ;; {event generate ~:*~a <<yowza>>}" (^path))
+    (let ((self-tkwin (widget-to-tkwin self)))
+      (assert (plusp self-tkwin))
+      (trc "setting up text-widget virtual-event handler" self :tkwin self-tkwin)
+      (tk-create-event-handler self-tkwin (expt 2 30)  (callback entry-modified-handler) self-tkwin))))
 
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))

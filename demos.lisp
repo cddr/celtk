@@ -24,21 +24,13 @@
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
-  #+test (dolist (dll (ff:list-all-foreign-libraries))
-    (when (find-if (lambda (lib)
-                     (search lib (pathname-name dll))) '("ftgl" "tcl" "tk"))
-      (print `(unloading foreign library ,dll))
-      (ff:unload-foreign-library dll)))
-  ;(cffi:use-foreign-library ctk::tcl)
-  ;(cffi:use-foreign-library ctk::tk)
-  ;(cffi:use-foreign-library ctk::togl)
   (test-window 
-   ;;'one-button
-   'ltktest-cells-inside
-   ;;'menu-button-test
-   ;;'spinbox-test
-   ;; 'lotsa-widgets
-   ;;'gears-demo
+   ;; dont try this one, it is deliberately dysfunctional 'one-button
+   ;; OK 'ltktest-cells-inside
+   ;; OK 'menu-button-test
+   ;; OK 'spinbox-test
+   'lotsa-widgets
+   ;; Now in Gears project 'gears-demo
   ))
 
 (defmodel one-button (window)
@@ -70,6 +62,10 @@
                             :md-value (c?n "hello, world")
                             :height 3
                             :width 25)
+                           (make-instance 'button
+                             :fm-parent *parent*
+                             :text "<<kenny>>"
+                             :command "event generate . <<kenny>> -data \"Hi mom\"")
                            (make-instance 'button
                              :fm-parent *parent*
                              :text "time now?"

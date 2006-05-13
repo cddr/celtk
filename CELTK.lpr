@@ -8,6 +8,7 @@
   :modules (list (make-instance 'module :name "Celtk.lisp")
                  (make-instance 'module :name "tk-interp.lisp")
                  (make-instance 'module :name "tk-object.lisp")
+                 (make-instance 'module :name "tk-events.lisp")
                  (make-instance 'module :name "widget.lisp")
                  (make-instance 'module :name "font.lisp")
                  (make-instance 'module :name "layout.lisp")
