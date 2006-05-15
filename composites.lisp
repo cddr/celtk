@@ -86,6 +86,8 @@
     (title$ :initarg :title$ :accessor title$
       :initform (c? (string-capitalize (class-name (class-of self)))))
     (dictionary :initarg :dictionary :initform (make-hash-table :test 'string-equal) :accessor dictionary)
+    (tkwins :initform (make-hash-table) :reader tkwins)
+    (xwins :initform (make-hash-table) :reader xwins)
     (callbacks :initarg :callbacks :accessor callbacks
       :initform (make-hash-table :test #'eq))
     (after-timers :initarg :after-timers :accessor after-timers :initform (make-hash-table))

@@ -6,9 +6,10 @@
 
 (define-project :name :celtk
   :modules (list (make-instance 'module :name "Celtk.lisp")
+                 (make-instance 'module :name "tk-structs.lisp")
                  (make-instance 'module :name "tk-interp.lisp")
-                 (make-instance 'module :name "tk-object.lisp")
                  (make-instance 'module :name "tk-events.lisp")
+                 (make-instance 'module :name "tk-object.lisp")
                  (make-instance 'module :name "widget.lisp")
                  (make-instance 'module :name "font.lisp")
                  (make-instance 'module :name "layout.lisp")
@@ -27,9 +28,9 @@
                  (make-instance 'module :name "frame.lisp")
                  (make-instance 'module :name "togl.lisp")
                  (make-instance 'module :name "run.lisp")
-                 (make-instance 'module :name "demos.lisp")
                  (make-instance 'module :name "ltktest-ci.lisp")
-                 (make-instance 'module :name "lotsa-widgets.lisp"))
+                 (make-instance 'module :name "lotsa-widgets.lisp")
+                 (make-instance 'module :name "demos.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name

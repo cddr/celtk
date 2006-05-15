@@ -1,56 +1,5 @@
 (in-package :celtk)
 
-#|
-typedef struct {
-    int type;
-    unsigned long serial;   /* # of last request processed by server */
-    Bool send_event;	    /* True if this came from a SendEvent request */
-    Display *display;	    /* Display the event was read from */
-    Window event;	    /* Window on which event was requested. */
-    Window root;	    /* root window that the event occured on */
-    Window subwindow;	    /* child window */
-    Time time;		    /* milliseconds */
-    int x, y;		    /* pointer x, y coordinates in event window */
-    int x_root, y_root;	    /* coordinates relative to root */
-    unsigned int state;	    /* key or button mask */
-    Tk_Uid name;	    /* Name of virtual event. */
-    Bool same_screen;	    /* same screen flag */
-    Tcl_Obj *user_data;     /* application-specific data reference; Tk will
-			     * decrement the reference count *once* when it
-			     * has finished processing the event. */
-} XVirtualEvent;
-|#
-
-(defctype Window-ptr :unsigned-long)
-(defctype Time :unsigned-long)
-(defctype Tk_Uid :string)
-
-(defcstruct x-virtual-event
-    (type :int)
-  (serial :unsigned-long)
-  (send-event :boolean)
-  (display :pointer)
-  (event-window Window-ptr)
-  (root-window Window-ptr)
-  (sub-window Window-ptr)
-  (time Time)
-  (x :int)
-  (y :int)
-  (x-root :int)
-  (y-root :int)
-  (state :unsigned-int)
-  (name Tk_Uid)
-  (same-screen :boolean)
-  (user-data :string)
-  )
-
-(defcenum tcl-event-flag-values
-    (:tcl-dont-wait         2)
-  (:tcl-window-events     4)
-  (:tcl-file-events       8)
-  (:tcl-timer-events     16)
-  (:tcl-idle-events      32)
-  (:tcl-all-events       -3))
 
 (defcfun ("Tcl_DoOneEvent" Tcl_DoOneEvent) :int
   (flags :int))
@@ -58,6 +7,9 @@ typedef struct {
 (defcfun ("Tcl_DoWhenIdle" tcl-do-when-idle) :void
   (tcl-idle-proc :pointer)
   (client-data :int))
+
+(defcfun ("Tcl_GetString" tcl-get-string) :string
+  (tcl-obj :pointer))
 
 (defcallback tcl-idle-proc :void ((client-data :int))
   (unless (c-stopped)
@@ -67,20 +19,15 @@ typedef struct {
 
 (defcfun ("Tk_MainLoop" Tk_MainLoop) :void)
 
-
-
 (defcfun ("Tk_CreateEventHandler" tk-create-event-handler) :void
   (tkwin :pointer)
   (mask :int)
   (proc :pointer)
   (client-data :int))
 
-(defcallback tk-event-proc :void  ((client-data :int)(XEvent :pointer))
-  (trc "yowza tk-event-proc" client-data XEvent (tk-event-type (mem-aref XEvent :int))
-    (foreign-slot-value xevent 'X-Virtual-Event 'user-data)))
-
-(defcenum tk-event-type
-    (:KeyPress		2)
+(defcenum tk-event-type ;; do not try to generate masks from these!
+    "Ok for interpreting type field in event, but not for (expt 2 etype) to get mask"
+  (:KeyPress 2)
   :KeyRelease
   :ButtonPress		
   :ButtonRelease		
@@ -113,9 +60,84 @@ typedef struct {
   :ColormapNotify		
   :ClientMessage		
   :MappingNotify		
-  :virtualEvent)
+  :virtualEvent
+  :ActivateNotify
+  :DeactivateNotify
+  :MouseWheelEvent)
 
-(defun tk-event-type (n)
+(defcenum tk-event-mask
+    "Use to filter events when calling tk-create-event-handler"
+  :NoEventMask		
+  (:KeyPressMask			#.(ash 1 0))  
+  (:KeyReleaseMask		#.(ash 1 1))  
+  (:ButtonPressMask		#.(ash 1 2))  
+  (:ButtonReleaseMask		#.(ash 1 3))  
+  (:EnterWindowMask		#.(ash 1 4))  
+  (:LeaveWindowMask		#.(ash 1 5))  
+  (:PointerMotionMask		#.(ash 1 6))  
+  (:PointerMotionHintMask	#.(ash 1 7))  
+  (:Button1MotionMask		#.(ash 1 8))  
+  (:Button2MotionMask		#.(ash 1 9))  
+  (:Button3MotionMask		#.(ash 1 10)) 
+  (:Button4MotionMask		#.(ash 1 11)) 
+  (:Button5MotionMask		#.(ash 1 12)) 
+  (:ButtonMotionMask		#.(ash 1 13)) 
+  (:KeymapStateMask		#.(ash 1 14))
+  (:ExposureMask			#.(ash 1 15)) 
+  (:VisibilityChangeMask	#.(ash 1 16)) 
+  (:StructureNotifyMask		#.(ash 1 17)) 
+  (:ResizeRedirectMask		#.(ash 1 18)) 
+  (:SubstructureNotifyMask	#.(ash 1 19)) 
+  (:SubstructureRedirectMask	#.(ash 1 20)) 
+  (:FocusChangeMask		#.(ash 1 21)) 
+  (:PropertyChangeMask		#.(ash 1 22)) 
+  (:ColormapChangeMask		#.(ash 1 23)) 
+  (:OwnerGrabButtonMask		#.(ash 1 24)) 
+  (:MouseWheelMask	      #.(ash 1 28))
+  (:ActivateMask	            #.(ash 1 29))
+  (:VirtualEventMask          #.(ash 1 30)))
+
+
+(defun tk-event-type (n) ;; do not try to generate masks from these!
   (ignore-errors 
    (foreign-enum-keyword 'tk-event-type n)))
+
+
+
+(defun tk-event-mask-symbol (n) ;; do not try to generate masks from these!
+  (ignore-errors 
+   (foreign-enum-keyword 'tk-event-mask n)))
+
+(defun foreign-masks-combine (enum-type &rest mask-specs)
+  (reduce 'logior (loop for mask-spec in mask-specs
+                        collecting (etypecase mask-spec
+                                     (number mask-spec)
+                                     (keyword (foreign-enum-value enum-type mask-spec))))
+    :initial-value 0))
+
+
+;; sample event handler
+
+(defcallback dump-event :void  ((client-data :int)(xe :pointer))
+  (call-dump-event client-data xe))
+
+(defun call-dump-event (client-data xe)
+  ;;(trc "tkep> serial" (xsv serial xe))
+  #+shh (loop for win being the hash-keys of (tkwins *tkw*)
+        do (print `(win ,win :xwin ,(tkwin-window win) ,(tkwin-widget win) ,(path (tkwin-widget win)))))
+  ;;(trc "    > same-screen" (xsv same-screen xe))
+
+  (trc "tkep> " (tk-event-type (mem-aref xe :int)) :client-data client-data)
+  (case (tk-event-type (mem-aref xe :int))
+    (:virtualevent
+     (trc "    > :type" (format nil "<<~a>>" (xsv name xe)) :time (xsv time xe) :state (xsv state xe))
+     (trc "    > :x" (xsv x xe) :y (xsv y xe) :x-root (xsv x-root xe) :y-root (xsv y-root xe))
+     (trc "    > event/root/sub" (mapcar (lambda (w) (when w (path w)))
+                                (list (xwin-widget (xsv event-window xe))
+                                  (xwin-widget (xsv root-window xe))
+                                  (xwin-widget (xsv sub-window xe)))))
+
+     (trc "    > data" (when (plusp (xsv user-data xe))
+                         (tcl-get-string (xsv user-data xe)))))))
+
 

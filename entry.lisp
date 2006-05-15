@@ -25,6 +25,10 @@
 
 ;----------------------------------------------------------------------------
 
+
+
+(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
+
 (deftk entry (widget)
   ((text :initarg :text :accessor text :initform nil))
   (:tk-spec entry
@@ -41,18 +45,19 @@
   (:default-initargs
       :id (gentemp "ENT")
     :xscrollcommand (c-in nil)
-    :textvariable (c? (^path))
+    :textvariable (c? (intern (^path)))
+    :virtual-event-handlers (c? (list `(tracewrite ,(lambda (self event client-data)
+                                                      (declare (ignore event client-data))
+                                                      (let ((new-value (tcl-get-var *tki* (^path)
+                                                                         (var-flags :TCL_GLOBAL_ONLY :TCL_LEAVE_ERR_MSG))))
+                                                        (unless (string= new-value (^md-value))
+                                                          (setf (^md-value) new-value)))))))
+   
     :md-value (c-in "")))
 
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
-    (tk-format-now "trace add variable ~a write TraceOP" (^path))
-    (setf (gethash 'ctk::|write| (event-handlers self))
-      (lambda (self event-type) ;; &rest args)
-        (declare (ignorable event-type))
-        (let ((new-value (tk-eval-var (^path))))
-            (unless (string= new-value (^md-value))
-              (setf (^md-value) new-value)))))))
+    (tk-format-now "trace add variable ~a write TraceOP" (^path))))
  
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks
@@ -85,25 +90,9 @@
     :yscrollcommand (c-in nil)
     :modified (c-in nil)
     :borderwidth (c? (if (^modified) 8 2))
-    :bindings nil #+not (c? (list (list '|<<Modified>>|
-                          (lambda (self event &rest args)
-                            (eko ("<<Modified>> !!TK value for text-widget" self event args)
-                              nil #+not (setf (^modified) t))))))))
-
-
-
-(defcallback entry-modified-handler :void  ((self-tkwin :int)(XEvent :pointer))
-  (trc "yowza entry-modified-handler" self-tkwin XEvent (mem-aref XEvent :int)
-    (TK-EVENT-TYPE (mem-aref XEvent :int))))
-
-(defmethod make-tk-instance :after ((self text-widget))
-  (with-integrity(:client `(:post-make-tk ,self))
-    ;;(tk-format-now "bind ~a <<Modified>> {set bxbxbxbx}" (^path)) ;; {event generate ~:*~a <<yowza>>}" (^path))
-    (let ((self-tkwin (widget-to-tkwin self)))
-      (assert (plusp self-tkwin))
-      (trc "setting up text-widget virtual-event handler" self :tkwin self-tkwin)
-      (tk-create-event-handler self-tkwin (expt 2 30)  (callback entry-modified-handler) self-tkwin))))
-
+    :virtual-event-handlers (c? (list `(modified ,(lambda (self event client-data)
+                                                    (eko ("<<Modified>> !!TK value for text-widget" self event client-data)
+                                                      (setf (^modified) t))))))))
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))
 ;;;    (with-open-file (ksyms "/0dev/math-paper/tk-keysym.dat" :direction :input)

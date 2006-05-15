@@ -30,11 +30,15 @@
                  (format nil "~(~a.~a~)"
                      (parent-path (fm-parent self))
                      (md-name self))))
+   (tkwin :cell nil :accessor tkwin :initform nil)
+   (xwin :cell nil :accessor xwin :initform nil)
    (packing :reader packing :initarg :packing :initform nil)
    (gridding :reader gridding :initarg :gridding :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
-   (bindings :reader bindings :initarg :bindings :initform nil)
-   (event-handlers :reader event-handlers :initarg :event-handlers :initform (make-hash-table))
+   (event-handlers :reader event-handlers :initarg :event-handlers :initform nil)
+   (virtual-event-handlers :reader virtual-event-handlers :initarg :virtual-event-handlers :initform nil)
+   (needs-event-handler-p :reader needs-event-handler-p
+     :initform (c? (or (^event-handlers)(^virtual-event-handlers))))
    (menus :reader menus :initarg :menus :initform nil
      :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
@@ -44,11 +48,56 @@
   (:default-initargs
       :id (gentemp "W")))
 
+(defobserver needs-event-handler-p ()
+  (when new-value
+    (with-integrity (:client `(:post-make-tk ,self))
+      (tk-create-event-handler-ex self 'widget-event-handler -1)))) ;; // make this -1 more efficient
+
+(defun widget-to-tkwin (self)
+  (tk-name-to-window *tki* (path self) (tk-main-window *tki*)))
+
+(defcallback widget-event-handler :void  ((client-data :int)(xe :pointer))
+  (trc "bingo" (tk-event-type (xsv type xe)))
+  (case (tk-event-type (xsv type xe))
+      (:virtualevent
+       (let* ((self (xwin-widget (xsv event-window xe)))
+              (name (read-from-string (string-upcase (xsv name xe))))
+              (entry (assoc name (^virtual-event-handlers))))
+         (TRC "widget-event-handler" self name)
+         (if entry
+             (funcall (second entry) self xe client-data)
+           (trc "no handler for" name self))))))
+
+(defun tk-create-event-handler-ex (widget callback-name &rest masks)
+  (let ((self-tkwin (widget-to-tkwin widget)))
+      (assert (plusp self-tkwin))
+      (trc "setting up widget virtual-event handler" widget :tkwin self-tkwin)
+      (tk-create-event-handler self-tkwin
+        (apply 'foreign-masks-combine 'tk-event-mask masks)
+        (get-callback callback-name)
+        self-tkwin)))
+
 (defclass commander ()
   ()
   (:default-initargs
-      :command (c? (format nil "call-back ~(~a~)" (^path)))))
+      :command (c? (format nil "event generate ~a <<do-on-command>>" (^path)))))
 
+(defcallback commander-event-proc :void  ((client-data :int)(xe :pointer))
+  (declare (ignore client-data))
+  (when (eq (xevent-type xe) :virtualevent)
+    (bwhen (n$ (xsv name xe))
+      (case (read-from-string (string-upcase n$))
+        (do-on-command (let ((self (xwin-widget (xsv event-window xe))))
+                         (bwhen (c (^on-command))
+                           (let ((d (xsv user-data xe)))
+                             (if (plusp d)
+                                 (funcall c self (read-from-string (tcl-get-string d)))
+                               (funcall c self))))))
+        (otherwise (trc "commander sees unknown" n$))))))
+
+(defmethod make-tk-instance :after ((self commander)) 
+  (with-integrity (:client `(:post-make-tk ,self))
+    (tk-create-event-handler-ex self 'commander-event-proc :virtualEventMask)))
 
 (defun widget-menu (self key)
   (or (find key (^menus) :key 'md-name)
@@ -57,11 +106,40 @@
 (defmacro ^widget-menu (key)
   `(widget-menu self ,key))
 
+(defun tkwin-register (self)
+  (let ((tkwin (or (tkwin self)
+                  (setf (tkwin self)
+                    (tk-name-to-window *tki* (^path) (tk-main-window *tki*))))))
+    (setf (gethash tkwin (tkwins .tkw)) self)))
+
+(defun xwin-register (self)
+  (when (tkwin self)
+    (let ((xwin (tkwin-window (tkwin self))))
+      (when (plusp xwin)
+        (setf (gethash xwin (xwins .tkw)) self)
+        xwin))))
+
+(defun tkwin-widget (tkwin)
+  (gethash tkwin (tkwins *tkw*)))
+
+(defun xwin-widget (xwin) ;; assignment of xwin is deferred so...all this BS..
+  (when (plusp xwin)
+    (or (gethash xwin (xwins *tkw*))
+      (loop for self being the hash-values of (tkwins *tkw*)
+          using (hash-key tkwin)
+          unless (xwin self) ;; we woulda found it by now
+          do (when (eql xwin (xwin-register self))
+               (return-from xwin-widget self))
+          finally (trc "xwin-widget > no widget for xwin " xwin)))))
+
 (defmethod make-tk-instance ((self widget)) 
   (setf (gethash (^path) (dictionary .tkw)) self)
-  (when (tk-class self)
-    (tk-format `(:make-tk ,self) "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
-      (tk-class self) (path self)(tk-configurations self)) :stdfctry))
+  (trc nil "mktki" self (^path))
+  (with-integrity (:client `(:make-tk ,self))
+      (when (tk-class self)
+        (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
+          (tk-class self) (path self)(tk-configurations self)))
+      (tkwin-register self)))
 
 (defmethod tk-configure ((self widget) option value)
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
@@ -70,23 +148,6 @@
   (trc nil "not-to-be tk-forgetting true widget" self)
   (tk-format `(:forget ,self) "pack forget ~a" (^path))
   (tk-format `(:destroy ,self) "destroy ~a" (^path)))
-
-;;; --- bindings ------------------------------------------------------------
-
-(defobserver bindings () ;;; (w widget) event fun)
-  ;
-  ; when we get dynamic with this cell we will have to do the kids
-  ; thing and worry about extant new-values, de-bind lost old-values
-  ;
-  ; /// think about trying again to wrap this whole thing in one (with-integrity '(:client...
-  ; to avoid separate enqueues for each binding (but then to tk-format-now so one does not
-  ; simpy enqueue again when dispatched.
-  ;
-  (loop for (event-info fn) in new-value
-        do (if (atom event-info) ;; could also be "if symbolp"
-               (bind self event-info fn)
-             (destructuring-bind (event event-info) event-info
-               (bind self event fn event-info)))))
 
 ;;; --- items -----------------------------------------------------------------------
 

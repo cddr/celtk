@@ -44,7 +44,9 @@
     :tk-variable nil ;;(c? (^path))
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
+    :command (c? (format nil "event generate ~a <<do-on-command>> -data" (^path)))
     :on-command (lambda (self value)
+                  (trc "hi scale" self value)
                   (setf (^md-value) value))))
 
 (defmethod make-tk-instance :after ((self scale))
@@ -67,14 +69,16 @@
       :id (gentemp "LBX")
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
-      :bindings (c? (assert (selector self))
-                  (when (selector self) ;; if not? Figure out how listbox tracks own selection
-                      (list (list '|<<ListboxSelect>>|
-                              (lambda (self event &rest args)
-                                (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
-                                  (trc "NEW listbox callback firing" self event selection)
-                                  (setf (selection (selector self))
-                                    (md-value (elt (^kids) selection)))))))))))
+    :virtual-event-handlers
+    (c? (assert (selector self))
+      (when (selector self) ;; if not? Figure out how listbox tracks own selection
+        (list `(ListboxSelect ,(lambda (self event client-data)
+                                 (declare (ignore client-data event))
+                                 (trc "NEW listbox callback firing" self  )
+                                 (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
+                                   (trc "NEW listbox selection" self selection)
+                                   (setf (selection (selector self))
+                                     (md-value (elt (^kids) selection)))))))))))
 
 (defmodel listbox-item (tk-object)
   ((item-text :initarg :item-text :accessor item-text
@@ -114,7 +118,7 @@
       :id (gentemp "SPN")
       :textVariable (c? (^path))
     :xscrollcommand (c-in nil)
-    :command (c? (format nil "call-back ~(~a~) %s" (^path)))
+    :command (c? (format nil "event generate ~a <<do-on-command>> -data %s" (^path)))
     :on-command (c? (lambda (self text)
                       (eko ("variable mirror command fired !!!!!!!" text)
                         (setf (^md-value) text))))))

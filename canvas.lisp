@@ -37,9 +37,10 @@
       :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :id (gentemp "CV")
-    :bindings (c? (list
-                   (focusIn->active)
-                   (focusOut->active)))))
+;;;    :virtual-event-handlers (c? (list
+;;;                                 (focusIn->active)
+;;;                                 (focusOut->active)))
+    ))
 
 (defun focusIn->active ()
   (list '|<FocusIn>| (lambda (self event &rest args)

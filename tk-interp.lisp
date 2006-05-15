@@ -27,6 +27,13 @@
 
 ;; Tcl/Tk
 
+;;;(define-foreign-library Tcl
+;;;    (:darwin (:framework "Tcl"))
+;;;  (:windows (:or "d:/tcl/bin/Tcl84.dll")))
+;;;(define-foreign-library Tk
+;;;    (:darwin (:framework "Tk"))
+;;;  (:windows (:or "d:/tcl/bin/tk84.dll")))
+    
 (define-foreign-library Tcl
     (:darwin (:framework "Tcl"))
   (:windows (:or "/tcl/bin/Tcl85.dll")))
@@ -147,13 +154,13 @@
 
 (defcfun ("Tk_GetNumMainWindows" tk-get-num-main-windows) :int)
 (defcfun ("Tk_MainWindow" tk-main-window) :pointer (interp :pointer))
+
 (defcfun ("Tk_NameToWindow" tk-name-to-window) :pointer
   (interp :pointer)
   (pathName :string)
   (related-tkwin :pointer))
 
-(defun widget-to-tkwin (self)
-  (tk-name-to-window *tki* (^path) (tk-main-window *tki*)))
+
 
 ;;; --- Togl (Version 1.7 and above needed!) -----------------------------
 

@@ -115,7 +115,8 @@
          (callback :pointer))
        (defcallback ,(intern cb$) :void ((,ptr-var :pointer))
          (unless (c-stopped)
-           (let ((,self-var (gethash (togl-ident ,ptr-var)(dictionary *tkw*))))
+           (let ((,self-var (or (gethash ,ptr-var (tkwins *tkw*))
+                              (gethash (togl-ident ,ptr-var)(dictionary *tkw*)))))
              ,@preamble
              (,(intern uc$) ,self-var))))
        (defmethod ,(intern uc$) :around ((self togl))

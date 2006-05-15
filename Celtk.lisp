@@ -125,18 +125,10 @@
    "\"" "\\\""))
 
 (defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
-  ;
-  ; --- debug stuff ---
-  ;
-  (let ((yes '("bind" "entry"))
-        (no  '("tk-events")))
-
+  (let ((yes '(".ent" "textvariable"))
+        (no  '()))
     (declare (ignorable yes no))
-    (bwhen (st (search "\"Alt Q\"" tk$))
-      (break "Hey, fix this.")
-      (replace tk$ "{Alt Q}" :start1 st))
-
-    (when (and (or (null yes) (find-if (lambda (s) (search s tk$)) yes))
+    (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
             (not (find-if (lambda (s) (search s tk$)) no)))
       (format t "~&tk> ~a~%" tk$)))
   
