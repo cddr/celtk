@@ -130,8 +130,7 @@
 (def-togl-callback display ())
 (def-togl-callback reshape ())
 (def-togl-callback destroy ())
-(def-togl-callback timer ()
-    (check-faux-events))
+(def-togl-callback timer ())
 
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))
