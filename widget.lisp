@@ -73,13 +73,13 @@
 (defobserver event-handler ()
   (when new-value ;; \\\ work out how to unregister any old value
     (with-integrity (:client `(:post-make-tk ,self))
-      (trc "creating event handler for" self)
+      (trc nil "creating event handler for" self)
       (tk-create-event-handler-ex self 'widget-event-handler -1)))) ;; // make this -1 more efficient
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
       (assert (plusp self-tkwin))
-      (trc "setting up widget virtual-event handler" widget :tkwin self-tkwin)
+      (trc nil "setting up widget virtual-event handler" widget :tkwin self-tkwin)
       (tk-create-event-handler self-tkwin
         (apply 'foreign-masks-combine 'tk-event-mask masks)
         (get-callback callback-name)

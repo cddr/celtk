@@ -46,7 +46,7 @@
     :yscrollcommand (c-in nil)
     :command (c? (format nil "event generate ~a <<do-on-command>> -data" (^path)))
     :on-command (lambda (self value)
-                  (trc "hi scale" self value)
+                  ;; (trc "hi scale" self value)
                   (setf (^md-value) value))))
 
 (defmethod make-tk-instance :after ((self scale))

@@ -63,11 +63,11 @@ dynamic add/remove
   `(mk-menu :kids (c? (the-kids ,@submenus))))
 
 (defmethod make-tk-instance :after ((self menu))
-  (trc "make-tk-instance > traversing menu" self)
+  (trc nil "make-tk-instance > traversing menu" self)
   (fm-menu-traverse self
     (lambda (entry &aux (menu self))
       (assert (typep entry 'menu-entry))
-      (trc "make-tk-instance visiting menu entry" (path menu) entry)
+      (trc nil "make-tk-instance visiting menu entry" (path menu) entry)
       (tk-format `(:post-make-tk ,self) "~(~a~) add ~(~a~) ~{~(~a~) ~a~^ ~}"
         (path menu)
         (tk-class entry)
@@ -273,11 +273,9 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
                 :kids (c? (the-kids ;; don't worry, this flattens
                            (loop for v in (entry-values .parent)
                                collecting
-                                 (progn 
-                                   (trc "popup-menubutton entry label" v (down$ v))
-                                   (mk-menu-entry-radiobutton
+                                 (mk-menu-entry-radiobutton
                                     :label (down$ v)
-                                    :value v))))))))))
+                                    :value v)))))))))
 
 (defobserver initial-value ((self popup-menubutton))
   (when new-value

@@ -100,7 +100,7 @@
   (Tcl_Init interp)
   (Tk_Init interp)
 
-  (format t "~%*** Tk_AppInit has been called.~%")
+  ;;(format t "~%*** Tk_AppInit has been called.~%")
 
   ;; Return OK
   (foreign-enum-value 'tcl-retcode-values :tcl-ok))

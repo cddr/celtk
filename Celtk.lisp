@@ -62,23 +62,22 @@
 
 (define-symbol-macro .tkw (nearest self window))
 
+
 ; --- tk-format --- talking to wish/Tk -----------------------------------------------------
+
+(defconstant +tk-client-task-priority+
+    '(:delete :forget :destroy 
+       :pre-make-tk :make-tk :make-tk-menubutton :post-make-tk 
+       :variable :bind :selection :trace :configure :grid :pack :fini))
 
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it stuff in the order it needs to work properly."
-  (let ((priority '(:delete :forget :destroy 
-                     :pre-make-tk :make-tk :make-tk-menubutton :post-make-tk 
-                     :variable :bind :selection :trace :configure :grid :pack :fini)))
-    (destructuring-bind (type1 self1 &rest dbg) task1
+  (destructuring-bind (type1 self1 &rest dbg) task1
       (declare (ignorable dbg))
-      (assert type1)
-      (assert (find type1 priority) () "unknown task type ~a in task ~a" type1 task1)
       (destructuring-bind (type2 self2 &rest dbg) task2
         (declare (ignorable dbg))
-        (assert type2)
-        (assert (find type2 priority) () "unknown task type ~a in task ~a" type2 task2)
-        (let ((p1 (position type1 priority))
-              (p2 (position type2 priority)))
+        (let ((p1 (position type1 +tk-client-task-priority+))
+              (p2 (position type2 +tk-client-task-priority+)))
           (cond
            ((< p1 p2) t)
            ((< p2 p1) nil)
@@ -86,12 +85,14 @@
                 (:make-tk
                  (fm-ordered-p self1 self2))
                 (:pack
-                 (fm-ascendant-p self2 self1))))))))))
+                 (fm-ascendant-p self2 self1)))))))))
 
 
 (defun tk-user-queue-handler (user-q)
-  #+shh (loop for (defer-info . nil) in (sort (copy-list (fifo-data user-q)) 'tk-user-queue-sort :key 'car)
-        do (trc "user-q-handler sees" defer-info))
+  (loop for (defer-info . nil) in (fifo-data user-q)
+        unless (find (car defer-info) +tk-client-task-priority+)
+        do (error "unknown tk client task type ~a in task: ~a " (car defer-info) defer-info))
+
   (loop for (nil #+not defer-info . task) in (prog1
                                                  (sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
                                                (fifo-clear user-q))

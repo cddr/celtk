@@ -88,8 +88,7 @@
                                    for n below 25
                                    counting sym into symct
                                    collecting sym into syms
-                                   finally (trc "syms found !!!" symct)
-                                   (return syms)))))
+                                   finally (return syms)))))
      :list-item-factory (lambda (sym)
                           (make-instance 'listbox-item
                             :fm-parent *parent*
@@ -161,7 +160,7 @@
       (mk-popup-menubutton
        :id :font-face
        :initial-value (c? (second (^entry-values)))
-       :entry-values (c? (eko ("popup ff") (subseq (tk-eval-list "font families") 4 10))))
+       :entry-values (c? (subseq (tk-eval-list "font families") 4 10)))
                           
       (mk-scale :id :font-size
         :md-value (c-in 14)
