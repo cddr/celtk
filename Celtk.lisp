@@ -24,8 +24,8 @@
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
   (:export
-   #:<1>
-   #:title$ #:pop-up #:event-root-x #:event-root-y
+   #:<1> #:tk-event-type #:xsv #:name #:x-root #:y-root
+   #:title$ #:pop-up
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
    #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label
@@ -47,7 +47,7 @@
    #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps
    #:^widget-menu #:widget-menu #:tk-format-now
    #:coords #:^coords #:tk-translate-keysym
-   #:do-on-event #:*tkw*))
+    #:*tkw*))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))

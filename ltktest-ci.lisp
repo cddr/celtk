@@ -327,22 +327,13 @@ certainly wrong (or the class should be canvas-scroller).
     ; This also simplifies Celtk since it just has to pass the Tk code along with "grid <path> "
     ; appended.
     ;    
-    :event-handlers nil #+not (c? (list
-                                   (list '(<1> "%X %Y")
-                                     (lambda (self event root-x root-y) 
-                                       (declare (ignorable event root-x root-y))
-                                       
-                                       ;
-                                       ; Stolen from the original. It means "when the left button is
-                                       ; pressed on this widget, popup this menu where the button was pressed"
-                                       ; The only difference is that here we get to specify this along with
-                                       ; the rest of the configuration of this instance, whereas in the original
-                                       ; the enabling code was just "out there" in a long sequence of other
-                                       ; imperatives setting up this widget and that. ie, It is nice having
-                                       ; everything about X collected in one place. In case you are wondering,
-                                       ; a standard event-handler is created for any widget with handlers.
-                                       ;
-                                       (pop-up (^widget-menu :bkg-pop) root-x root-y)))))
+    :event-handler (c? (lambda (self xe)
+                         (case (tk-event-type (xsv type xe))
+                           (:virtualevent
+                            (trc "canvas virtual" (xsv name xe)))
+                           (:buttonpress
+                            (TRC "canvas buttonpress" self (xsv x-root xe)(xsv y-root xe))
+                            (pop-up (^widget-menu :bkg-pop) (xsv x-root xe) (xsv y-root xe))))))
     
     :menus (c? (the-kids
                 ;

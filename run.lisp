@@ -38,7 +38,7 @@
   ;; not recommended by Tcl doc (tcl-do-when-idle (get-callback 'tcl-idle-proc) 42)
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
-  (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<tracewrite>> -data {$n1 $op}}")
+  (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
   
   (with-integrity ()
     (setf *tkw* (make-instance root-class))
@@ -48,9 +48,7 @@
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")
 
-  ;; one or the other of...
- (tcl-do-one-event-loop)#+either-or   (Tk_MainLoop)
-  )
+  (tcl-do-one-event-loop))
 
 (defcallback main-window-proc :void  ((client-data :int)(xe :pointer))
   (declare (ignore client-data))
@@ -73,27 +71,10 @@
 (defun tcl-do-one-event-loop ()
   (loop while (plusp (tk-get-num-main-windows))
       do (loop until (zerop (Tcl_DoOneEvent 2))) ;; 2== TCL_DONT_WAIT
-        (sleep *event-loop-delay*)
+        (sleep *event-loop-delay*) ;; give the IDE a few cycles
       finally ;;(tk-eval "exit")
-        (tcl-delete-interp *tki*)
+        (tcl-delete-interp *tki*) ;; probably unnecessary
         (setf *tki* nil)))
-
-
-
-(defmethod do-on-event (self event-type$ &rest args &aux (event-type (intern event-type$ :ctk)))
-  (assert (symbolp event-type))
-  (trc nil "on event!!!" self event-type args)
-  (bif (ecb (gethash event-type (event-handlers self)))
-    (apply ecb self event-type args)
-    (progn
-      (trc "no event handlers for" self event-type (symbol-package event-type))
-      (loop for k being the hash-keys of (event-handlers self)
-              do (trc "known key" k (symbol-package k))))))
-
-(defmethod do-on-command (self &rest args)
-  (bif (ocb (on-command self))
-    (apply ocb self args)
-    (trc "weird, no on-command value" self args)))
 
 (defun test-window (root-class)
   "nails existing window as a convenience in iterative development"

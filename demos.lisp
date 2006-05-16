@@ -25,10 +25,10 @@
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
-   ;; 'one-button-window
-   ;;'ltktest-cells-inside
-   ;; OK 'menu-button-test
-   ;; OK 'spinbox-test
+   ;; true tester: 'one-button-window
+   ;; Not so good: 'ltktest-cells-inside
+   ;; 'menu-button-test
+   ;; 'spinbox-test
     'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))

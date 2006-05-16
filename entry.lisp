@@ -46,18 +46,27 @@
       :id (gentemp "ENT")
     :xscrollcommand (c-in nil)
     :textvariable (c? (intern (^path)))
-    :virtual-event-handlers (c? (list `(tracewrite ,(lambda (self event client-data)
-                                                      (declare (ignore event client-data))
-                                                      (let ((new-value (tcl-get-var *tki* (^path)
-                                                                         (var-flags :TCL_GLOBAL_ONLY :TCL_LEAVE_ERR_MSG))))
-                                                        (unless (string= new-value (^md-value))
-                                                          (setf (^md-value) new-value)))))))
+    :event-handler (lambda (self xe)
+                     (TRC nil "widget-event-handler" self (xsv type xe) )
+                     (case (tk-event-type (xsv type xe))
+                       (:virtualevent
+                        (trc nil "v/e" (xsv name xe))
+                        (case (read-from-string (string-upcase (xsv name xe)))
+                          (trace
+                           (TRC nil "entry e/h trace" self (when (plusp (xsv user-data xe))
+                                                              (tcl-get-string (xsv user-data xe))))
+                           ;; assuming write op, but data field shows that
+                           (let ((new-value (tcl-get-var *tki* (^path)
+                                              (var-flags :TCL_NAMESPACE_ONLY))))
+                             (unless (string= new-value (^md-value))
+                               (setf (^md-value) new-value))))))))
    
     :md-value (c-in "")))
 
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
-    (tk-format-now "trace add variable ~a write TraceOP" (^path))))
+    (tk-format-now "trace add variable ~a write TraceOP" (^path))
+    ))
  
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks
@@ -90,9 +99,14 @@
     :yscrollcommand (c-in nil)
     :modified (c-in nil)
     :borderwidth (c? (if (^modified) 8 2))
-    :virtual-event-handlers (c? (list `(modified ,(lambda (self event client-data)
-                                                    (eko ("<<Modified>> !!TK value for text-widget" self event client-data)
-                                                      (setf (^modified) t))))))))
+    :event-handler (lambda (self xe)
+                     (case (tk-event-type (xsv type xe))
+                       (:virtualevent
+                        (case (read-from-string (string-upcase (xsv name xe)))
+                          (modified
+                           (eko (nil "<<Modified>> !!TK value for text-widget" self)
+                             (setf (^modified) t)))))))))
+
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))
 ;;;    (with-open-file (ksyms "/0dev/math-paper/tk-keysym.dat" :direction :input)

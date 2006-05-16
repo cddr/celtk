@@ -69,16 +69,14 @@
       :id (gentemp "LBX")
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
-    :virtual-event-handlers
-    (c? (assert (selector self))
-      (when (selector self) ;; if not? Figure out how listbox tracks own selection
-        (list `(ListboxSelect ,(lambda (self event client-data)
-                                 (declare (ignore client-data event))
-                                 (trc "NEW listbox callback firing" self  )
-                                 (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
-                                   (trc "NEW listbox selection" self selection)
-                                   (setf (selection (selector self))
-                                     (md-value (elt (^kids) selection)))))))))))
+    :event-handler (lambda (self xe)
+                     (case (tk-event-type (xsv type xe))
+                       (:virtualevent
+                        (case (read-from-string (string-upcase (xsv name xe)))
+                          (ListboxSelect
+                           (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
+                             (setf (selection (selector self))
+                               (md-value (elt (^kids) selection)))))))))))
 
 (defmodel listbox-item (tk-object)
   ((item-text :initarg :item-text :accessor item-text

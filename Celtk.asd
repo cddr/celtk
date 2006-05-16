@@ -15,7 +15,9 @@
   :depends-on (:cells :cl-opengl :cl-glu)
   :serial t
   :components ((:file "Celtk")
+               (:file "tk-structs")
                (:file "tk-interp")
+               (:file "tk-events")
                (:file "tk-object")
                (:file "widget")
                (:file "font")
@@ -35,6 +37,6 @@
                (:file "frame")
                (:file "togl")
                (:file "run")
-               (:file "demos")
                (:file "ltktest-ci")
-               (:file "gears")))
+               (:file "lotsa-widgets")
+               (:file "demos")))

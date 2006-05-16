@@ -22,6 +22,31 @@
 
 (in-package :Celtk)
 
+;;; --- widget tkwin window glue -----------------------
+
+(defun widget-to-tkwin (self)
+  (tk-name-to-window *tki* (path self) (tk-main-window *tki*)))
+
+(defun xwin-register (self)
+  (when (tkwin self)
+    (let ((xwin (tkwin-window (tkwin self))))
+      (when (plusp xwin)
+        (setf (gethash xwin (xwins .tkw)) self)
+        xwin))))
+
+(defun tkwin-widget (tkwin)
+  (gethash tkwin (tkwins *tkw*)))
+
+(defun xwin-widget (xwin) ;; assignment of xwin is deferred so...all this BS..
+  (when (plusp xwin)
+    (or (gethash xwin (xwins *tkw*))
+      (loop for self being the hash-values of (tkwins *tkw*)
+          using (hash-key tkwin)
+          unless (xwin self) ;; we woulda found it by now
+          do (when (eql xwin (xwin-register self))
+               (return-from xwin-widget self))
+          finally (trc "xwin-widget > no widget for xwin " xwin)))))
+
 ;;; --- widget -----------------------------------------
 
 (defmodel widget (family tk-object)
@@ -35,10 +60,7 @@
    (packing :reader packing :initarg :packing :initform nil)
    (gridding :reader gridding :initarg :gridding :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
-   (event-handlers :reader event-handlers :initarg :event-handlers :initform nil)
-   (virtual-event-handlers :reader virtual-event-handlers :initarg :virtual-event-handlers :initform nil)
-   (needs-event-handler-p :reader needs-event-handler-p
-     :initform (c? (or (^event-handlers)(^virtual-event-handlers))))
+   (event-handler :reader event-handler :initarg :event-handler :initform nil)
    (menus :reader menus :initarg :menus :initform nil
      :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
@@ -48,25 +70,11 @@
   (:default-initargs
       :id (gentemp "W")))
 
-(defobserver needs-event-handler-p ()
-  (when new-value
+(defobserver event-handler ()
+  (when new-value ;; \\\ work out how to unregister any old value
     (with-integrity (:client `(:post-make-tk ,self))
+      (trc "creating event handler for" self)
       (tk-create-event-handler-ex self 'widget-event-handler -1)))) ;; // make this -1 more efficient
-
-(defun widget-to-tkwin (self)
-  (tk-name-to-window *tki* (path self) (tk-main-window *tki*)))
-
-(defcallback widget-event-handler :void  ((client-data :int)(xe :pointer))
-  (trc "bingo" (tk-event-type (xsv type xe)))
-  (case (tk-event-type (xsv type xe))
-      (:virtualevent
-       (let* ((self (xwin-widget (xsv event-window xe)))
-              (name (read-from-string (string-upcase (xsv name xe))))
-              (entry (assoc name (^virtual-event-handlers))))
-         (TRC "widget-event-handler" self name)
-         (if entry
-             (funcall (second entry) self xe client-data)
-           (trc "no handler for" name self))))))
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
@@ -76,6 +84,13 @@
         (apply 'foreign-masks-combine 'tk-event-mask masks)
         (get-callback callback-name)
         self-tkwin)))
+
+(defcallback widget-event-handler :void  ((client-data :int)(xe :pointer))
+  (let ((self (tkwin-widget client-data)))
+    (assert self () "widget-event-handler > no widget for tkwin ~a" client-data)
+    (bif (h (^event-handler))
+      (funcall h self xe)
+      (trc "widget-event-handler > warning: no handler in instance requesting event handling" self))))
 
 (defclass commander ()
   ()
@@ -112,26 +127,6 @@
                     (tk-name-to-window *tki* (^path) (tk-main-window *tki*))))))
     (setf (gethash tkwin (tkwins .tkw)) self)))
 
-(defun xwin-register (self)
-  (when (tkwin self)
-    (let ((xwin (tkwin-window (tkwin self))))
-      (when (plusp xwin)
-        (setf (gethash xwin (xwins .tkw)) self)
-        xwin))))
-
-(defun tkwin-widget (tkwin)
-  (gethash tkwin (tkwins *tkw*)))
-
-(defun xwin-widget (xwin) ;; assignment of xwin is deferred so...all this BS..
-  (when (plusp xwin)
-    (or (gethash xwin (xwins *tkw*))
-      (loop for self being the hash-values of (tkwins *tkw*)
-          using (hash-key tkwin)
-          unless (xwin self) ;; we woulda found it by now
-          do (when (eql xwin (xwin-register self))
-               (return-from xwin-widget self))
-          finally (trc "xwin-widget > no widget for xwin " xwin)))))
-
 (defmethod make-tk-instance ((self widget)) 
   (setf (gethash (^path) (dictionary .tkw)) self)
   (trc nil "mktki" self (^path))
@@ -139,6 +134,10 @@
       (when (tk-class self)
         (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
           (tk-class self) (path self)(tk-configurations self)))
+      #+tryinafter (tkwin-register self)))
+
+(defmethod make-tk-instance :after ((self widget)) 
+  (with-integrity (:client `(:post-make-tk ,self))
       (tkwin-register self)))
 
 (defmethod tk-configure ((self widget) option value)

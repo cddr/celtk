@@ -160,8 +160,6 @@
   (pathName :string)
   (related-tkwin :pointer))
 
-
-
 ;;; --- Togl (Version 1.7 and above needed!) -----------------------------
 
    
@@ -253,39 +251,7 @@
 
   (tcl-eval interp script))
 
-#+testing
-(defun exec-button ()
-  (tk-interp-init-ensure)
-  (let ((interp (Tcl_CreateInterp)))
-    (tk-app-init interp)
-    (togl_init interp)
-    #+works (progn
-              (eval-script interp "button .b1 -text Hello")
-              (eval-script interp "pack .b1"))
-    (eval-script interp "togl .t1 -height 100 -height 100 -ident t1")
-    ;;(eval-script interp "puts \"Hello puts\"")
-    )
-  (Tk_MainLoop))
 
-#+testing
-(defun test-result ()
-  (tk-interp-init-ensure)
-  (let ((*tki* (Tcl_CreateInterp)))
-    (tk-app-init *tki*)
-    #+wait (eval-script *tki* "font families")
-    #+ok (eval-script *tki* "tk scaling")
-    #+ok (progn
-      (eval-script *tki* "set xyz 42")
-      (eval-script *tki* "set xyz"))
-    ;;(trc "string result:" (tcl-get-string-result interp))
-    (trc "tk-eval result:" (tk-eval "tk scaling"))
-    (trc "tk-eval-list result:" (tk-eval-list "font families"))))
-
-;;;(defun exec-main ()
-;;;  (main "\\0devtools\\frgotk\\psu-rc-gui.tcl"))
-;;;
-;;;#+test
-;;;(exec-main)
 
 ;;; Togl stuff
 
