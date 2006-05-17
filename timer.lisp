@@ -52,7 +52,7 @@
   (export '(repeat ^repeat)))
 
 (defmodel timer ()
-  ((id :cell nil :initarg :id :accessor id :initform :anon
+  ((id :cell nil :initarg :id :accessor id :initform (gentemp "AFTER")
      :documentation "A debugging aid")
    (tag :cell nil :initarg :tag :accessor tag :initform :anon
      :documentation "A debugging aid")
@@ -99,9 +99,8 @@
                          (setf (id self) (set-timer self (^delay)))))))))))
 
 (defun set-timer (self time)
-  (let ((lookup-id (gentemp "AFTER")))
-    (setf (gethash lookup-id (dictionary *tkw*)) self)
-    (tk-eval "after ~a {event generate . <<time-is-up>> -data ~a}" time lookup-id)))
+  (setf (gethash (id self) (dictionary *tkw*)) self)
+  (tk-eval "after ~a {do-on-command ~a}" time (id self)))
 
 (defobserver timers ((self tk-object) new-value old-value)
   (dolist (k (set-difference old-value new-value))

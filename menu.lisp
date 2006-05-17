@@ -172,7 +172,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   ()
   (:tk-spec command -command)
   (:default-initargs
-      :command (c? (format nil "event generate . <<do-menu-command>> -data ~a" (path-idx self)))))
+      :command (c? (format nil "do-on-command ~a" (path-idx self)))))
 
 (defmacro mk-menu-entry-command-ex ((&rest menu-command-initargs) lbl callback-body)
   `(mk-menu-entry-command

@@ -8,6 +8,18 @@
   (tcl-idle-proc :pointer)
   (client-data :int))
 
+(defcfun ("Tcl_CreateCommand" tcl-create-command) :pointer
+  (interp :pointer)
+  (cmdName :string)
+  (proc :pointer)
+  (client-data :int)
+  (delete-proc :pointer))
+
+(defcfun ("Tcl_SetResult" tcl-set-result) :void
+  (interp :pointer)
+  (result :string)
+  (free-proc :pointer))
+
 (defcfun ("Tcl_GetString" tcl-get-string) :string
   (tcl-obj :pointer))
 

@@ -25,11 +25,11 @@
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
-   ;; true tester: 'one-button-window
+   ;;'one-button-window
    ;; Not so good: 'ltktest-cells-inside
    ;; 'menu-button-test
-   ;; 'spinbox-test
-    'lotsa-widgets
+   'spinbox-test
+  ;; 'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))
 
@@ -40,6 +40,11 @@
                (mk-frame-stack
                 :packing (c?pack-self)
                 :kids (c? (the-kids
+                           (mk-menubar
+                            :kids (c? (the-kids
+                                       (mk-menu-entry-cascade-ex (:label "File")
+                                         (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
+                                         (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
                            (make-instance 'entry
                              :id :entree
                              :fm-parent *parent*
@@ -48,70 +53,19 @@
                              :fm-parent *parent*
                              :text "read"
                              :on-command (lambda (self)
-                                           (trc "entry reads" (ctk::tk-eval-var (path (fm^ :entree)))))))))))))
-
-#+save
-(defmodel one-button-window (window)
-  ()
-  (:default-initargs
-      :on-event (lambda (self &rest event-args)
-                  (trc "we got events" self event-args))
-    :kids (c? (the-kids                
-               (mk-menubar
-                :kids (c? (the-kids
-                           (mk-menu-entry-cascade-ex (:label "File")
-                             (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
-                             (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
-               (mk-frame-stack
-                :packing (c?pack-self)
-                :kids (c? (the-kids
-                           
-                           ;;;                           (mk-scrolled-list
-                           ;;;                            :id :spinpkg-sym-list
-                           ;;;                            :list-height 6
-                           ;;;                            :list-item-keys (c? (loop for sym being the symbols in (find-package "CELTK")
-                           ;;;                                                    for n below 5
-                           ;;;                                                    counting sym into symct
-                           ;;;                                                    collecting sym into syms
-                           ;;;                                                    finally (trc "syms found !!!" symct)
-                           ;;;                                                      (return syms)))
-                           ;;;                            :list-item-factory (lambda (sym)
-                           ;;;                                                 (trc "make list item" sym *parent*)
-                           ;;;                                                 (make-instance 'listbox-item
-                           ;;;                                                   :fm-parent *parent*
-                           ;;;                                                   :md-value sym
-                           ;;;                                                   :item-text (down$ (symbol-name sym)))))
-                           (mk-text-widget
-                            :id :my-text
-                            :md-value (c?n "hello, world")
-                            :height 3
-                            :width 25)
-                           (make-instance 'button
-                             :fm-parent *parent*
-                             :text "<<kenny>>"
-                             :on-command (lambda (self)
-                                           (trc "button pushed!!!" self)))
-                           ;;;                           (make-instance 'button
-                           ;;;                             :fm-parent *parent*
-                           ;;;                             :text "time now?"
-                           ;;;                             :on-command (c? (lambda (self)
-                           ;;;                                               (trc "we got callbacks" self))))
+                                           (trc "entry reads" (ctk::tk-eval-var (path (fm^ :entree))))))
                            (make-instance 'scale
                              :fm-parent *parent*
                              :tk-label "Boots"
                              :on-command (c? (lambda (self value)
-                                               (trc "we got scale callbacks" self value))))
+                                               (trc "we got scale callbacks" self (parse-integer value)))))
                            (mk-spinbox
                             :id :spin-pkg
                             :md-value (c-in "cells") ;;(cells::c?n "cells")
                             :tk-values (mapcar 'down$
                                          (sort (mapcar 'package-name
                                                  (list-all-packages))
-                                           'string>)))
-                           (make-instance 'entry
-                             :fm-parent *parent*
-                             :md-value (c-in "Boots"))
-                           )))))))
+                                           'string>))))))))))
 
 (defmodel spinbox-test (window)
   ()
@@ -142,7 +96,8 @@
                                          (make-instance 'listbox-item
                                            :fm-parent *parent*
                                            :md-value sym
-                                           :item-text (down$ (symbol-name sym))))))))))
+                                           :item-text (down$ (symbol-name sym)))))
+                   (mk-label :text (c? (selection (fm^ :spinpkg-sym-list)))))))))
 
 
 (defmodel menu-button-test (window)

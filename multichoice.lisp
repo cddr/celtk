@@ -44,10 +44,9 @@
     :tk-variable nil ;;(c? (^path))
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
-    :command (c? (format nil "event generate ~a <<do-on-command>> -data" (^path)))
     :on-command (lambda (self value)
                   ;; (trc "hi scale" self value)
-                  (setf (^md-value) value))))
+                  (setf (^md-value) (parse-integer value)))))
 
 (defmethod make-tk-instance :after ((self scale))
   "Still necessary?"
@@ -116,7 +115,7 @@
       :id (gentemp "SPN")
       :textVariable (c? (^path))
     :xscrollcommand (c-in nil)
-    :command (c? (format nil "event generate ~a <<do-on-command>> -data %s" (^path)))
+    :command (c? (format nil "do-on-command ~a %s" (^path)))
     :on-command (c? (lambda (self text)
                       (eko ("variable mirror command fired !!!!!!!" text)
                         (setf (^md-value) text))))))

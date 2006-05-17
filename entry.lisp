@@ -65,8 +65,7 @@
 
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
-    (tk-format-now "trace add variable ~a write TraceOP" (^path))
-    ))
+    (tk-format-now "trace add variable ~a write TraceOP" (^path))))
  
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks

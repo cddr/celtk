@@ -39,12 +39,13 @@
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
+  (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command)  42 0)
   
   (with-integrity ()
     (setf *tkw* (make-instance root-class))
 
   (tk-create-event-handler-ex *tkw* 'main-window-proc :virtualEventMask))
-    
+  
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")
 
@@ -55,9 +56,6 @@
   (when (eq (xevent-type xe) :virtualevent)  
     (bwhen (n$ (xsv name xe))
       (case (read-from-string (string-upcase n$))
-        (do-menu-command (let ((self (gethash (tcl-get-string (xsv user-data xe)) (dictionary *tkw*))))
-                           (bwhen (c (^on-command))
-                             (funcall c self))))
         (time-is-up (let ((self (gethash (tcl-get-string (xsv user-data xe)) (dictionary *tkw*))))
                       (bwhen (c (^on-command))
                         (funcall c self))))
