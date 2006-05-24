@@ -1,24 +1,21 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
+
 
 (defpackage :celtk
   (:nicknames "CTK")
@@ -55,6 +52,8 @@
 (in-package :Celtk)
 
 (defvar *tki* nil)
+(defparameter *windows-being-destroyed* nil)
+(defparameter *windows-destroyed* nil)
 
 (defparameter *tk-last* nil "Debug aid. Last recorded command send to Tk")
 
@@ -94,7 +93,7 @@
         do (error "unknown tk client task type ~a in task: ~a " (car defer-info) defer-info))
 
   (loop for (nil #+not defer-info . task) in (prog1
-                                                 (sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
+                                                 (stable-sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
                                                (fifo-clear user-q))
         do
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
@@ -125,20 +124,25 @@
     "]" "\\]")
    "\"" "\\\""))
 
-(defun tk-format-now (fmt$ &rest fmt-args &aux (tk$ (apply 'format nil fmt$ fmt-args)))
-  (let ((yes '(".ent" "textvariable"))
-        (no  '()))
-    (declare (ignorable yes no))
-    (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
-            (not (find-if (lambda (s) (search s tk$)) no)))
-      (format t "~&tk> ~a~%" tk$)))
-  
-  (assert *tki*)
-  ;
-  ; --- serious stuff ---
-  ;
-  (setf *tk-last* tk$)
-  (tcl-eval-ex *tki* tk$))
+(defun tk-format-now (fmt$ &rest fmt-args)
+  (let ((*print-circle* nil)
+        (tk$ (apply 'format nil fmt$ fmt-args)))
+    ;
+    ; --- debug stuff ---------------------------------
+    ;
+    (let ((yes '( "destroy"))
+          (no  '()))
+      (declare (ignorable yes no))
+      (when (and (find-if (lambda (s) (search s tk$)) yes)
+                      (not (find-if (lambda (s) (search s tk$)) no)))
+        (format t "~&tk> ~a~%" tk$)))
+    (assert *tki*)
+    ; --- end debug stuff ------------------------------
+    ;
+    ; --- serious stuff ---
+    ;
+    (setf *tk-last* tk$)
+    (tcl-eval-ex *tki* tk$)))
 
 (defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"
@@ -189,8 +193,6 @@
 (defmethod parent-path ((self t)) (path self))
 
 ; --- tk eval  ----------------------------------------------------
-
-
 
 (defmethod path-index (self) (path self))
 

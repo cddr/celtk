@@ -1,25 +1,20 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
 
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
 
 (in-package :Celtk)
 
@@ -85,12 +80,11 @@
     #+wishful (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
     (title$ :initarg :title$ :accessor title$
       :initform (c? (string-capitalize (class-name (class-of self)))))
-    (dictionary :initarg :dictionary :initform (make-hash-table :test 'string-equal) :accessor dictionary)
+    (dictionary :initarg :dictionary :initform (make-hash-table :test 'equalp) :accessor dictionary)
     (tkwins :initform (make-hash-table) :reader tkwins)
     (xwins :initform (make-hash-table) :reader xwins)
     (callbacks :initarg :callbacks :accessor callbacks
       :initform (make-hash-table :test #'eq))
-    (after-timers :initarg :after-timers :accessor after-timers :initform (make-hash-table))
     (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
     (tk-scaling :initarg :tk-scaling :accessor tk-scaling
       :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))

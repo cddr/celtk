@@ -27,11 +27,11 @@
         asdf:*central-registry*)
 
   (push (make-pathname #+lispworks :host #-lispworks :device "c"
-                       :directory '(:absolute "0devtools" "cffi"))
+                       :directory '(:absolute "1-devtools" "cffi"))
         asdf:*central-registry*)
 
   (push (make-pathname #+lispworks :host #-lispworks :device "c"
-                       :directory '(:absolute "0devtools" "cl-opengl"))
+                       :directory '(:absolute "1-devtools" "cl-opengl"))
         asdf:*central-registry*)
 
   (push (make-pathname #+lispworks :host #-lispworks :device "c"

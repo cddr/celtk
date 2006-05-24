@@ -1,24 +1,20 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
 
 (in-package :Celtk)
 
@@ -30,12 +26,12 @@
 (defun xwin-register (self)
   (when (tkwin self)
     (let ((xwin (tkwin-window (tkwin self))))
-      (when (plusp xwin)
+      (unless (zerop xwin)
         (setf (gethash xwin (xwins .tkw)) self)
         xwin))))
 
 (defun tkwin-widget (tkwin)
-  (gethash tkwin (tkwins *tkw*)))
+  (gethash (pointer-address tkwin) (tkwins *tkw*)))
 
 (defun xwin-widget (xwin) ;; assignment of xwin is deferred so...all this BS..
   (when (plusp xwin)
@@ -68,7 +64,10 @@
      :initform (c? (upper self selector)))
    (on-event :initform nil :initarg :on-event :accessor on-event))
   (:default-initargs
-      :id (gentemp "W")))
+      :id (gentemp "W")
+    :event-handler nil #+debug (lambda (self xe)
+                     (TRC "widget-event-handler" self (tk-event-type (xsv type xe)) )
+                     )))
 
 (defobserver event-handler ()
   (when new-value ;; \\\ work out how to unregister any old value
@@ -78,14 +77,14 @@
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
-      (assert (plusp self-tkwin))
-      (trc nil "setting up widget virtual-event handler" widget :tkwin self-tkwin)
-      (tk-create-event-handler self-tkwin
-        (apply 'foreign-masks-combine 'tk-event-mask masks)
-        (get-callback callback-name)
-        self-tkwin)))
+    (assert (not (null-pointer-p self-tkwin)))
+    (trc nil "setting up widget virtual-event handler" widget :tkwin self-tkwin)
+    (tk-create-event-handler self-tkwin
+      (apply 'foreign-masks-combine 'tk-event-mask masks)
+      (get-callback callback-name)
+      self-tkwin)))
 
-(defcallback widget-event-handler :void  ((client-data :int)(xe :pointer))
+(defcallback widget-event-handler :void  ((client-data :pointer)(xe :pointer))
   (let ((self (tkwin-widget client-data)))
     (assert self () "widget-event-handler > no widget for tkwin ~a" client-data)
     (bif (h (^event-handler))
@@ -97,7 +96,7 @@
   (:default-initargs
       :command (c? (format nil "do-on-command ~a" (^path)))))
 
-(defcallback do-on-command :int ((client-data :int)(interp :pointer)(argc :int)(argv :pointer))
+(defcallback do-on-command :int ((client-data :pointer)(interp :pointer)(argc :int)(argv :pointer))
   (declare (ignore client-data))
   (destructuring-bind (path &rest args)
       (loop for argn upfrom 1 below argc
@@ -106,9 +105,18 @@
       (bIf (cmd (^on-command))
         (progn (apply cmd self args)
           0)
-        (progn (tcl-set-result interp (format nil "do-on-command> Target widget ~a has no on-command to run" path) 0)
+        (progn (tcl-set-result interp
+                 (format nil "do-on-command> Target widget ~a has no on-command to run" path)
+                 (null-pointer))
           1))
-      (progn (tcl-set-result interp (format nil "do-on-command> Target widget ~a does not exist" path) 0)
+      (progn
+        (loop for hk being the hash-keys of (dictionary *tkw*)
+              when (string-equal hk path)
+              do (trc "found string-equal match" path))
+        (break "do-on-command> Target widget ~a does not exist" path)
+        (tcl-set-result interp
+          (format nil "do-on-command> Target widget ~a does not exist" path)
+          (null-pointer))
         1))))
 
 (defun widget-menu (self key)
@@ -122,7 +130,7 @@
   (let ((tkwin (or (tkwin self)
                   (setf (tkwin self)
                     (tk-name-to-window *tki* (^path) (tk-main-window *tki*))))))
-    (setf (gethash tkwin (tkwins .tkw)) self)))
+    (setf (gethash (pointer-address tkwin) (tkwins .tkw)) self)))
 
 (defmethod make-tk-instance ((self widget)) 
   (setf (gethash (^path) (dictionary .tkw)) self)
@@ -141,9 +149,9 @@
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
 
 (defmethod not-to-be :after ((self widget))
-  (trc nil "not-to-be tk-forgetting true widget" self)
-  (tk-format `(:forget ,self) "pack forget ~a" (^path))
-  (tk-format `(:destroy ,self) "destroy ~a" (^path)))
+  (unless (find .tkw *windows-destroyed*)
+    (tk-format `(:forget ,self) "pack forget ~a" (^path))
+    (tk-format `(:destroy ,self) "destroy ~a" (^path))))
 
 ;;; --- items -----------------------------------------------------------------------
 
@@ -215,8 +223,9 @@
       "~a coords ~a ~{ ~a~}" (path .parent) (id-no self) new-value)))
 
 (defmethod not-to-be :after ((self item))
-  (trc nil "whacking item" self)
-  (tk-format `(:delete ,self) "~a delete ~a" (path (upper self widget)) (id-no self)))
+  (unless (find .tkw *windows-destroyed*)
+    ;(trc "whacking item" self)
+    (tk-format `(:delete ,self) "~a delete ~a" (path (upper self widget)) (id-no self))))
 
 ;;; --- widget mixins ------------------------------
 
@@ -241,9 +250,11 @@
   (declare (ignorable old-value old-value-boundp))
   (trc nil "selection output" self new-value)
   (when new-value
-    (tk-format `(:variable ,self) "set ~(~a~) ~a" ;; was ~a at the end, but no good for a font name with embedded spaces
-      (tk-variable self)
-      (tk-send-value new-value))))
+    (with-integrity (:client `(:variable ,self))
+      (let ((v$ (if (stringp new-value) ;; just going slow on switching over to C API before changing tk-send-value
+                    new-value
+                    (tk-send-value new-value))))
+        (tcl-set-var *tki* (tk-variable self) v$ (var-flags :TCL_NAMESPACE_ONLY))))))
 
 
 ;;; --- images -------------------------------------------------------

@@ -1,3 +1,22 @@
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
+
+
 (in-package :celtk)
 
 ;;;(defctype tcl-retcode :int)
@@ -115,7 +134,7 @@
          (callback :pointer))
        (defcallback ,(intern cb$) :void ((,ptr-var :pointer))
          (unless (c-stopped)
-           (let ((,self-var (or (gethash ,ptr-var (tkwins *tkw*))
+           (let ((,self-var (or (gethash (pointer-address ,ptr-var) (tkwins *tkw*))
                               (gethash (togl-ident ,ptr-var)(dictionary *tkw*)))))
              ,@preamble
              (,(intern uc$) ,self-var))))
@@ -131,7 +150,10 @@
 (def-togl-callback reshape ())
 (def-togl-callback destroy ())
 (def-togl-callback timer ())
-
+#+not
+(defmethod togl-timer-using-class :after ((self togl))
+  (loop until (zerop (ctk::Tcl_DoOneEvent 2))))
+       
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))
     (setf (gethash (^path) (dictionary .tkw)) self)

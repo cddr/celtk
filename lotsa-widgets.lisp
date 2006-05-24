@@ -1,3 +1,21 @@
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
+
 (in-package :celtk-user)
 
 (defmodel lotsa-widgets (window)
@@ -120,12 +138,16 @@
                             :fm-parent *parent*
                             :item-text (down$ (symbol-name sym)))))))
 
+(namestring (make-pathname :directory '(:absolute "0dev" "Celtk") :name "x1" :type "xbm"))
 (defun assorted-canvas-items ()
   (mk-canvas
    :height 350
    :kids (c? (the-kids
               (mk-bitmap :coords (list 140 140)
-                :bitmap "@\\0dev\\Celtk\\x1.xbm" #+not "@\\temp\\gsl.xbm")
+                :bitmap (conc$ "@" (namestring (make-pathname
+                                                :directory '(:absolute "0dev" "Celtk")
+                                                :name "x1"
+                                                :type "xbm"))))
               (mk-rectangle :coords (list 10 10 100 60)
                 :tk-fill "red")
               (mk-text-item :coords (list 100 80)
@@ -187,14 +209,14 @@
                           (mk-menu
                            :id 'filemenu
                            :kids (c? (the-kids
-                                      (mk-menu-entry-command :label "New" :command "exit")
+                                      (mk-menu-entry-command :label "New" :command "tk_getOpenFile") ;; not quite right, is it?
                                       (mk-menu-entry-command :label "Open" :command "tk_getOpenFile")
-                                      (mk-menu-entry-command :label "Close" :command "exit")
+                                      (mk-menu-entry-command :label "Close" :command "{destroy .}")
                                       (mk-menu-entry-separator)
                                       (mk-menu-entry-command :label "Quit"
                                         :state (c? (if t ;; (md-value (fm^ :check-me))
                                                        'normal 'disabled))
-                                        :command "exit")))))))
+                                        :command "tk_getOpenFile"))))))) ;; 'exit' in production, but under dev would take out Lisp IDE
               (mk-menu-entry-cascade
                :id 'editcascade
                :label "Edit"

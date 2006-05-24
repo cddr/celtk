@@ -1,3 +1,22 @@
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
+
+
 (in-package :celtk)
 
 ;;------------------------------------------------------------------------------
@@ -27,20 +46,26 @@
 
 ;; Tcl/Tk
 
-;;;(define-foreign-library Tcl
-;;;    (:darwin (:framework "Tcl"))
-;;;  (:windows (:or "d:/tcl/bin/Tcl84.dll")))
-;;;(define-foreign-library Tk
-;;;    (:darwin (:framework "Tk"))
-;;;  (:windows (:or "d:/tcl/bin/tk84.dll")))
-    
 (define-foreign-library Tcl
     (:darwin (:framework "Tcl"))
-  (:windows (:or "/tcl/bin/Tcl85.dll")))
+  (:windows (:or "/tcl/bin/Tcl85.dll"))
+  (:unix "libtcl.so")
+  (t (:default "libtcl")))
+
 (define-foreign-library Tk
     (:darwin (:framework "Tk"))
-  (:windows (:or "/tcl/bin/tk85.dll")))
-    
+  (:windows (:or "/tcl/bin/tk85.dll"))
+  (:unix "libtk.so")
+  (t (:default "libtk")))
+  
+;; Togl
+(define-foreign-library Togl
+    (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
+  (:windows (:or "/tcl/lib/togl/togl17.dll"))
+  (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
+
+;;; wait till Stu confirms (use-foreign-library Togl)
+  
 ;; Togl
 (define-foreign-library Togl
     (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
@@ -77,18 +102,13 @@
   (interp :pointer))
 
 ;; Tcl_SetVal
+(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
 
-(defcfun ("Tcl_SetVar" %Tcl_SetVar) :string
+(defcfun ("Tcl_SetVar" tcl-set-var) :string
   (interp :pointer)
   (var-name :string)
   (new-value :string)
   (flags :int))
-
-(defun Tcl_SetVar (interp var-name new-value flags)
-  (with-foreign-string (var-name-cstr var-name)
-    (with-foreign-string (new-value-cstr new-value)
-          (foreign-string-to-lisp
-           (%Tcl_SetVar interp var-name-cstr new-value-cstr flags)))))
 
 (defcallback Tk_AppInit tcl-retcode
   ((interp :pointer))
@@ -232,8 +252,9 @@
   (setq *initialized* nil))
 
 (defun argv0 ()
-  #+allegro (sys:command-line-argument 0)
-  #+lispworks (nth 0 (io::io-get-command-line-arguments)))
+    #+allegro (sys:command-line-argument 0)
+   #+lispworks (nth 0 (io::io-get-command-line-arguments))
+   #+sbcl (nth 0 sb-ext:*posix-argv*))
 
 (defun tk-interp-init-ensure ()
   (unless *initialized*

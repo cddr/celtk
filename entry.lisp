@@ -1,33 +1,24 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
 
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
 
 (in-package :Celtk)
 
 ;----------------------------------------------------------------------------
-
-
-
-(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
 
 (deftk entry (widget)
   ((text :initarg :text :accessor text :initform nil))
@@ -104,7 +95,15 @@
                         (case (read-from-string (string-upcase (xsv name xe)))
                           (modified
                            (eko (nil "<<Modified>> !!TK value for text-widget" self)
-                             (setf (^modified) t)))))))))
+                             (setf (^modified) t)))))
+                       ))))
+
+(defobserver .md-value ((self text-widget))
+  (trc nil "md-value output" self new-value)
+  (with-integrity (:client `(:variable ,self))
+    (tk-format-now "~a delete 1.0 end" (^path))
+    (when (plusp (length new-value))
+      (tk-format-now "~a insert end ~s" (^path) new-value))))
 
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))

@@ -1,3 +1,22 @@
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
+
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
+
+
 (in-package :celtk)
 
 
@@ -6,13 +25,13 @@
 
 (defcfun ("Tcl_DoWhenIdle" tcl-do-when-idle) :void
   (tcl-idle-proc :pointer)
-  (client-data :int))
+  (client-data :pointer))
 
 (defcfun ("Tcl_CreateCommand" tcl-create-command) :pointer
   (interp :pointer)
   (cmdName :string)
   (proc :pointer)
-  (client-data :int)
+  (client-data :pointer)
   (delete-proc :pointer))
 
 (defcfun ("Tcl_SetResult" tcl-set-result) :void
@@ -23,7 +42,7 @@
 (defcfun ("Tcl_GetString" tcl-get-string) :string
   (tcl-obj :pointer))
 
-(defcallback tcl-idle-proc :void ((client-data :int))
+(defcallback tcl-idle-proc :void ((client-data :pointer))
   (unless (c-stopped)
     (print (list :idle-proc :client-data client-data))))
 
@@ -35,7 +54,7 @@
   (tkwin :pointer)
   (mask :int)
   (proc :pointer)
-  (client-data :int))
+  (client-data :pointer))
 
 (defcenum tk-event-type ;; do not try to generate masks from these!
     "Ok for interpreting type field in event, but not for (expt 2 etype) to get mask"
@@ -130,7 +149,7 @@
 
 ;; sample event handler
 
-(defcallback dump-event :void  ((client-data :int)(xe :pointer))
+(defcallback dump-event :void  ((client-data :pointer)(xe :pointer))
   (call-dump-event client-data xe))
 
 (defun call-dump-event (client-data xe)
@@ -149,7 +168,7 @@
                                   (xwin-widget (xsv root-window xe))
                                   (xwin-widget (xsv sub-window xe)))))
 
-     (trc "    > data" (when (plusp (xsv user-data xe))
+     (trc "    > data" (unless (null-pointer-p (xsv user-data xe))
                          (tcl-get-string (xsv user-data xe)))))))
 
 

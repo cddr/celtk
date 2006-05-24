@@ -1,71 +1,94 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
 
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
 
 (in-package :celtk-user)
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
    ;;'one-button-window
-   ;; Not so good: 'ltktest-cells-inside
+   'ltktest-cells-inside
    ;; 'menu-button-test
-   'spinbox-test
-  ;; 'lotsa-widgets
+   ;;'spinbox-test
+  ;;'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))
 
 (defmodel one-button-window (window)
   ()
   (:default-initargs
-    :kids (c? (the-kids                
-               (mk-frame-stack
-                :packing (c?pack-self)
-                :kids (c? (the-kids
-                           (mk-menubar
-                            :kids (c? (the-kids
-                                       (mk-menu-entry-cascade-ex (:label "File")
-                                         (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
-                                         (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
-                           (make-instance 'entry
-                             :id :entree
-                             :fm-parent *parent*
-                             :md-value (c-in "Boots"))
-                           (make-instance 'button
-                             :fm-parent *parent*
-                             :text "read"
-                             :on-command (lambda (self)
-                                           (trc "entry reads" (ctk::tk-eval-var (path (fm^ :entree))))))
-                           (make-instance 'scale
-                             :fm-parent *parent*
-                             :tk-label "Boots"
-                             :on-command (c? (lambda (self value)
-                                               (trc "we got scale callbacks" self (parse-integer value)))))
-                           (mk-spinbox
-                            :id :spin-pkg
-                            :md-value (c-in "cells") ;;(cells::c?n "cells")
-                            :tk-values (mapcar 'down$
-                                         (sort (mapcar 'package-name
-                                                 (list-all-packages))
-                                           'string>))))))))))
+      :kids (c? (the-kids                
+                 (mk-frame-stack
+                  :packing (c?pack-self)
+                  :kids (c? (the-kids
+                             (one-deep-menubar)
+                             #+not (mk-menubar
+                              :kids (c? (the-kids
+                                         (mk-menu-entry-cascade-ex (:label "File")
+                                           (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
+                                           (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
+                             (mk-text-widget
+                              :id :my-text
+                              :md-value (c?n "hello, world")
+                              :height 8
+                              :width 25)
+                             ;;;                           (make-instance 'entry
+                             ;;;                             :id :entree
+                             ;;;                             :fm-parent *parent*
+                             ;;;                             :md-value (c-in "Boots"))
+                             ;;;                           (make-instance 'button
+                             ;;;                             :fm-parent *parent*
+                             ;;;                             :text "read"
+                             ;;;                             :on-command (lambda (self)
+                             ;;;                                           (trc "entry reads" (ctk::tk-eval-var (path (fm^ :entree))))))
+                             ;;;                           (make-instance 'scale
+                             ;;;                             :fm-parent *parent*
+                             ;;;                             :tk-label "Boots"
+                             ;;;                             :on-command (c? (lambda (self value)
+                             ;;;                                               (trc "we got scale callbacks" self (parse-integer value)))))
+                             ;;;                           (mk-spinbox
+                             ;;;                            :id :spin-pkg
+                             ;;;                            :md-value (c-in "cells") ;;(cells::c?n "cells")
+                             ;;;                            :tk-values (mapcar 'down$
+                             ;;;                                         (sort (mapcar 'package-name
+                             ;;;                                                 (list-all-packages))
+                             ;;;                                           'string>)))
+                             )))))))
+
+(defun one-deep-menubar ()
+  (mk-menubar
+   :id 'mbar
+   :kids (c? (the-kids
+              (mk-menu-entry-cascade-ex (:label "File")
+                            (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
+                            (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed")))
+              (mk-menu-entry-cascade
+               :id 'editcascade
+               :label "Edit"
+               :kids (c? (the-kids
+                          (mk-menu
+                           :id 'editmenu
+                           :kids (c? (the-kids
+                                      (mk-menu-radio-group :id :app-font-face
+                                        :selection (c-in "courier")
+                                        :kids (c? (the-kids
+                                                   (mk-menu-entry-radiobutton :label "Times" :value "times")
+                                                   (mk-menu-entry-radiobutton :label "Courier" :value "courier")
+                                                   (mk-menu-entry-radiobutton :label "Helvetica" :value "helvetica"))))))))))))))
 
 (defmodel spinbox-test (window)
   ()

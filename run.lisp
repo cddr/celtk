@@ -1,25 +1,20 @@
-;; -*- mode: Lisp; Syntax: Common-Lisp; Package: celtk; -*-
-;;;
-;;; Copyright (c) 2006 by Kenneth William Tilton.
-;;;
-;;; Permission is hereby granted, free of charge, to any person obtaining a copy 
-;;; of this software and associated documentation files (the "Software"), to deal 
-;;; in the Software without restriction, including without limitation the rights 
-;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-;;; copies of the Software, and to permit persons to whom the Software is furnished 
-;;; to do so, subject to the following conditions:
-;;;
-;;; The above copyright notice and this permission notice shall be included in 
-;;; all copies or substantial portions of the Software.
-;;;
-;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-;;; IN THE SOFTWARE.
+;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
+#|
 
+    Celtk -- Cells, Tcl, and Tk
+
+Copyright (C) 2006 by Kenneth Tilton
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Lisp Lesser GNU Public License
+ (http://opensource.franz.com/preamble.html), known as the LLGPL.
+
+This library is distributed  WITHOUT ANY WARRANTY; without even 
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the Lisp Lesser GNU Public License for more details.
+
+|#
 
 (in-package :Celtk)
 
@@ -39,27 +34,47 @@
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
-  (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command)  42 0)
+  (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command)  (null-pointer) (null-pointer))
   
   (with-integrity ()
     (setf *tkw* (make-instance root-class))
 
-  (tk-create-event-handler-ex *tkw* 'main-window-proc :virtualEventMask))
+  (tk-create-event-handler-ex *tkw* 'main-window-proc :structureNotifyMask :virtualEventMask))
   
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")
+  (tk-format-now "bind . <Destroy> {event generate . <<window-destroyed>>}")
 
   (tcl-do-one-event-loop))
 
-(defcallback main-window-proc :void  ((client-data :int)(xe :pointer))
+(defun ensure-destruction (w)
+  (unless (find w *windows-being-destroyed*)
+    (let ((*windows-being-destroyed* (cons w *windows-being-destroyed*)))
+      (not-to-be w))))
+
+(defcallback main-window-proc :void  ((client-data :pointer)(xe :pointer))
   (declare (ignore client-data))
-  (when (eq (xevent-type xe) :virtualevent)  
-    (bwhen (n$ (xsv name xe))
-      (case (read-from-string (string-upcase n$))
-        (time-is-up (let ((self (gethash (tcl-get-string (xsv user-data xe)) (dictionary *tkw*))))
-                      (bwhen (c (^on-command))
-                        (funcall c self))))
-        (otherwise (trc "main window sees unknown" n$))))))
+  (TRC nil "main window event" (xevent-type xe))
+  (case (xevent-type xe)
+    (:destroyNotify
+     (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
+       (ensure-destruction *tkw*)))
+    (:virtualevent
+     (bwhen (n$ (xsv name xe))
+       (case (read-from-string (string-upcase n$))
+
+         (close-window
+          (ensure-destruction *tkw*))
+
+         (window-destroyed
+          (ensure-destruction *tkw*))
+
+         (time-is-up
+          (let ((self (gethash (tcl-get-string (xsv user-data xe)) (dictionary *tkw*))))
+            (bwhen (c (^on-command))
+              (funcall c self))))
+
+         (otherwise (trc "main window sees unknown" n$)))))))
 
 ;; Our own event loop ! - Use this if it is desirable to do something
 ;; else between events
@@ -67,10 +82,14 @@
 (defparameter *event-loop-delay* 0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
 (defun tcl-do-one-event-loop ()
-  (loop while (plusp (tk-get-num-main-windows))
-      do (loop until (zerop (Tcl_DoOneEvent 2))) ;; 2== TCL_DONT_WAIT
+  (loop while (progn (trc "checking num main windows")
+                (plusp (tk-get-num-main-windows)))
+      do (trc "calling Tcl_DoOneEvent" (tk-get-num-main-windows))
+        (loop until (zerop (Tcl_DoOneEvent 2))) ;; 2== TCL_DONT_WAIT
+        (trc "sleeping")
         (sleep *event-loop-delay*) ;; give the IDE a few cycles
-      finally ;;(tk-eval "exit")
+      finally
+        (trc "Tcl-do-one-event-loop sees no more windows" *tki*)
         (tcl-delete-interp *tki*) ;; probably unnecessary
         (setf *tki* nil)))
 
