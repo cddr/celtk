@@ -126,8 +126,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
-    (let ((*print-circle* nil)
-          (tk$ (apply 'format nil fmt$ fmt-args)))
+    (let* ((*print-circle* nil)
+           (tk$ (apply 'format nil fmt$ fmt-args)))
       ;
       ; --- debug stuff ---------------------------------
       ;
