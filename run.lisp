@@ -34,7 +34,7 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
-  (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command)  (null-pointer) (null-pointer))
+  (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command) (null-pointer) (null-pointer))
   
   (with-integrity ()
     (setf *tkw* (make-instance root-class))
@@ -43,12 +43,13 @@ See the Lisp Lesser GNU Public License for more details.
   
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")
-  (tk-format-now "bind . <Destroy> {event generate . <<window-destroyed>>}")
 
   (tcl-do-one-event-loop))
 
 (defun ensure-destruction (w)
+  (TRC nil "ensure-destruction entry" W)
   (unless (find w *windows-being-destroyed*)
+    (TRC nil "ensure-destruction not-to-being" W)
     (let ((*windows-being-destroyed* (cons w *windows-being-destroyed*)))
       (not-to-be w))))
 
@@ -61,6 +62,8 @@ See the Lisp Lesser GNU Public License for more details.
        (ensure-destruction *tkw*)))
     (:virtualevent
      (bwhen (n$ (xsv name xe))
+       (trc nil "main-window-proc :" n$ (unless (null-pointer-p (xsv user-data xe))
+                                      (tcl-get-string (xsv user-data xe))))
        (case (read-from-string (string-upcase n$))
 
          (close-window
@@ -74,7 +77,8 @@ See the Lisp Lesser GNU Public License for more details.
             (bwhen (c (^on-command))
               (funcall c self))))
 
-         (otherwise (trc "main window sees unknown" n$)))))))
+         (otherwise (trc "main window sees unknown" n$))))))
+  0)
 
 ;; Our own event loop ! - Use this if it is desirable to do something
 ;; else between events
@@ -82,14 +86,14 @@ See the Lisp Lesser GNU Public License for more details.
 (defparameter *event-loop-delay* 0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
 (defun tcl-do-one-event-loop ()
-  (loop while (progn (trc "checking num main windows")
+  (loop while (progn (trc nil "checking num main windows")
                 (plusp (tk-get-num-main-windows)))
-      do (trc "calling Tcl_DoOneEvent" (tk-get-num-main-windows))
+      do (trc nil "calling Tcl_DoOneEvent" (tk-get-num-main-windows))
         (loop until (zerop (Tcl_DoOneEvent 2))) ;; 2== TCL_DONT_WAIT
-        (trc "sleeping")
+        (trc nil "sleeping")
         (sleep *event-loop-delay*) ;; give the IDE a few cycles
       finally
-        (trc "Tcl-do-one-event-loop sees no more windows" *tki*)
+        (trc nil "Tcl-do-one-event-loop sees no more windows" *tki*)
         (tcl-delete-interp *tki*) ;; probably unnecessary
         (setf *tki* nil)))
 

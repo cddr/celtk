@@ -125,24 +125,25 @@ See the Lisp Lesser GNU Public License for more details.
    "\"" "\\\""))
 
 (defun tk-format-now (fmt$ &rest fmt-args)
-  (let ((*print-circle* nil)
-        (tk$ (apply 'format nil fmt$ fmt-args)))
-    ;
-    ; --- debug stuff ---------------------------------
-    ;
-    (let ((yes '( "destroy"))
-          (no  '()))
-      (declare (ignorable yes no))
-      (when (and (find-if (lambda (s) (search s tk$)) yes)
-                      (not (find-if (lambda (s) (search s tk$)) no)))
-        (format t "~&tk> ~a~%" tk$)))
-    (assert *tki*)
-    ; --- end debug stuff ------------------------------
-    ;
-    ; --- serious stuff ---
-    ;
-    (setf *tk-last* tk$)
-    (tcl-eval-ex *tki* tk$)))
+  (unless (find *tkw* *windows-destroyed*)
+    (let ((*print-circle* nil)
+          (tk$ (apply 'format nil fmt$ fmt-args)))
+      ;
+      ; --- debug stuff ---------------------------------
+      ;
+      (let ((yes '( "destroy"))
+            (no  '()))
+        (declare (ignorable yes no))
+        (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
+                        (not (find-if (lambda (s) (search s tk$)) no)))
+          (format t "~&tk> ~a~%" tk$)))
+      (assert *tki*)
+      ; --- end debug stuff ------------------------------
+      ;
+      ; --- serious stuff ---
+      ;
+      (setf *tk-last* tk$)
+      (tcl-eval-ex *tki* tk$))))
 
 (defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"

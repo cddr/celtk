@@ -149,7 +149,8 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
 
 (defmethod not-to-be :after ((self widget))
-  (unless (find .tkw *windows-destroyed*)
+  (when (or (and (eql self .tkw) (not (find .tkw *windows-destroyed*)))
+          (not (find .tkw *windows-being-destroyed*)))
     (tk-format `(:forget ,self) "pack forget ~a" (^path))
     (tk-format `(:destroy ,self) "destroy ~a" (^path))))
 
@@ -158,7 +159,6 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-when (compile load eval)
   (export '(canvas-offset ^canvas-offset coords-tweak ^coords-tweak caret-tweak ^caret-tweak
              decorations ^decorations)))
-
 
 (defmodel item-geometer () ;; mix-in
   ((canvas-offset :initarg :canvas-offset :accessor canvas-offset
@@ -274,5 +274,5 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; --- menus ---------------------------------
 
 (defun pop-up (menu x y)
-  (trc "popping up" menu x y)
+  (trc nil "popping up" menu x y)
   (tk-format-now "tk_popup ~A ~A ~A" (path menu) x y))

@@ -332,7 +332,7 @@ certainly wrong (or the class should be canvas-scroller).
                            (:virtualevent
                             (trc "canvas virtual" (xsv name xe)))
                            (:buttonpress
-                            (TRC "canvas buttonpress" self (xsv x-root xe)(xsv y-root xe))
+                            (TRC nil "canvas buttonpress" self (xsv x-root xe)(xsv y-root xe))
                             (pop-up (^widget-menu :bkg-pop) (xsv x-root xe) (xsv y-root xe))))))
     
     :menus (c? (the-kids
@@ -382,7 +382,7 @@ certainly wrong (or the class should be canvas-scroller).
                           :delay 1 ;; milliseconds since this gets passed unvarnished to TK after
                           :action (lambda (timer)
                                     (declare (ignorable timer))
-                                    (trc "timer fires!!" timer)
+                                    (trc nil "timer fires!!" timer)
                                     (incf (^angle-1) 0.1)))))
     :coords (c? (let ((angle-2 (* 0.3 (^angle-1)))
                              (wx (sin (* 0.1 (^angle-1)))))
@@ -429,7 +429,7 @@ certainly wrong (or the class should be canvas-scroller).
                   ; declaring them to the menu widget, it seems to me. In Celtk, they do.
                   ;
                   :underline 1
-                  :command "destroy ."))))))
+                  :command "destroy .; break"))))))
 
 
 (defmodel entry-numeric (entry)

@@ -82,11 +82,8 @@ See the Lisp Lesser GNU Public License for more details.
      :initform (c? (bwhen (rpt (eko (nil ">>> repeat") (when (eq (^state) :on)
                                (^repeat))))
                    (when (or (zerop (^executions)) (^executed)) ;; dispatch initially or after an execution
-                     (if (zerop (^executions))
-                         (setf (elapsed self) (now))
-                       (when (and (numberp rpt)
-                               (>= (^executions) rpt))
-                         (print `(stop timer!!! ,(* 1.0 (- (now) (elapsed self)))))))
+                     (when (zerop (^executions))
+                       (setf (elapsed self) (now)))
                      (when (if (numberp rpt)
                                (< (^executions) rpt)
                              rpt) ;; playing it safe/robust: redundant with initial bwhen check that rpt is not nil
