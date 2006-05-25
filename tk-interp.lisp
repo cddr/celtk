@@ -180,6 +180,41 @@ See the Lisp Lesser GNU Public License for more details.
   (pathName :string)
   (related-tkwin :pointer))
 
+;; ----------------------------------------------------------------------------
+;; Tcl_CreateCommand - used to implement direct callbacks
+;; ----------------------------------------------------------------------------
+
+(defcfun ("Tcl_CreateCommand" Tcl_CreateCommand) :pointer
+  (interp :pointer)
+  (cmdName :string)
+  (cmdProc :pointer)
+  (clientData :int)
+  (deleteProc :pointer))
+
+;; ----------------------------------------------------------------------------
+;; Tcl/Tk channel related stuff
+;; ----------------------------------------------------------------------------
+
+(defcfun ("Tcl_RegisterChannel" Tcl_RegisterChannel) :void
+  (interp :pointer)
+  (channel :pointer))
+
+(defcfun ("Tcl_UnregisterChannel" Tcl_UnregisterChannel) :void
+  (interp :pointer)
+  (channel :pointer))
+
+(defcfun ("Tcl_MakeFileChannel" Tcl_MakeFileChannel) :pointer
+  (handle :int)
+  (readOrWrite :int))
+
+(defcfun ("Tcl_GetChannelName" Tcl_GetChannelName) :string
+  (channel :pointer))
+
+(defcfun ("Tcl_GetChannel" Tcl_GetChannel) :pointer
+  (interp :pointer)
+  (channelName :string)
+  (modePtr :pointer))
+
 ;;; --- Togl (Version 1.7 and above needed!) -----------------------------
 
    
