@@ -37,6 +37,7 @@
                (:file "frame")
                (:file "togl")
                (:file "run")
+	       (:file "fileevent")
                (:file "ltktest-ci")
                (:file "lotsa-widgets")
                (:file "demos")))
