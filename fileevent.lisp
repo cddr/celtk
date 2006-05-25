@@ -36,7 +36,9 @@
 	    read-fn
 	    write-fn
 	    eof-fn
-	    mk-fileevent)))
+	    mk-fileevent
+	    stream-2-in-fd
+	    stream-2-out-fd)))
 
 ;;; ===========================================================================
 ;;; TK-FILEEVENT MODEL
