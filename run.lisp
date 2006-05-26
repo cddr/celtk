@@ -39,7 +39,7 @@ See the Lisp Lesser GNU Public License for more details.
   (with-integrity ()
     (setf *tkw* (make-instance root-class))
 
-  (tk-create-event-handler-ex *tkw* 'main-window-proc :structureNotifyMask :virtualEventMask))
+  (tk-create-event-handler-ex *tkw* 'main-window-proc -1 :structureNotifyMask :virtualEventMask))
   
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")

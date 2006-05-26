@@ -1,7 +1,7 @@
 ;; -*- mode: Lisp; Syntax: Common-Lisp; Package: cells; -*-
 #|
 
-    Celtk -- Cells, Tcl, and Tk
+    Togl Bindings and Cells/Tk Interfaces
 
 Copyright (C) 2006 by Kenneth Tilton
 
@@ -16,36 +16,74 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
-
 (in-package :celtk)
 
-;;;(defctype tcl-retcode :int)
-;;;
-;;;(defcenum tcl-retcode-values
-;;;    (:tcl-ok    0)
-;;;  (:tcl-error 1))
-;;;    
-;;;(defmethod translate-from-foreign (value (type (eql 'tcl-retcode)))
-;;;  (unless (eq value (foreign-enum-value 'tcl-retcode-values :tcl-ok))
-;;;    (error "*** Tcl error !"))
-;;;  value)
-;;;
-;;;(define-foreign-library Tcl
-;;;    (:windows "/tcl/bin/Tcl84.dll")
-;;;  (:darwin (:framework "Tcl")))
-;;;
-;;;(define-foreign-library Tk
-;;;    (:windows "/tcl/bin/Tk84.dll")
-;;;  (:darwin (:framework "Tk")))
-;;;
-;;;(defcfun ("Tcl_InitStubs" tcl-init-stubs) :int
-;;;  (interp :pointer)(version :string)(math-version-exactly :int))
-;;;
-;;;(defcfun ("Tk_InitStubs" tk-init-stubs) :int
-;;;  (interp :pointer)(version :string)(math-version-exactly :int))
-;;;
-;;;(defcfun ("Togl_Init" togl-init) tcl-retcode
-;;;  (interp :pointer))
+
+(define-foreign-library Togl
+    (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
+  (:windows (:or "/tcl/lib/togl/togl17.dll"))
+  (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
+
+(defctype togl-struct-ptr-type :pointer)
+
+;;; --- Togl (Version 1.7 and above needed!) -----------------------------
+
+(defcfun ("Togl_Init" Togl_Init) tcl-retcode
+  (interp :pointer))
+
+(defcfun ("Togl_CreateFunc" Togl_CreateFunc) :void
+  (togl-callback-ptr :pointer))
+
+(defcfun ("Togl_DisplayFunc" Togl_DisplayFunc) :void
+  (togl-callback-ptr :pointer))
+
+(defcfun ("Togl_ReshapeFunc" Togl_ReshapeFunc) :void
+  (togl-callback-ptr :pointer))
+
+(defcfun ("Togl_DestroyFunc" Togl_DestroyFunc) :void
+  (togl-callback-ptr :pointer))
+
+(defcfun ("Togl_TimerFunc" Togl_TimerFunc) :void
+  (togl-callback-ptr :pointer))
+
+(defcfun ("Togl_PostRedisplay" Togl_PostRedisplay) :void
+  (togl-struct-ptr :pointer))
+
+(defcfun ("Togl_SwapBuffers" Togl_SwapBuffers) :void
+  (togl-struct-ptr :pointer))
+
+(defcfun ("Togl_Ident" Togl-Ident) :string
+  (togl-struct-ptr :pointer))
+
+(defcfun ("Togl_Width" Togl_Width) :int
+  (togl-struct-ptr :pointer))
+
+(defcfun ("Togl_Height" Togl_Height) :int
+  (togl-struct-ptr :pointer))
+
+(defcfun ("Togl_Interp" Togl_Interp) :pointer
+  (togl-struct-ptr :pointer))
+
+;; Togl_AllocColor
+;; Togl_FreeColor
+
+;; Togl_LoadBitmapFont
+;; Togl_UnloadBitmapFont
+
+;; Togl_SetClientData
+;; Togl_ClientData
+
+;; Togl_UseLayer
+;; Togl_ShowOverlay
+;; Togl_HideOverlay
+;; Togl_PostOverlayRedisplay
+;; Togl_OverlayDisplayFunc
+;; Togl_ExistsOverlay
+;; Togl_GetOverlayTransparentValue
+;; Togl_IsMappedOverlay
+;; Togl_AllocColorOverlay
+;; Togl_FreeColorOverlay
+;; Togl_DumpToEpsFile
 
 (eval-when (compile load eval)
   (export '(togl_swapbuffers togl_postredisplay togl-ptr togl-reshape-func
@@ -150,9 +188,6 @@ See the Lisp Lesser GNU Public License for more details.
 (def-togl-callback reshape ())
 (def-togl-callback destroy ())
 (def-togl-callback timer ())
-#+not
-(defmethod togl-timer-using-class :after ((self togl))
-  (loop until (zerop (ctk::Tcl_DoOneEvent 2))))
        
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))

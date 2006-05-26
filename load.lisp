@@ -31,16 +31,12 @@
         asdf:*central-registry*)
 
   (push (make-pathname #+lispworks :host #-lispworks :device "c"
-                       :directory '(:absolute "1-devtools" "cl-opengl"))
-        asdf:*central-registry*)
-
-  (push (make-pathname #+lispworks :host #-lispworks :device "c"
                        :directory '(:absolute "0dev" "Celtk"))
         asdf:*central-registry*))
 
 ;;; and now you can try building the whole mess:
 
-(ASDF:OOS 'ASDF:LOAD-OP :CELTK)
+(ASDF:OOS 'ASDF:LOAD-OP :celtk)
 
 ;;; and test:
 
@@ -49,3 +45,13 @@
 ;;; When that crashes, track down all the define-foreign-library calls in the source
 ;;; and fix the pathnames to point to your shared libraries.
 
+;;; To see the OpenGL Gears demo:
+
+(push (make-pathname #+lispworks :host #-lispworks :device "c"
+                       :directory '(:absolute "1-devtools" "cl-opengl"))
+        asdf:*central-registry*)
+
+(ASDF:OOS 'ASDF:LOAD-OP :gears)
+
+#+test
+(gears::gears)

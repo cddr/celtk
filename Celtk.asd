@@ -9,10 +9,10 @@
   :author "Kenny Tilton <kentilton@gmail.com>"
   :version "2.0"
   :maintainer "Kenny Tilton <kentilton@gmail.com>"
-  :licence "MIT Style"
+  :licence "Lisp LGPL"
   :description "Tcl/Tk with Cells Inside(tm)"
-  :long-description "A Cells-driven portable GUI, ultimately implmented by Tk"
-  :depends-on (:cells :cl-opengl :cl-glu)
+  :long-description "A Cells-driven portable GUI, ultimately implmented by Tcl/Tk"
+  :depends-on (:cells :cffi)
   :serial t
   :components ((:file "Celtk")
                (:file "tk-structs")

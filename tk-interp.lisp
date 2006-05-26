@@ -19,31 +19,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :celtk)
 
-;;------------------------------------------------------------------------------
-;; GLOBAL VARS AND PARAMS
-;;------------------------------------------------------------------------------
-
-
-;;------------------------------------------------------------------------------
-;; External LIBRARIES
-;;------------------------------------------------------------------------------
-
-#+FRANKG
-(eval-when (:load-toplevel :compile-toplevel :execute)
-  #+asdf (progn 
-	   #-cffi (progn
-		    (asdf:operate 'asdf:load-op :cffi)
-	            (use-package :cffi))
-	   #-cl-opengl (progn
-		         (asdf:operate 'asdf:load-op :cl-opengl)
-	                 (use-package :cl-opengl))
-	   #-cells (progn
-		         (asdf:operate 'asdf:load-op :cells)
-	                 (use-package :cells))
-	   )
-  )
-
-
 ;; Tcl/Tk
 
 (define-foreign-library Tcl
@@ -57,19 +32,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:windows (:or "/tcl/bin/tk85.dll"))
   (:unix "libtk.so")
   (t (:default "libtk")))
-  
-;; Togl
-(define-foreign-library Togl
-    (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
-  (:windows (:or "/tcl/lib/togl/togl17.dll"))
-  (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
 
-;;; wait till Stu confirms (use-foreign-library Togl)
-  
-;; Togl
-(define-foreign-library Togl
-    (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
-  (:windows (:or "/tcl/lib/togl/togl17.dll")))
 
 (defctype tcl-retcode :int)
 
@@ -84,44 +47,23 @@ See the Lisp Lesser GNU Public License for more details.
     
 ;; --- initialization ----------------------------------------
 
-(defcfun ("Tcl_FindExecutable" %Tcl_FindExecutable) :void
+(defcfun ("Tcl_FindExecutable" tcl-find-executable) :void
   (argv0 :string))
-
-(defun Tcl_FindExecutable ()
-  (with-foreign-string (argv0-cstr (argv0))
-    (%Tcl_FindExecutable argv0-cstr)))
-
-;; Tcl_Init
 
 (defcfun ("Tcl_Init" Tcl_Init) tcl-retcode
   (interp :pointer))
 
-;; Tk_Init
-
 (defcfun ("Tk_Init" Tk_Init) tcl-retcode
   (interp :pointer))
-
-;; Tcl_SetVal
-(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
-
-(defcfun ("Tcl_SetVar" tcl-set-var) :string
-  (interp :pointer)
-  (var-name :string)
-  (new-value :string)
-  (flags :int))
 
 (defcallback Tk_AppInit tcl-retcode
   ((interp :pointer))
   (tk-app-init interp))
-  
-;; Tcl_AppInit
 
 (defun tk-app-init (interp)
   (Tcl_Init interp)
   (Tk_Init interp)
-
   ;;(format t "~%*** Tk_AppInit has been called.~%")
-
   ;; Return OK
   (foreign-enum-value 'tcl-retcode-values :tcl-ok))
 
@@ -146,7 +88,17 @@ See the Lisp Lesser GNU Public License for more details.
 (defcfun ("Tcl_DeleteInterp" tcl-delete-interp) :void
   (interp        :pointer))
 
-;; Tcl_EvalFile
+;;; --- windows ----------------------------------
+
+(defcfun ("Tk_GetNumMainWindows" tk-get-num-main-windows) :int)
+(defcfun ("Tk_MainWindow" tk-main-window) :pointer (interp :pointer))
+
+(defcfun ("Tk_NameToWindow" tk-name-to-window) :pointer
+  (interp :pointer)
+  (pathName :string)
+  (related-tkwin :pointer))
+
+;;; --- eval -----------------------------------------------
 
 (defcfun ("Tcl_EvalFile" %Tcl_EvalFile) tcl-retcode
   (interp        :pointer)
@@ -169,16 +121,16 @@ See the Lisp Lesser GNU Public License for more details.
 (defun tcl-eval-ex (i s)
   (tcl_evalex i s -1 0))
 
+(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
+
+(defcfun ("Tcl_SetVar" tcl-set-var) :string
+  (interp :pointer)
+  (var-name :string)
+  (new-value :string)
+  (flags :int))
+
 (defcfun ("Tcl_GetStringResult" tcl-get-string-result) :string
   (interp      :pointer))
-
-(defcfun ("Tk_GetNumMainWindows" tk-get-num-main-windows) :int)
-(defcfun ("Tk_MainWindow" tk-main-window) :pointer (interp :pointer))
-
-(defcfun ("Tk_NameToWindow" tk-name-to-window) :pointer
-  (interp :pointer)
-  (pathName :string)
-  (related-tkwin :pointer))
 
 ;; ----------------------------------------------------------------------------
 ;; Tcl_CreateCommand - used to implement direct callbacks
@@ -215,67 +167,6 @@ See the Lisp Lesser GNU Public License for more details.
   (channelName :string)
   (modePtr :pointer))
 
-;;; --- Togl (Version 1.7 and above needed!) -----------------------------
-
-   
-(defcfun ("Togl_Init" Togl_Init) tcl-retcode
-  (interp :pointer))
-
-(defcfun ("Togl_CreateFunc" Togl_CreateFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_DisplayFunc" Togl_DisplayFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_ReshapeFunc" Togl_ReshapeFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_DestroyFunc" Togl_DestroyFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_TimerFunc" Togl_TimerFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_PostRedisplay" Togl_PostRedisplay) :void
-  (togl-struct-ptr :pointer))
-
-(defcfun ("Togl_SwapBuffers" Togl_SwapBuffers) :void
-  (togl-struct-ptr :pointer))
-
-(defcfun ("Togl_Ident" Togl-Ident) :string
-  (togl-struct-ptr :pointer))
-
-(defcfun ("Togl_Width" Togl_Width) :int
-  (togl-struct-ptr :pointer))
-
-(defcfun ("Togl_Height" Togl_Height) :int
-  (togl-struct-ptr :pointer))
-
-(defcfun ("Togl_Interp" Togl_Interp) :pointer
-  (togl-struct-ptr :pointer))
-
-;; Togl_AllocColor
-;; Togl_FreeColor
-
-;; Togl_LoadBitmapFont
-;; Togl_UnloadBitmapFont
-
-;; Togl_SetClientData
-;; Togl_ClientData
-
-;; Togl_UseLayer
-;; Togl_ShowOverlay
-;; Togl_HideOverlay
-;; Togl_PostOverlayRedisplay
-;; Togl_OverlayDisplayFunc
-;; Togl_ExistsOverlay
-;; Togl_GetOverlayTransparentValue
-;; Togl_IsMappedOverlay
-;; Togl_AllocColorOverlay
-;; Togl_FreeColorOverlay
-;; Togl_DumpToEpsFile
-
-
 ;; Initialization mgmt - required to avoid multiple library loads
 
 (defvar *initialized* nil)
@@ -287,16 +178,16 @@ See the Lisp Lesser GNU Public License for more details.
   (setq *initialized* nil))
 
 (defun argv0 ()
-    #+allegro (sys:command-line-argument 0)
-   #+lispworks (nth 0 (io::io-get-command-line-arguments))
-   #+sbcl (nth 0 sb-ext:*posix-argv*))
+  #+allegro (sys:command-line-argument 0)
+  #+lispworks (nth 0 system:*line-arguments-list*) ;; portable to OS X
+  #+sbcl (nth 0 sb-ext:*posix-argv*))
 
 (defun tk-interp-init-ensure ()
   (unless *initialized*
     (use-foreign-library Tcl)
     (use-foreign-library Tk)
     (use-foreign-library Togl)
-    (Tcl_FindExecutable)
+    (tcl-find-executable (argv0))
     (set-initialized)))
 
 ;; Send a script to a piven Tcl/Tk interpreter
@@ -304,19 +195,5 @@ See the Lisp Lesser GNU Public License for more details.
 (defun eval-script (interp script)
   (assert interp)
   (assert script)
-
   (tcl-eval interp script))
-
-
-
-;;; Togl stuff
-
-(defparameter *togl-initialized* nil
-  "Flag, t if Togl is considered initialized")
-
-;; Callbacks, global
-
-(defctype togl-struct-ptr-type :pointer)
-
-
 
