@@ -260,12 +260,6 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; --- images -------------------------------------------------------
 
 (defobserver image-files ()
-  ;
-  ; I do not know how to create the photo for X before X exists
-  ; though it seems to work. <g> perhaps Tk understands it does not need to
-  ; place the image in a tree and lets the undefined path go? If so,
-  ; just add :pre-make-kt before :make-kt in the sort list
-  ;
   (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
       do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file ~a"
            (^path) name (tkescape (namestring file-pathname)))))
