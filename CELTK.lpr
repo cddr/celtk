@@ -10,6 +10,7 @@
                  (make-instance 'module :name "tk-interp.lisp")
                  (make-instance 'module :name "tk-events.lisp")
                  (make-instance 'module :name "tk-object.lisp")
+                 (make-instance 'module :name "fileevent.lisp")
                  (make-instance 'module :name "widget.lisp")
                  (make-instance 'module :name "font.lisp")
                  (make-instance 'module :name "layout.lisp")
@@ -103,7 +104,7 @@
   :old-space-size 256000
   :new-space-size 6144
   :runtime-build-option :standard
-  :on-initialization 'celtk::tk-test
+  :on-initialization 'celtk::test-fileevent
   :on-restart 'do-default-restart)
 
 ;; End of Project Definition

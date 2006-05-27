@@ -98,7 +98,7 @@ See the Lisp Lesser GNU Public License for more details.
   ;(assert (not (zerop (tk-init-stubs interp "8.1" 0))))
   (togl_init interp)
   (togl-create-func (callback togl-create))
-  ;;; needed? (togl-destroy-func (callback togl-destroy)
+  (togl-destroy-func (callback togl-destroy))
   (togl-display-func (callback togl-display))
   (togl-reshape-func (callback togl-reshape))
   (togl-timer-func (callback togl-timer)) ;; probably want to make this optional
@@ -175,6 +175,7 @@ See the Lisp Lesser GNU Public License for more details.
            (let ((,self-var (or (gethash (pointer-address ,ptr-var) (tkwins *tkw*))
                               (gethash (togl-ident ,ptr-var)(dictionary *tkw*)))))
              ,@preamble
+             (trc nil "selves" ,cb$ (togl-ident ,ptr-var) (gethash (pointer-address ,ptr-var) (tkwins *tkw*))(gethash (togl-ident ,ptr-var)(dictionary *tkw*)))
              (,(intern uc$) ,self-var))))
        (defmethod ,(intern uc$) :around ((self togl))
          (if (,(intern cb-slot$) self)
@@ -183,7 +184,9 @@ See the Lisp Lesser GNU Public License for more details.
        (defmethod ,(intern uc$) ((self togl))))))
 
 (def-togl-callback create ()
-    (setf (togl-ptr self) togl-ptr))
+  (setf (togl-ptr self) togl-ptr)
+  (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
+
 (def-togl-callback display ())
 (def-togl-callback reshape ())
 (def-togl-callback destroy ())
@@ -195,3 +198,16 @@ See the Lisp Lesser GNU Public License for more details.
     (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
       (path self)(tk-configurations self)))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
 
+
+;;;
+;;;(DEFCFUN ("Togl_DestroyFunc" TOGL-DESTROY-FUNC) :VOID (CALLBACK :POINTER))
+;;;(defcallback togl-destroy :void ((togl-ptr :pointer))
+;;;  (trc "togl-destroy ptr" togl-ptr (loop for k being the hash-keys of (tkwins *tkw*)
+;;;                                         collecting k))
+;;;  (unless (c-stopped)
+;;;    (let ((self (or (gethash (pointer-address togl-ptr) (tkwins *tkw*)) (gethash (togl-ident togl-ptr) (dictionary *tkw*)))))
+;;;      
+;;;      (togl-destroy-using-class self))))
+;;;(DEFMETHOD TOGL-DESTROY-USING-CLASS :AROUND ((SELF TOGL))
+;;;  (IF (CB-DESTROY SELF) (FUNCALL (CB-DESTROY SELF) SELF) (CALL-NEXT-METHOD)))
+;;;(DEFMETHOD TOGL-DESTROY-USING-CLASS ((SELF TOGL)))
