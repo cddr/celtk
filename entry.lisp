@@ -68,7 +68,9 @@ See the Lisp Lesser GNU Public License for more details.
       (tk-format `(:variable ,self) "set ~a ~s" (^path) new-value))))
 
 (deftk text-widget (widget)
-  ((modified :initarg :modified :accessor modified :initform nil))
+  ((modified :initarg :modified :accessor modified :initform nil)
+   (eval-text :initarg :eval-text :accessor eval-text :initform (c-in t)
+	      :documentation "Set to nil if you want to make sure text entries do not get evaluated. If set to nil the /dangerous charachters/ will be replaced by space char."))
   (:tk-spec text
     -background -borderwidth -cursor
     -exportselection (tkfont -font) -foreground
@@ -102,8 +104,25 @@ See the Lisp Lesser GNU Public License for more details.
   (trc nil "md-value output" self new-value)
   (with-integrity (:client `(:variable ,self))
     (tk-format-now "~a delete 1.0 end" (^path))
-    (when (plusp (length new-value))
-      (tk-format-now "~a insert end ~s" (^path) new-value))))
+    (let ((value nil))
+      (when (plusp (length new-value))
+	(if (not (^eval-text))
+	  (setq value (replace-dangerous-chars new-value))
+	  (setq value new-value))
+	(tk-format-now "~a insert end ~s" (^path) value)))))
+
+;; frgo, 2006-05-27:
+;; replace-dangeorous-chars is meant to replace characters in a
+;; sequence that would start/end evaluation in Tcl land.
+(defun replace-dangerous-chars (seq &optional (dangerous-chars "[]{}"))
+  (assert (stringp seq))
+  (let ((result seq))
+    (loop for pos from 0 to (1- (length result))
+      do
+      (let ((c (char result pos)))
+        (if (find c dangerous-chars)
+	 (setf (char result pos) #\Space))))
+    (values result)))
 
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))
@@ -116,7 +135,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;;;          finally (return ht)))))
 
  (defun tk-translate-keysym (keysym$)
-  (if (= 1 (length keysym$))
+   (if (= 1 (length keysym$))
       (schar keysym$ 0)
     (intern (string-upcase keysym$))
     #+nah (gethash keysym$ +tk-keysym-table+)))
