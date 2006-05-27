@@ -188,6 +188,33 @@
 ;;; ===========================================================================
 
 (defmethod set-tk-readable ((self tk-fileevent) ch-name path)
+
+;; frgo, 2006-05-26:
+;; The code here was aimed at EOF checking after reading...
+;; So the API needs rework... 
+;;   (tk-format-now " proc readable {channel path} {
+;;      # check for async errors (sockets only, I think)
+;;      if {[string length [set err [fconfigure $channel -error]]]} {
+;;          error-cb $path $err
+;; 	 close $channel
+;;  	 return
+;;      }
+;;      # read a line from the channel
+;;      if {[catch {set line [gets $channel]} err]} {
+;;          error-cb $path $err
+;;  	close $channel
+;;  	return
+;;      }
+;;      if {[string length $line]} {
+;;  	received-cb $path $line
+;;      }
+;;      # check for eof
+;;      if {[eof $channel]} {
+;;          eof-cb $path
+;;          close $channel
+;;      }
+;;  }")
+  
   (tk-format-now "proc readable {channel path} { if [ eof $channel ] then { eof-cb $path } else { readable-cb $path } }")         
   (tk-format-now "fileevent ~A readable [list readable ~A ~A]"
 		 ch-name
@@ -419,8 +446,7 @@
     (let ((data (read-line stream nil nil nil)))
       (trc "*** READ-FROM-PIPE: data = " data)
       (when data
-        (setf (md-value (fm-other :receive-window)) data))))
-)
+        (setf (md-value (fm-other :receive-window)) data)))))
 
 (defmodel fileevent-test-window (window)
   ()
@@ -436,7 +462,8 @@
 				     :width 80
 				     :borderwidth 2
 				     :relief 'sunken
-				     :pady 5))
+				     :pady 5
+				     :eval-text nil))
 		   (mk-fileevent :id :fileevent-test
 				 :read-fn 'read-from-pipe
 			         :iostream (open "/Users/frgo/tmp/frgo-test"
