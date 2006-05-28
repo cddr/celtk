@@ -463,8 +463,7 @@
 				     :width 80
 				     :borderwidth 2
 				     :relief 'sunken
-				     :pady 5
-				     :eval-text nil))
+				     :pady 5))
 		   (mk-fileevent :id :fileevent-test
 				 :read-fn 'read-from-pipe
 			         :iostream (open "/0dev/hw.txt"
