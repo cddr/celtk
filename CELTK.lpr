@@ -104,7 +104,7 @@
   :old-space-size 256000
   :new-space-size 6144
   :runtime-build-option :standard
-  :on-initialization 'celtk::test-fileevent
+  :on-initialization 'celtk::tk-test
   :on-restart 'do-default-restart)
 
 ;; End of Project Definition

@@ -124,6 +124,8 @@ See the Lisp Lesser GNU Public License for more details.
     "]" "\\]")
    "\"" "\\\""))
 
+(tkescape "[exit]")
+
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
     (let* ((*print-circle* nil)
@@ -131,10 +133,10 @@ See the Lisp Lesser GNU Public License for more details.
       ;
       ; --- debug stuff ---------------------------------
       ;
-      (let ((yes '( "destroy"))
+      (let ((yes '( "insert"))
             (no  '()))
         (declare (ignorable yes no))
-        (when nil #+not (and (find-if (lambda (s) (search s tk$)) yes)
+        (when  (and (find-if (lambda (s) (search s tk$)) yes)
                         (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))
       (assert *tki*)

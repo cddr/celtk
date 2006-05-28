@@ -20,11 +20,11 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
-   ;;'one-button-window
+   'one-button-window
    ;;'ltktest-cells-inside
    ;;'menu-button-test
    ;;'spinbox-test
-  'lotsa-widgets
+  ;;'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))
 
@@ -33,22 +33,22 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :kids (c? (the-kids                
                  (mk-menubar
-                              :kids (c? (the-kids
-                                         (mk-menu-entry-cascade-ex (:label "File")
-                                           (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
-                                           (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
+                  :kids (c? (the-kids
+                             (mk-menu-entry-cascade-ex (:label "File")
+                               (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))
+                               (mk-menu-entry-command-ex () "Save" (format t "~&Save pressed"))))))
                  (mk-frame-stack
                   :packing (c?pack-self)
                   :kids (c? (the-kids
                              (mk-text-widget
                               :id :my-text
-                              :md-value (c?n "hello, world")
+                              :md-value (c?n "[bzbzbzbz]")
                               :height 8
                               :width 25)
-                             ;;;                           (make-instance 'entry
-                             ;;;                             :id :entree
-                             ;;;                             :fm-parent *parent*
-                             ;;;                             :md-value (c-in "Boots"))
+                             (make-instance 'entry
+                               :id :entree
+                               :fm-parent *parent*
+                               :md-value (c-in "Boots"))
                              ;;;                           (make-instance 'button
                              ;;;                             :fm-parent *parent*
                              ;;;                             :text "read"

@@ -132,23 +132,23 @@ typedef struct {
   (:tcl-all-events       -3))
 
 (defcenum tcl-variable-related-flag
-    "Flags passed to getvar, setvar, tracevar, etc"
-  (:TCL_GLOBAL_ONLY      1)
-  (:TCL_NAMESPACE_ONLY	 2)
-  (:TCL_APPEND_VALUE	 4)
-  (:TCL_LIST_ELEMENT	 8)
-  (:TCL_TRACE_READS      #x10)
-  (:TCL_TRACE_WRITES	 #x20)
-  (:TCL_TRACE_UNSETS	 #x40)
-  (:TCL_TRACE_DESTROYED	 #x80)
-  (:TCL_INTERP_DESTROYED #x100)
-  (:TCL_LEAVE_ERR_MSG	 #x200)
-  (:TCL_TRACE_ARRAY      #x800)
-  ;; Required to support old variable/vdelete/vinfo traces */
-  (:TCL_TRACE_OLD_STYLE	 #x1000)
-  ;; Indicate the semantics of the result of a trace */
-  (:TCL_TRACE_RESULT_DYNAMIC #x8000)
-  (:TCL_TRACE_RESULT_OBJECT  #x10000))
+    "flags passed to getvar, setvar, tracevar, etc"
+  (:tcl-global-only      1)
+  (:tcl-namespace-only	 2)
+  (:tcl-append-value	 4)
+  (:tcl-list-element	 8)
+  (:tcl-trace-reads      #x10)
+  (:tcl-trace-writes	 #x20)
+  (:tcl-trace-unsets	 #x40)
+  (:tcl-trace-destroyed	 #x80)
+  (:tcl-interp-destroyed #x100)
+  (:tcl-leave-err-msg	 #x200)
+  (:tcl-trace-array      #x800)
+  ;; required to support old variable/vdelete/vinfo traces */
+  (:tcl-trace-old-style	 #x1000)
+  ;; indicate the semantics of the result of a trace */
+  (:tcl-trace-result-dynamic #x8000)
+  (:tcl-trace-result-object  #x10000))
 
 (defun var-flags (&rest kws)
   (apply '+ (loop for kw in kws

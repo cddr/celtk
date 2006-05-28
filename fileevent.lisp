@@ -352,7 +352,7 @@
      (interp     :pointer)
      (argc       :int)
      (argv       :pointer))
-  (declare (ignorable clientData argc interp))
+  (declare (ignore clientData argc interp))
   (let* ((path (foreign-string-to-lisp (mem-aref argv :pointer 1)))
 	 (self (gethash path (dictionary *tkw*))))
     (bwhen (fn (^read-fn))
@@ -364,7 +364,7 @@
      (interp     :pointer)
      (argc       :int)
      (argv       :pointer))
-  (declare (ignorable clientData argc interp))
+  (declare (ignore clientData argc interp))
   (let* ((path (foreign-string-to-lisp (mem-aref argv :pointer 1)))
 	 (self (gethash path (dictionary *tkw*))))
     (bwhen (fn (^write-fn))
@@ -376,7 +376,8 @@
      (interp     :pointer)
      (argc       :int)
      (argv       :pointer))
-  (declare (ignorable clientData interp argc))
+  (declare (ignore clientData interp argc))
+  (trc "eof!!!!!")
   (let* ((path (foreign-string-to-lisp (mem-aref argv :pointer 1)))
 	 (self (gethash path (dictionary *tkw*))))
     (bwhen (fn (^eof-fn))
@@ -466,7 +467,7 @@
 				     :eval-text nil))
 		   (mk-fileevent :id :fileevent-test
 				 :read-fn 'read-from-pipe
-			         :iostream (open "/Users/frgo/tmp/frgo-test"
+			         :iostream (open "/0dev/hw.txt"
 ;;;                           Adapt here !!!     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 					         :direction :input))))))
 
@@ -475,3 +476,6 @@
   (trc "-----------------------------------------------------------------------------")
   (test-window 'fileevent-test-window)
   (trc "-----------------------------------------------------------------------------"))
+
+#+test
+(test-window 'fileevent-test-window)
