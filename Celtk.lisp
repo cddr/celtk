@@ -16,6 +16,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
+;;; $Header$
 
 (defpackage :celtk
   (:nicknames "CTK")
@@ -133,6 +134,16 @@ See the Lisp Lesser GNU Public License for more details.
       ;
       ; --- debug stuff ---------------------------------
       ;
+<<<<<<< Celtk.lisp
+;;       (let ((yes '( "insert" "end"))
+;;             (no  '()))
+;;         (declare (ignorable yes no))
+;;         (when (and (find-if (lambda (s) (search s tk$)) yes)
+;;                    (not (find-if (lambda (s) (search s tk$)) no)))
+;;           (format t "~&tk> ~a~%" tk$))
+;; 	  (break))
+;;       (assert *tki*)
+=======
       (let ((yes '( "insert"))
             (no  '()))
         (declare (ignorable yes no))
@@ -140,6 +151,7 @@ See the Lisp Lesser GNU Public License for more details.
                         (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))
       (assert *tki*)
+>>>>>>> 1.26
       ; --- end debug stuff ------------------------------
       ;
       ; --- serious stuff ---
