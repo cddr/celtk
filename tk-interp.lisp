@@ -162,6 +162,10 @@ See the Lisp Lesser GNU Public License for more details.
 (defcfun ("Tcl_GetChannelName" Tcl_GetChannelName) :string
   (channel :pointer))
 
+(defcfun ("Tcl_GetChannelType" Tcl_GetChannelType) :pointer
+  (channel :pointer))
+
+
 (defcfun ("Tcl_GetChannel" Tcl_GetChannel) :pointer
   (interp :pointer)
   (channelName :string)
