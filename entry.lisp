@@ -100,14 +100,23 @@ See the Lisp Lesser GNU Public License for more details.
                              (setf (^modified) t)))))
                        ))))
 
+(defmethod clear ((self text-widget))
+  (setf (md-value self) nil))
+
 (defobserver .md-value ((self text-widget))
   (trc nil "md-value output" self new-value)
   (with-integrity (:client `(:variable ,self))
     (tk-format-now "~a delete 1.0 end" (^path))
     (when (plusp (length new-value))
-      (tk-format-now "~a insert end {~a}" (^path) new-value)))) ;; kt060528: simple {} seems to block evaluation
+      (trc "*** md-value text widget: new-value" new-value)
+      (tk-format-now "~a insert end {~a}" (^path) new-value)) ;; kt060528: simple {} seems to block evaluation
     ;; Yes, it does. But we had to change ~s to ~a also in order to prevent
     ;; side effects - frgo 2006-05-29 1:30 am ;-)
+    (tk-format-now "update idletasks"))) ;; Causes a display update after each text widget operation.
+
+;; The beginnings of a new text widget api:
+;; (defmethod insert ((self text-widget) &rest args)
+;;   (tk-format-now ))
 
 ;;;(defvar +tk-keysym-table+
 ;;;  (let ((ht (make-hash-table :test 'string=)))
