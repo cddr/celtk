@@ -154,3 +154,16 @@ typedef struct {
   (apply '+ (loop for kw in kws
                   collecting (foreign-enum-value 'tcl-variable-related-flag kw))))
 
+(defcstruct Tcl_ChannelType
+  (typeName         :string)
+  (blockModeProc    :pointer)
+  (closeProc        :pointer)
+  (inputProc        :pointer)
+  (outputProc       :pointer)
+  (seekProc         :pointer)
+  (setOptionProc    :pointer)
+  (getOptionProc    :pointer)
+  (watchChannelProc :pointer)
+  (channelReadyProc :pointer)
+  (getFileProc      :pointer))
+
