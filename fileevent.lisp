@@ -108,6 +108,11 @@
     :initform (c-in nil)
     :documentation "The eof callback. A dispatcher function used to call the function supplied via the eof-fn slot. - Internal use only.")
 
+   (error-cb
+    :accessor error-cb :initarg :error-cb
+    :initform (c-in nil)
+    :documentation "The error callback. A dispatcher function used to call the function supplied via the error-fn slot. - Internal use only.")
+
    (tki
     :accessor tki :initarg :tki
     :initform (c-in nil)
@@ -131,7 +136,12 @@
    (eof-fn
     :accessor eof-fn :initarg :eof-fn
     :initform (c-in nil)
-    :documentation "User supplied function, gets called when iostream is EOF. Gets iostream as parameter. - API: initarg, setf (Via default-initarg set to fn default-eof-fn which simply closes the stream)."))
+    :documentation "User supplied function, gets called when iostream is EOF. Gets iostream as parameter. - API: initarg, setf (Via default-initarg set to fn default-eof-fn which simply closes the stream).")
+
+   (error-fn
+    :accessor error-fn :initarg :error-fn
+    :initform (c-in nil)
+    :documentation "User supplied function, gets called when iostream has encountntered an error. Gets iostream and error sting as parameters. - API: initarg, setf (Via default-initarg set to fn default-error-fn which simply closes the stream and signals an error of class tcl-error)."))
 
   (:default-initargs
       :id (gensym "tk-fileevent-")
@@ -187,11 +197,13 @@
 ;;; FILEEVENT HELPER METHODS AND FUCTIONS
 ;;; ===========================================================================
 
-(defmethod set-tk-readable ((self tk-fileevent) ch-name path)
+(defmethod set-tk-readable ((self tk-fileevent) ch-name path type)
 
 ;; frgo, 2006-05-26:
 ;; The code here was aimed at EOF checking after reading...
-;; So the API needs rework... 
+;; So the API needs rework...
+;; STATUS: IN WORK
+;;
 ;;   (tk-format-now " proc readable {channel path} {
 ;;      # check for async errors (sockets only, I think)
 ;;      if {[string length [set err [fconfigure $channel -error]]]} {
@@ -199,7 +211,7 @@
 ;; 	 close $channel
 ;;  	 return
 ;;      }
-;;      # read a line from the channel
+;;      # Read a line from the channel
 ;;      if {[catch {set line [gets $channel]} err]} {
 ;;          error-cb $path $err
 ;;  	close $channel
@@ -214,19 +226,56 @@
 ;;          close $channel
 ;;      }
 ;;  }")
-  
-  (tk-format-now "proc readable {channel path} { if [ eof $channel ] then { eof-cb $path } else { readable-cb $path } }")         
-  (tk-format-now "fileevent ~A readable [list readable ~A ~A]"
-		 ch-name
-		 ch-name
-		 path))
 
-(defmethod set-tk-writeable ((self tk-fileevent) ch-name path)
-  (tk-format-now "proc writeable {channel path} { if [ eof $channel ] then  { eof-cb $path } else { readable-cb $path } }")
-  (tk-format-now "fileevent ~A writeable [list writeable ~A ~A]"
+;;  frgo: Old code snippet:
+;;   (tk-format-now "proc readable {channel path} { if [ eof $channel ] then { eof-cb $path } else { readable-cb $path } }")         
+;;   (tk-format-now "fileevent ~A readable [list readable ~A ~A]"
+;; 		 ch-name
+;; 		 ch-name
+;; 		 path)
+
+  (trc "tk-set-readable sees ch-name path type" ch-name path type)
+  (tk-format-now
+   "proc readable {channel path type} {  
+
+      if {! [string compare $type \"socket\"]} {
+        if {[string length [set err [fconfigure $channel -error]]]} {
+          error-cb $path $err
+ 	  close $channel
+  	  return
+        }
+      }
+  
+      readable-cb $path
+
+      catch { if {[eof $channel]} {
+                eof-cb $path
+                close $channel
+              }
+            }
+    }")
+  
+  (tk-format-now "fileevent ~A readable [list readable ~A ~A ~a]"
 		 ch-name
 		 ch-name
-		 path))
+		 path
+		 type)
+)
+
+(defmethod set-tk-writeable ((self tk-fileevent) ch-name path type)
+  (tk-format-now "proc writeable {channel path type} { if [ eof $channel ] then  { eof-cb $path } else { writeable-cb $path } }")
+  (tk-format-now "fileevent ~A writeable [list writeable ~A ~A ~a]"
+		 ch-name
+		 ch-name
+		 path
+		 type))
+
+;;; ===========================================================================
+;;; FILEEVENT CONDITIONS
+;;; ===========================================================================
+
+(define-condition tcl-fileevent-error (error)
+  ())
 
 ;;; ===========================================================================
 ;;; OBSERVERS - USED TO SEND UPDATES TO TK LAND
@@ -242,14 +291,26 @@
       ((:update-input-tk-fileevent)
        (let* ((channel (in-tcl-channel self))
 	      (path    (path self))
-	      (ch-name (Tcl_GetChannelName channel)))
-	(set-tk-readable self ch-name path)))
+	      (ch-name (Tcl_GetChannelName channel))
+	      (ch-type (Tcl_GetChannelType channel)))
+	 (set-tk-readable self
+			  ch-name
+			  path
+			  (foreign-slot-value ch-type
+				     	      'Tcl_ChannelType
+					      'typeName ))))
 
       ((:update-output-tk-fileevent)
        (let* ((channel (out-tcl-channel self))
 	      (path    (path self))
-	      (ch-name (Tcl_GetChannelName channel)))
-         (set-tk-writeable self ch-name path)))
+	      (ch-name (Tcl_GetChannelName channel))
+	      (ch-type (Tcl_GetChannelType channel)))
+         (set-tk-writeable self
+			   ch-name
+			   path
+			   (foreign-slot-value ch-type
+				               'Tcl_ChannelType
+					       'typeName))))
 
       ((:reset-input-tk-fileevent)
        ;; Do nothing
@@ -304,6 +365,14 @@
   (if new-value
     (Tcl_CreateCommand *tki*
 		       "eof-cb"
+		       new-value
+		       (null-pointer)
+		       (null-pointer))))
+
+(defobserver error-cb ((self tk-fileevent))
+  (if new-value
+    (Tcl_CreateCommand *tki*
+		       "error-cb"
 		       new-value
 		       (null-pointer)
 		       (null-pointer))))
@@ -377,12 +446,26 @@
      (argc       :int)
      (argv       :pointer))
   (declare (ignore clientData interp argc))
-  (trc "eof!!!!!")
+  (trc "EOF-CB !!!")
   (let* ((path (foreign-string-to-lisp (mem-aref argv :pointer 1)))
 	 (self (gethash path (dictionary *tkw*))))
     (bwhen (fn (^eof-fn))
 	   (funcall fn self)))
   (values (foreign-enum-value 'tcl-retcode-values :tcl-ok)))
+
+(defcallback error-cb :int
+    ((clientData :pointer)
+     (interp     :pointer)
+     (argc       :int)
+     (argv       :pointer))
+  (declare (ignore clientData interp argc))
+  (trc "ERROR-CB !!!")
+  (let* ((path (foreign-string-to-lisp (mem-aref argv :pointer 1)))
+	 (err$ (foreign-string-to-lisp (mem-aref argv :pointer 2)))
+	 (self (gethash path (dictionary *tkw*))))
+    (bwhen (fn (^error-fn))
+	   (funcall fn self err$)))
+  (values (foreign-enum-value 'tcl-retcode-values :tcl-error)))
 
 ;;; ===========================================================================
 ;;; MK-FILEEVENT: CONVENIENCE MACRO
@@ -394,6 +477,7 @@
 		  :readable-cb (get-callback 'readable-cb)
 		  :writeable-cb (get-callback 'writeable-cb)
 		  :eof-cb (get-callback 'eof-cb)
+		  :error-cb (get-callback 'error-cb)
 		  :fm-parent *parent*
 		  ,@inits))
 
@@ -403,10 +487,26 @@
 ;;; ===========================================================================
 
 (defmethod default-eof-fn ((self tk-fileevent))
-    ;; Default action: close stream
-    (bwhen (iostream (^iostream))
-      (close iostream)
-      (setf (^iostream) nil)))
+  ;; Default action: close stream
+  (bwhen (iostream (^iostream))
+    (with-integrity (:client `(:variable ,self))
+      (setf (^iostream) nil)
+      (close iostream))))
+
+;;; ===========================================================================
+;;; A DEFAULT ERROR FUNCTION, USER MAY SUPPLY ANOTHER FUNCTION WHEN MAKING THE
+;;; INSTANCE OF TK-FILEEVENT
+;;; ===========================================================================
+
+(defmethod default-error-fn ((self tk-fileevent) err$)
+  (declare (ignorable err$))
+  (trc "Heya! Error ~a ... :-(" err$)
+  ;; Default action 1: close stream
+  (bwhen (iostream (^iostream))
+    (close iostream)
+    (setf (^iostream) nil))
+  ;; Default action 2: signal error
+  (signal 'tcl-fileevent-error))
 
 ;;; ===========================================================================
 ;;; TESTING
@@ -441,13 +541,18 @@
 ;;;
 ;;; May 2006
 
-(defmethod read-from-pipe ((self tk-fileevent) &optional (operation :read))
+
+;;; This is the User Supplied Read Function USRF. USRF has to take care of
+;;; closing the channel if it is a file that is read from !!!
+;;; The sample supplied here may serve as a template ...
+(defmethod USRF ((self tk-fileevent) &optional (operation :read))
   (declare (ignorable operation))
   (let ((stream (^iostream)))
     (let ((data (read-line stream nil nil nil)))
-      (trc "*** READ-FROM-PIPE: data = " data)
-      (when data
-        (setf (md-value (fm-other :receive-window)) data)))))
+      (trc "*** USRF: data = " data)
+      (if data
+	 (setf (md-value (fm-other :receive-window)) data)
+	 (funcall (^eof-fn) self)))))
 
 (defmodel fileevent-test-window (window)
   ()
@@ -465,10 +570,11 @@
 				     :relief 'sunken
 				     :pady 5))
 		   (mk-fileevent :id :fileevent-test
-				 :read-fn 'read-from-pipe
-			         :iostream (open "/0dev/hw.txt"
+				 :read-fn 'USRF
+			         :iostream (c-in
+					     (open "/Users/frgo/dribble.lisp"
 ;;;                           Adapt here !!!     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-					         :direction :input))))))
+						  :direction :input)))))))
 
 ;;; Call this function  for testing !!
 (defun test-fileevent ()
