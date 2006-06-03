@@ -27,13 +27,6 @@ See the Lisp Lesser GNU Public License for more details.
   (tcl-idle-proc :pointer)
   (client-data :pointer))
 
-(defcfun ("Tcl_CreateCommand" tcl-create-command) :pointer
-  (interp :pointer)
-  (cmdName :string)
-  (proc :pointer)
-  (client-data :pointer)
-  (delete-proc :pointer))
-
 (defcfun ("Tcl_SetResult" tcl-set-result) :void
   (interp :pointer)
   (result :string)
@@ -133,8 +126,6 @@ See the Lisp Lesser GNU Public License for more details.
   (ignore-errors 
    (foreign-enum-keyword 'tk-event-type n)))
 
-
-
 (defun tk-event-mask-symbol (n) ;; do not try to generate masks from these!
   (ignore-errors 
    (foreign-enum-keyword 'tk-event-mask n)))
@@ -160,6 +151,8 @@ See the Lisp Lesser GNU Public License for more details.
 
   (trc "tkep> " (tk-event-type (mem-aref xe :int)) :client-data client-data)
   (case (tk-event-type (mem-aref xe :int))
+    (:motionnotify
+     (trc nil "motionnotify" (xsv x xe) :y (xsv y xe) :x-root (xsv x-root xe) :y-root (xsv y-root xe)))
     (:virtualevent
      (trc "    > :type" (format nil "<<~a>>" (xsv name xe)) :time (xsv time xe) :state (xsv state xe))
      (trc "    > :x" (xsv x xe) :y (xsv y xe) :x-root (xsv x-root xe) :y-root (xsv y-root xe))
@@ -170,5 +163,22 @@ See the Lisp Lesser GNU Public License for more details.
 
      (trc "    > data" (unless (null-pointer-p (xsv user-data xe))
                          (tcl-get-string (xsv user-data xe)))))))
+
+(defun xevent-dump (xe)
+  (case (tk-event-type (mem-aref xe :int))
+    (:motionnotify
+     (trc nil "motionnotify" (xsv x xe) :y (xsv y xe) :x-root (xsv x-root xe) :y-root (xsv y-root xe)))
+    (:virtualevent
+     (trc "    > :type" (format nil "<<~a>>" (xsv name xe)) :time (xsv time xe) :state (xsv state xe))
+     (trc "    > :x" (xsv x xe) :y (xsv y xe) :x-root (xsv x-root xe) :y-root (xsv y-root xe))
+     (trc "    > event/root/sub" (mapcar (lambda (w) (when w (path w)))
+                                (list (xwin-widget (xsv event-window xe))
+                                  (xwin-widget (xsv root-window xe))
+                                  (xwin-widget (xsv sub-window xe)))))
+
+     (trc "    > data" (unless (null-pointer-p (xsv user-data xe))
+                         (tcl-get-string (xsv user-data xe)))))
+    (otherwise
+     (trc "tkep> " (tk-event-type (mem-aref xe :int))))))
 
 

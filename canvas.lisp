@@ -32,11 +32,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
-    :id (gentemp "CV")
-;;;    :virtual-event-handlers (c? (list
-;;;                                 (focusIn->active)
-;;;                                 (focusOut->active)))
-    ))
+    :id (gentemp "CV")))
 
 (defun focusIn->active ()
   (list '|<FocusIn>| (lambda (self event &rest args)

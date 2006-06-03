@@ -28,40 +28,25 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- Togl (Version 1.7 and above needed!) -----------------------------
 
-(defcfun ("Togl_Init" Togl_Init) tcl-retcode
+(defcfun ("Togl_Init" Togl-Init) tcl-retcode
   (interp :pointer))
 
-(defcfun ("Togl_CreateFunc" Togl_CreateFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_DisplayFunc" Togl_DisplayFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_ReshapeFunc" Togl_ReshapeFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_DestroyFunc" Togl_DestroyFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_TimerFunc" Togl_TimerFunc) :void
-  (togl-callback-ptr :pointer))
-
-(defcfun ("Togl_PostRedisplay" Togl_PostRedisplay) :void
+(defcfun ("Togl_PostRedisplay" togl-post-redisplay) :void
   (togl-struct-ptr :pointer))
 
-(defcfun ("Togl_SwapBuffers" Togl_SwapBuffers) :void
+(defcfun ("Togl_SwapBuffers" togl-swap-buffers) :void
   (togl-struct-ptr :pointer))
 
 (defcfun ("Togl_Ident" Togl-Ident) :string
   (togl-struct-ptr :pointer))
 
-(defcfun ("Togl_Width" Togl_Width) :int
+(defcfun ("Togl_Width" Togl-Width) :int
   (togl-struct-ptr :pointer))
 
-(defcfun ("Togl_Height" Togl_Height) :int
+(defcfun ("Togl_Height" Togl-Height) :int
   (togl-struct-ptr :pointer))
 
-(defcfun ("Togl_Interp" Togl_Interp) :pointer
+(defcfun ("Togl_Interp" Togl-Interp) :pointer
   (togl-struct-ptr :pointer))
 
 ;; Togl_AllocColor
@@ -86,9 +71,9 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Togl_DumpToEpsFile
 
 (eval-when (compile load eval)
-  (export '(togl_swapbuffers togl_postredisplay togl-ptr togl-reshape-func
-             togl togl-timer-using-class Togl_PostRedisplay togl-reshape-using-class
-             togl-display-using-class togl_width togl_height togl-create-using-class)))
+  (export '(togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
+             togl togl-timer-using-class togl-post-redisplay togl-reshape-using-class
+             togl-display-using-class togl-width togl-height togl-create-using-class)))
 
 ;; --- gotta call this bad boy during initialization, I guess any time after we have an interpreter
 ;;
@@ -96,7 +81,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defun tk-togl-init (interp)
   ;(assert (not (zerop (tcl-init-stubs interp "8.1" 0))))
   ;(assert (not (zerop (tk-init-stubs interp "8.1" 0))))
-  (togl_init interp)
+  (togl-init interp)
   (togl-create-func (callback togl-create))
   (togl-destroy-func (callback togl-destroy))
   (togl-display-func (callback togl-display))
@@ -115,15 +100,15 @@ See the Lisp Lesser GNU Public License for more details.
     -width ;;		400	Width of widget in pixels.
     -height ;;		400	Height of widget in pixels.
     -ident	;;	""	A user identification string ignored by togl.
-		;;	This can be useful in your C callback functions
-		;;	to determine which Togl widget is the caller.
+    ;;	This can be useful in your C callback functions
+    ;;	to determine which Togl widget is the caller.
     -rgba	;;	true	If true, use RGB(A) mode
-		;;	If false, use Color Index mode
+    ;;	If false, use Color Index mode
     -redsize      ;;	1	Min bits per red component
     -greensize	;; 1	Min bits per green component
     -bluesize	;; 1	Min bits per blue component
     -double		;; false	If false, request a single buffered window
-			;; If true, request double buffered window
+    ;; If true, request double buffered window
     -depth		;; false	If true, request a depth buffer
     -depthsize	;; 1	Min bits of depth buffer
     -accum		;; false	If true, request an accumulation buffer
@@ -132,33 +117,35 @@ See the Lisp Lesser GNU Public License for more details.
     -accumbluesize	;; 1	Min bits per accum blue component
     -accumalphasize	;; 1	Min bits per accum alpha component
     -alpha		;; false	If true and -rgba is true, request an alpha
-			;; channel
+    ;; channel
     -alphasize	;; 1	Min bits per alpha component
     -stencil	;; false	If true, request a stencil buffer
     -stencilsize	;; 1	Min number of stencil bits
     -auxbuffers	;; 0	Desired number of auxiliary buffers
     -privatecmap	;; false	Only applicable in color index mode.
-		 	;; If false, use a shared read-only colormap.
-			;; If true, use a private read/write colormap.
+    ;; If false, use a shared read-only colormap.
+    ;; If true, use a private read/write colormap.
     -overlay      ;; false   If true, request overlay planes.
     -stereo       ;; false   If true, request a stereo-capable window.
     (-timer-interval -time)  ;; 1       Specifies the interval, in milliseconds, for
-                  ;     calling the C timer callback function which
-                  ;    was registered with Togl_TimerFunc.
+    ;     calling the C timer callback function which
+    ;    was registered with Togl_TimerFunc.
     -sharelist    ;; ""      Name of an existing Togl widget with which to
-                  ;     share display lists.
-                  ;    NOT YET IMPLEMENTED FOR WINDOWS 95/NT.
+    ;     share display lists.
+    ;    NOT YET IMPLEMENTED FOR WINDOWS 95/NT.
     -sharecontext ;; ""      Name of an existing Togl widget with which to
-                  ;     share the OpenGL context.  NOTE:  most other
-                  ;    attributes such as double buffering, RGBA vs CI,
-                  ;   ancillary buffer specs, etc are then ignored.
-                  ;  NOT YET IMPLEMENTED FOR WINDOWS 95/NT.
+    ;     share the OpenGL context.  NOTE:  most other
+    ;    attributes such as double buffering, RGBA vs CI,
+    ;   ancillary buffer specs, etc are then ignored.
+    ;  NOT YET IMPLEMENTED FOR WINDOWS 95/NT.
     -indirect     ;; false   If present, request an indirect rendering context.
-                  ;     A direct rendering context is normally requested.
-                  ;    NOT SIGNIFICANT FOR WINDOWS 95/NT.
+    ;     A direct rendering context is normally requested.
+    ;    NOT SIGNIFICANT FOR WINDOWS 95/NT.
     )
   (:default-initargs
-      :id (gentemp "TOGL")
+      :double t
+    :rgba t
+    :id (gentemp "TOGL")
     :ident (c? (^path))))
 
 (defmacro def-togl-callback (root (&optional (ptr-var 'togl-ptr)(self-var 'self)) &body preamble)

@@ -98,7 +98,7 @@ typedef struct {
 |#
 
 (defcstruct x-virtual-event
-    "Virtual event, OK?"
+    "common event fields"
   (type :int)
   (serial :unsigned-long)
   (send-event :boolean)
@@ -120,8 +120,47 @@ typedef struct {
 (defmacro xsv (slot-name xptr)
   `(foreign-slot-value ,xptr 'X-Virtual-Event ',slot-name))
 
+(defmacro xke (slot-name xptr)
+  `(foreign-slot-value ,xptr 'x-key-event ',slot-name))
+
 (defun xevent-type (xe)
   (tk-event-type (xsv type xe)))
+
+;; -------------------------------------------
+
+(defcstruct x-key-event
+   "X key Event"
+  (xke-header x-virtual-event)
+  (trans-char-0 :char)
+  (trans-char-1 :char)
+  (trans-char-2 :char)
+  (trans-char-3 :char))
+
+(defcstruct x-button-event
+    "common event fields"
+  (type :int)
+  (serial :unsigned-long)
+  (send-event :boolean)
+  (display :pointer)
+  (event-window Window)
+  (root-window Window)
+  (sub-window Window)
+  (time Time)
+  (x :int)
+  (y :int)
+  (x-root :int)
+  (y-root :int)
+  (state :unsigned-int)
+  (button :unsigned-int)
+  (same-screen :boolean))
+
+(defmacro xbe (slot-name xptr)
+  `(foreign-slot-value ,xptr 'x-button-event ',slot-name))
+
+(defun xbe-x (xbe) (xbe x xbe))
+(defun xbe-y (xbe) (xbe y xbe))
+
+;; --------------------------------------------
 
 (defcenum tcl-event-flag-values
     (:tcl-dont-wait         2)

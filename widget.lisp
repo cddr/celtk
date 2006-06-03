@@ -55,25 +55,21 @@ See the Lisp Lesser GNU Public License for more details.
    (xwin :cell nil :accessor xwin :initform nil)
    (packing :reader packing :initarg :packing :initform nil)
    (gridding :reader gridding :initarg :gridding :initform nil)
+   (x :reader x :initarg :x :initform nil)
+   (y :reader y :initarg :y :initform nil)
+   (relx :reader relx :initarg :relx :initform nil)
+   (rely :reader rely :initarg :rely :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
    (event-handler :reader event-handler :initarg :event-handler :initform nil)
    (menus :reader menus :initarg :menus :initform nil
      :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
    (selector :reader selector :initarg :selector
-     :initform (c? (upper self selector)))
-   (on-event :initform nil :initarg :on-event :accessor on-event))
+     :initform (c? (upper self selector))))
   (:default-initargs
       :id (gentemp "W")
     :event-handler nil #+debug (lambda (self xe)
-                     (TRC "widget-event-handler" self (tk-event-type (xsv type xe)) )
-                     )))
-
-(defobserver event-handler ()
-  (when new-value ;; \\\ work out how to unregister any old value
-    (with-integrity (:client `(:post-make-tk ,self))
-      (trc nil "creating event handler for" self)
-      (tk-create-event-handler-ex self 'widget-event-handler -1)))) ;; // make this -1 more efficient
+                                 (TRC "widget-event-handler" self (tk-event-type (xsv type xe))))))
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
@@ -83,41 +79,6 @@ See the Lisp Lesser GNU Public License for more details.
       (apply 'foreign-masks-combine 'tk-event-mask masks)
       (get-callback callback-name)
       self-tkwin)))
-
-(defcallback widget-event-handler :void  ((client-data :pointer)(xe :pointer))
-  (let ((self (tkwin-widget client-data)))
-    (assert self () "widget-event-handler > no widget for tkwin ~a" client-data)
-    (bif (h (^event-handler))
-      (funcall h self xe)
-      (trc "widget-event-handler > warning: no handler in instance requesting event handling" self))))
-
-(defclass commander ()
-  ()
-  (:default-initargs
-      :command (c? (format nil "do-on-command ~a" (^path)))))
-
-(defcallback do-on-command :int ((client-data :pointer)(interp :pointer)(argc :int)(argv :pointer))
-  (declare (ignore client-data))
-  (destructuring-bind (path &rest args)
-      (loop for argn upfrom 1 below argc
-          collecting (mem-aref argv :string argn))
-    (bif (self (gethash path (dictionary *tkw*)))
-      (bIf (cmd (^on-command))
-        (progn (apply cmd self args)
-          0)
-        (progn (tcl-set-result interp
-                 (format nil "do-on-command> Target widget ~a has no on-command to run" path)
-                 (null-pointer))
-          1))
-      (progn
-        (loop for hk being the hash-keys of (dictionary *tkw*)
-              when (string-equal hk path)
-              do (trc "found string-equal match" path))
-        (break "do-on-command> Target widget ~a does not exist" path)
-        (tcl-set-result interp
-          (format nil "do-on-command> Target widget ~a does not exist" path)
-          (null-pointer))
-        1))))
 
 (defun widget-menu (self key)
   (or (find key (^menus) :key 'md-name)
@@ -143,7 +104,36 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod make-tk-instance :after ((self widget)) 
   (with-integrity (:client `(:post-make-tk ,self))
-      (tkwin-register self)))
+    (tkwin-register self)
+    (tk-create-event-handler-ex self 'widget-event-handler-callback -1)))
+
+;;;(defobserver relx ()
+;;;  (when new-value
+;;;    (tk-format `(:grid ,self)
+;;;      "place ~a ~a -relx ~a -rely ~a" (if old-value "configure" "")
+;;;      (^path) new-value (^rely))))
+
+(defobserver x ((self widget))
+  (when new-value
+    (tk-format `(:grid ,self)
+      "place ~a ~a -x ~a -y ~a" (if old-value "configure" "")
+      (^path) new-value (^y))))
+
+(defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
+  (let ((self (tkwin-widget client-data)))
+    (assert self () "widget-event-handler > no widget for tkwin ~a" client-data)
+    (widget-event-handle self xe)))
+
+(defmethod widget-event-handle ((self widget) xe)
+  (bif (h (^event-handler))
+    (funcall h self xe)
+    #+shhh (case (xevent-type xe)
+      (:buttonpress
+       (trc "button pressed:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))
+      
+      (:buttonrelease (trc "button released:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))(:MotionNotify
+       (xevent-dump xe))
+      (:virtualevent))))
 
 (defmethod tk-configure ((self widget) option value)
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
@@ -153,6 +143,14 @@ See the Lisp Lesser GNU Public License for more details.
           (not (find .tkw *windows-being-destroyed*)))
     (tk-format `(:forget ,self) "pack forget ~a" (^path))
     (tk-format `(:destroy ,self) "destroy ~a" (^path))))
+
+;;; --- commander mix-in --------------------------------
+
+(defclass commander ()
+  ()
+  (:default-initargs
+      :command (c? (format nil "do-on-command ~a" (^path)))))
+
 
 ;;; --- items -----------------------------------------------------------------------
 
@@ -254,15 +252,15 @@ See the Lisp Lesser GNU Public License for more details.
       (let ((v$ (if (stringp new-value) ;; just going slow on switching over to C API before changing tk-send-value
                     new-value
                     (tk-send-value new-value))))
-        (tcl-set-var *tki* (tk-variable self) v$ (var-flags :TCL_NAMESPACE_ONLY))))))
+        (tcl-set-var *tki* (tk-variable self) v$ (var-flags :tcl-namespace-only))))))
 
 
 ;;; --- images -------------------------------------------------------
 
 (defobserver image-files ()
   (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
-      do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file ~a"
-           (^path) name (tkescape (namestring file-pathname)))))
+      do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file {~a}"
+           (^path) name (progn #+not tkescape (namestring file-pathname)))))
 
 
 ;;; --- menus ---------------------------------

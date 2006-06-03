@@ -27,6 +27,8 @@ See the Lisp Lesser GNU Public License for more details.
    
    (timers :initarg :timers :accessor timers :initform nil)
    (on-command :initarg :on-command :accessor on-command :initform nil)
+   (on-key-down :initarg :on-key-down :accessor on-key-down :initform nil)
+   (on-key-up :initarg :on-key-up :accessor on-key-up :initform nil)
    (user-errors :initarg :user-errors :accessor user-errors :initform nil))
   (:documentation "Root class for widgets and (canvas) items"))
 

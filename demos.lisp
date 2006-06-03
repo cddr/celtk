@@ -20,13 +20,22 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
-   'one-button-window
+   ;;'place-test
+   ;;'one-button-window
    ;;'ltktest-cells-inside
    ;;'menu-button-test
    ;;'spinbox-test
-  ;;'lotsa-widgets
+   'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))
+
+(defmodel place-test (window)
+  ()
+  (:default-initargs
+      :kids (c? (the-kids                
+                 (mk-label :text "hi, Mom"
+                   :x 100
+                   :y 20)))))
 
 (defmodel one-button-window (window)
   ()

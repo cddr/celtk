@@ -108,28 +108,8 @@ See the Lisp Lesser GNU Public License for more details.
   (with-integrity (:client `(:variable ,self))
     (tk-format-now "~a delete 1.0 end" (^path))
     (when (plusp (length new-value))
-      (trc "*** md-value text widget: new-value" new-value)
       (tk-format-now "~a insert end {~a}" (^path) new-value)) ;; kt060528: simple {} seems to block evaluation
     ;; Yes, it does. But we had to change ~s to ~a also in order to prevent
     ;; side effects - frgo 2006-05-29 1:30 am ;-)
     (tk-format-now "update idletasks"))) ;; Causes a display update after each text widget operation.
 
-;; The beginnings of a new text widget api:
-;; (defmethod insert ((self text-widget) &rest args)
-;;   (tk-format-now ))
-
-;;;(defvar +tk-keysym-table+
-;;;  (let ((ht (make-hash-table :test 'string=)))
-;;;    (with-open-file (ksyms "/0dev/math-paper/tk-keysym.dat" :direction :input)
-;;;      (loop for ksym-def = (read-line ksyms nil nil)
-;;;          for end = (position #\space ksym-def)
-;;;          while end
-;;;          do (let ((ksym (subseq ksym-def 0 end)))
-;;;               (setf (gethash ksym ht) (read-from-string ksym-def nil nil :start (1+ end))))
-;;;          finally (return ht)))))
-
- (defun tk-translate-keysym (keysym$)
-   (if (= 1 (length keysym$))
-      (schar keysym$ 0)
-    (intern (string-upcase keysym$))
-    #+nah (gethash keysym$ +tk-keysym-table+)))

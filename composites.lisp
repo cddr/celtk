@@ -72,17 +72,25 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-when (compile load eval)
   (export '(title$ active)))
 
+(defvar *app*)
+
+(defmodel application (family)
+  ((app-time :initform (c-in (get-internal-real-time))
+     :initarg :app-time
+     :accessor app-time)))
+
+(defmethod path ((self application)) nil)
+
+(defun app-idle (self)
+  (setf (^app-time) (now)))
+
 (defmodel window (composite-widget)
-  (#+wishful (wish :initarg :wish :accessor wish
-               :initform (wish-stream *wish*)
-               #+(or) (c? (do-execute "wish85 -name testwindow" 
-                            nil #+not (list (format nil "-name ~s" (title$ self))))))
-    #+wishful (ewish :initarg :ewish :accessor ewish :initform nil :cell nil) ;; vestigial?
-    (title$ :initarg :title$ :accessor title$
+  ((title$ :initarg :title$ :accessor title$
       :initform (c? (string-capitalize (class-name (class-of self)))))
     (dictionary :initarg :dictionary :initform (make-hash-table :test 'equalp) :accessor dictionary)
     (tkwins :initform (make-hash-table) :reader tkwins)
     (xwins :initform (make-hash-table) :reader xwins)
+    (keyboard-modifiers :initarg :keyboard-modifiers :initform (c-in nil) :accessor keyboard-modifiers)
     (callbacks :initarg :callbacks :accessor callbacks
       :initform (make-hash-table :test #'eq))
     (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
@@ -92,8 +100,7 @@ See the Lisp Lesser GNU Public License for more details.
     (tkfont-sizes-to-load :initarg :tkfont-sizes-to-load :accessor tkfont-sizes-to-load :initform nil)
     (tkfont-info :initarg :tkfont-info :accessor tkfont-info
       :initform (tkfont-info-loader))
-    (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil))
-  )
+    (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil)))
 
 (defobserver initial-focus ()
   (when new-value

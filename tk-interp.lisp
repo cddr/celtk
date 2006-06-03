@@ -136,12 +136,12 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Tcl_CreateCommand - used to implement direct callbacks
 ;; ----------------------------------------------------------------------------
 
-(defcfun ("Tcl_CreateCommand" Tcl_CreateCommand) :pointer
+(defcfun ("Tcl_CreateCommand" tcl-create-command) :pointer
   (interp :pointer)
   (cmdName :string)
-  (cmdProc :pointer)
-  (clientData :int)
-  (deleteProc :pointer))
+  (proc :pointer)
+  (client-data :pointer)
+  (delete-proc :pointer))
 
 ;; ----------------------------------------------------------------------------
 ;; Tcl/Tk channel related stuff

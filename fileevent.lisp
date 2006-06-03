@@ -157,32 +157,24 @@
 ;;; update operation.
 
 (defun file-event-opcode-cell-rule ()
-  (c? ;; Set the opcode depending on values of input-fd, output-fd, iostream,
-      ;; readable-cb, writeable-cb
-
-      (if (and (not (^input-fd))
-	       (not (^output-fd))
-	       (not .cache))
-        :nop
+  "Set the opcode depending on values of input-fd, output-fd, iostream, readable-cb, writeable-cb"
+  (c? (cond
+       ((not (or (^input-fd) (^output-fd) .cache))
+        :nop)
        
-        (if (and (^input-fd)
-		 (^iostream)
-	         (^readable-cb))
-	   :update-input-tk-fileevent
+       ((and (^input-fd) (^iostream) (^readable-cb))
+        :update-input-tk-fileevent)
 	   
-	   (if (and (^output-fd)
-		    (^iostream)
-		    (^writeable-cb))
-	       :update-output-tk-fileevent
-	       
-	      (if (and (not (^iostream))
-		       (not (^input-fd)))
-		 :reset-input-tk-fileevent
+       ((and (^output-fd) (^iostream) (^writeable-cb))
+        :update-output-tk-fileevent)
+       
+       ((not (or (^iostream) (^input-fd)))
+        :reset-input-tk-fileevent)
 		 
-		 (if (and (not (^iostream))
-			  (not (^output-fd)))
-		     :reset-output-tk-fileevent
-		     :nop)))))))
+       ((not (or (^iostream) (^output-fd)))
+        :reset-output-tk-fileevent)
+
+       (t :nop))))
 
 ;;; ===========================================================================
 ;;; INIT-TK-FILEEVENT - CALLED UPON INITIALIZATION
@@ -347,7 +339,7 @@
 
 (defobserver readable-cb ((self tk-fileevent))
   (if new-value
-    (Tcl_CreateCommand *tki*
+    (tcl-create-command *tki*
 		       "readable-cb"
 		       new-value
 		       (null-pointer)
@@ -355,7 +347,7 @@
 
 (defobserver writeable-cb ((self tk-fileevent))
   (if new-value
-    (Tcl_CreateCommand *tki*
+    (tcl-create-command *tki*
 		       "writeable-cb"
 		       new-value
 		       (null-pointer)
@@ -363,7 +355,7 @@
 
 (defobserver eof-cb ((self tk-fileevent))
   (if new-value
-    (Tcl_CreateCommand *tki*
+    (tcl-create-command *tki*
 		       "eof-cb"
 		       new-value
 		       (null-pointer)
