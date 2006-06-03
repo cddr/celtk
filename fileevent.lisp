@@ -363,7 +363,7 @@
 
 (defobserver error-cb ((self tk-fileevent))
   (if new-value
-    (Tcl_CreateCommand *tki*
+    (tcl-create-command *tki*
 		       "error-cb"
 		       new-value
 		       (null-pointer)
