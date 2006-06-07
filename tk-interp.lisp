@@ -33,7 +33,6 @@ See the Lisp Lesser GNU Public License for more details.
   (:unix "libtk.so")
   (t (:default "libtk")))
 
-
 (defctype tcl-retcode :int)
 
 (defcenum tcl-retcode-values

@@ -120,6 +120,8 @@ typedef struct {
 (defmacro xsv (slot-name xptr)
   `(foreign-slot-value ,xptr 'X-Virtual-Event ',slot-name))
 
+(defun myx (xe)
+  (xsv x xe))
 (defmacro xke (slot-name xptr)
   `(foreign-slot-value ,xptr 'x-key-event ',slot-name))
 

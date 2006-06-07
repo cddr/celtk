@@ -22,7 +22,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (eval-when (compile load eval)
   (export '(make-tkfinfo tkfinfo-family tkfinfo-size tkfinfo-slant tkfinfo-ascent  tkfinfo-linespace tkfinfo-fixed
-             tkfont-id tkfont-info bounds-offset tkfinfo-ascent tkfont-height tkfont-ascent 
+             tkfont-id tkfont-info tkfinfo-ascent tkfont-height tkfont-ascent 
              tkfinfo-descent ^tkfont-descent ^tkfont-find
              tkfinfo tkfinfo-em ^tkfont-em 
              line-up line-down tkfont-size-info)))

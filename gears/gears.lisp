@@ -35,10 +35,10 @@
                (mk-stack (:packing (c?pack-self "-side left -fill both"))
                  (mk-label :text "Click and drag to rotate image")
                  (mk-row ()
-                         (mk-label :text "Spin delay (ms):")
-                         (mk-entry :id :vtime
-                           :md-value (c-in "10"))
-                         (mk-button-ex (" Quit " (tk-eval "destroy ."))))
+                   (mk-label :text "Spin delay (ms):")
+                   (mk-entry :id :vtime
+                     :md-value (c-in "100"))
+                   (mk-button-ex (" Quit " (tk-eval "destroy ."))))
                  (make-instance 'gears
                    :fm-parent *parent*
                    :width 400 :height 400
@@ -46,12 +46,15 @@
                                          (format nil "~a" (max 1 (or (parse-integer n$ :junk-allowed t) 0)))))
                    :double 1 ;; "yes"
                    :event-handler (c? (lambda (self xe)
+                                        (trc nil "togl event" (tk-event-type (xsv type xe)))
                                         (case (tk-event-type (xsv type xe))
                                           (:virtualevent
-                                           (trc "canvas virtual" (xsv name xe)))
+                                           (trc nil "canvas virtual" (xsv name xe)))
                                           (:buttonpress
+                                           #+not (RotStart self (xsv x xe) (xsv y xe))
                                            (RotStart self (xsv x-root xe) (xsv y-root xe)))
                                           (:motionnotify
+                                           #+not (RotMove self (xsv x xe) (xsv y xe))
                                            (RotMove self (xsv x-root xe) (xsv y-root xe)))
                                           (:buttonrelease
                                            (setf *startx* nil)))))))))))
@@ -64,10 +67,12 @@
 
 (defun RotMove (self x y)
   (when *startx*
+    (trc nil "rotmove started" x *startx* *xangle0*)
     (setf *xangle* (+ *xangle0* (- x *startx*)))
     (setf *yangle* (+ *yangle0* (- y *starty*)))
     (setf (rotx self) *xangle*)
-    (setf (roty self) *yangle*)))
+    (setf (roty self) *yangle*)
+    (togl-post-redisplay (togl-ptr self))))
 
 (defconstant +pif+ (coerce pi 'single-float))
 
@@ -76,7 +81,7 @@
    (roty :initform (c-in 25) :accessor roty :initarg :roty)
    (rotz :initform (c-in 10) :accessor rotz :initarg :rotz)
    (gear1 :initarg :gear1 :accessor gear1
-     :initform (c_? (trc "making list!!!!! 1")
+     :initform (c_? (trc nil "making list!!!!! 1")
                  (let ((dl (gl:gen-lists 1)))
                    (gl:with-new-list (dl :compile)
                      (gl:material :front :ambient-and-diffuse #(0.8 0.1 0.0 1.0))
@@ -105,7 +110,7 @@
 (defmethod togl-timer-using-class ((self gears))
   (trc nil "enter gear timer" self (togl-ptr self) (get-internal-real-time))
   (incf (^angle) 5.0)
-  (Togl_PostRedisplay (togl-ptr self))
+  (togl-post-redisplay (togl-ptr self))
   ;(loop until (zerop (ctk::Tcl_DoOneEvent 2)))
   )
 
@@ -117,14 +122,14 @@
   (truc self))
 
 (defmethod togl-reshape-using-class ((self gears)) 
-  (trc "reshape")
+  (trc nil "reshape")
   (truc self t)
   )
 
 (defun truc (self &optional truly)
-  (let ((width (Togl_width (togl-ptr self)))
-        (height (Togl_height (togl-ptr self))))
-    (trc "enter gear reshape" self width (width self))
+  (let ((width (Togl-width (togl-ptr self)))
+        (height (Togl-height (togl-ptr self))))
+    (trc nil "enter gear reshape" self width (width self))
     (gl:viewport 0 (- height (height self)) (width self) (height self))
     (unless truly
       (gl:matrix-mode :projection)
@@ -139,7 +144,7 @@
 
 (defmethod togl-display-using-class ((self gears) &aux (scale (scale (upper self gears-demo))))
   (declare (ignorable scale))
-  
+  (trc nil "display angle" (^rotx)(^roty)(^rotz))
   (gl:clear-color 0 0 0 1)
   (gl:clear :color-buffer-bit :depth-buffer-bit)
   
@@ -163,7 +168,7 @@
       (gl:rotate (- (* -2 (^angle)) 25) 0 0 1)
       (gl:call-list (^gear3))))
   
-  (Togl_SwapBuffers (togl-ptr self))
+  (Togl-Swap-Buffers (togl-ptr self))
   
   #+shhh (print-frame-rate self))
 

@@ -153,9 +153,8 @@ See the Lisp Lesser GNU Public License for more details.
         (^on-name (read-from-string (format nil "^ON-~a" name))))
     `(progn
        (defmethod ,do-on-name (self &rest args)
-         (bIf (cmd (,^on-name))
-           (apply cmd self args)
-           (format t "~&Warning: Target widget ~a has no ~a to run" self ',do-on-name))
+         (bwhen (cmd (,^on-name))
+           (apply cmd self args))
          0)
 
        (defcallback ,do-on-name :int ((client-data :pointer)(interp :pointer)(argc :int)(argv :pointer))
@@ -176,16 +175,3 @@ See the Lisp Lesser GNU Public License for more details.
 (defcommand key-up)
 (defcommand key-down)
 
-;;;(defcallback do-on-command :int ((client-data :pointer)(interp :pointer)(argc :int)(argv :pointer))
-;;;  (declare (ignore client-data))
-;;;  (let ((*tki* interp)
-;;;        (args (loop for argn upfrom 1 below argc
-;;;            collecting (mem-aref argv :string argn))))
-;;;    (bif (self (gethash (car args) (dictionary *tkw*)))
-;;;        (apply 'do-on-command self (rest args))
-;;;        (progn
-;;;          (break "do-on-command> Target widget ~a does not exist" path)
-;;;          #+anyvalue? (tcl-set-result interp
-;;;            (format nil "do-on-command> Target widget ~a does not exist" path)
-;;;            (null-pointer))
-;;;          1)))))

@@ -21,7 +21,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 ; --- scroll bars ----------------------------------------
 
-
 (deftk scrollbar (widget)
   ()
   (:tk-spec scrollbar

@@ -34,7 +34,7 @@ See the Lisp Lesser GNU Public License for more details.
     -disabledforeground))
 
 
-(deftk image (item)
+(deftk image-item (item)
   ()
   (:tk-spec image
     -state

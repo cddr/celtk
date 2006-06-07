@@ -82,7 +82,7 @@ certainly wrong (or the class should be canvas-scroller).
   ; at just the right time in the larger scheme of state propagation one needs for 
   ; data integrity. What is that scheme?
   ;
-  ; Data integrity: when the overall Cells data model gets perturbed by imperative code -- typically an
+  ; Data integrity: when the overall Cells data model gets perturbed by imperative code -- typically in an
   ; event loop -- executing a SETF of some datapoint X, we want these requirements met:
   ;
   ;   - recompute all and (for efficiency) only state computed off X (directly or indirectly through some intermediate datapoint);
@@ -118,6 +118,7 @@ certainly wrong (or the class should be canvas-scroller).
 ; handle the rest. The application works via Cells rules reacting to change by computing new state for the application model, 
 ; which operates on the outside world via observers (on-change callbacks) triggered
 ; automatically by the Cells engine. See DEFOBSERVER.
+
 
 (defmodel ltktest-cells-inside (window)
   ()

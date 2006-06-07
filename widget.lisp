@@ -55,8 +55,8 @@ See the Lisp Lesser GNU Public License for more details.
    (xwin :cell nil :accessor xwin :initform nil)
    (packing :reader packing :initarg :packing :initform nil)
    (gridding :reader gridding :initarg :gridding :initform nil)
-   (x :reader x :initarg :x :initform nil)
-   (y :reader y :initarg :y :initform nil)
+   (px :reader px :initarg :px :initform nil)
+   (py :reader py :initarg :py :initform nil)
    (relx :reader relx :initarg :relx :initform nil)
    (rely :reader rely :initarg :rely :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
@@ -70,6 +70,9 @@ See the Lisp Lesser GNU Public License for more details.
       :id (gentemp "W")
     :event-handler nil #+debug (lambda (self xe)
                                  (TRC "widget-event-handler" self (tk-event-type (xsv type xe))))))
+
+(eval-when (compile load eval)
+  (export '()))
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
@@ -113,11 +116,11 @@ See the Lisp Lesser GNU Public License for more details.
 ;;;      "place ~a ~a -relx ~a -rely ~a" (if old-value "configure" "")
 ;;;      (^path) new-value (^rely))))
 
-(defobserver x ((self widget))
+(defobserver px ((self widget))
   (when new-value
     (tk-format `(:grid ,self)
       "place ~a ~a -x ~a -y ~a" (if old-value "configure" "")
-      (^path) new-value (^y))))
+      (^path) new-value (^py))))
 
 (defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
   (let ((self (tkwin-widget client-data)))
@@ -159,6 +162,8 @@ See the Lisp Lesser GNU Public License for more details.
              decorations ^decorations)))
 
 (defmodel item-geometer () ;; mix-in
+  ()
+  #+vestigial?
   ((canvas-offset :initarg :canvas-offset :accessor canvas-offset
      :initform (c_? (eko (nil "standard canvas offset" self (type-of self) (^p-offset))
                      (c-offset self))))
@@ -184,7 +189,7 @@ See the Lisp Lesser GNU Public License for more details.
    (coords-tweak :initarg :coords-tweak :initform '(0 0) :accessor coords-tweak
      :documentation "Text items need this to get positioned according to baseline")
    (coords :initarg :coords :accessor coords
-     :initform (c_? (eko (nil "final coords" self (anchor self)(^l-coords)(^canvas-offset)(^coords-tweak))
+     :initform nil #+old (c_? (eko (nil "final coords" self (anchor self)(^l-coords)(^canvas-offset)(^coords-tweak))
                      (loop for coord-xy = (^l-coords) then (cddr coord-xy)
                          while coord-xy
                          nconcing (mapcar '+ coord-xy (^canvas-offset) (^coords-tweak))))))

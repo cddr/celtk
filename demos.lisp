@@ -18,10 +18,11 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :celtk-user)
 
+
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
    ;;'place-test
-   ;;'one-button-window
+   ;; 'one-button-window
    ;;'ltktest-cells-inside
    ;;'menu-button-test
    ;;'spinbox-test
@@ -34,14 +35,14 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :kids (c? (the-kids                
                  (mk-label :text "hi, Mom"
-                   :x 100
-                   :y 20)))))
+                   :px 100
+                   :py 20)))))
 
 (defmodel one-button-window (window)
   ()
   (:default-initargs
       :kids (c? (the-kids                
-                 (mk-menubar
+                 #+shhhh (mk-menubar
                   :kids (c? (the-kids
                              (mk-menu-entry-cascade-ex (:label "File")
                                (mk-menu-entry-command-ex () "Load" (format t "~&Load pressed"))

@@ -12,7 +12,7 @@
   :licence "Lisp LGPL"
   :description "Tcl/Tk with Cells Inside(tm)"
   :long-description "A Cells-driven portable GUI, ultimately implmented by Tcl/Tk"
-  :depends-on (:cells :cffi)
+  :depends-on (:cells :cffi :gui-geometry)
   :serial t
   :components ((:file "Celtk")
                (:file "tk-structs")
@@ -20,8 +20,8 @@
                (:file "tk-events")
                (:file "tk-object")
                (:file "widget")
-               (:file "font")
                (:file "layout")
+               (:file "font")
                (:file "timer")
                (:file "menu")
                (:file "label")
@@ -35,9 +35,9 @@
                (:file "item-shaped")
                (:file "composites")
                (:file "frame")
+               (:file "fileevent")
                (:file "togl")
                (:file "run")
-	       (:file "fileevent")
-               (:file "ltktest-ci")
+	         (:file "ltktest-ci")
                (:file "lotsa-widgets")
                (:file "demos")))

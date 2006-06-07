@@ -16,6 +16,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
+
 (in-package :celtk-user)
 
 (defmodel lotsa-widgets (window)

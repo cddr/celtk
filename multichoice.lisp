@@ -65,6 +65,7 @@ See the Lisp Lesser GNU Public License for more details.
     :event-handler (lambda (self xe)
                      (case (tk-event-type (xsv type xe))
                        (:virtualevent
+                        (trc ":virtualevent" (xsv name xe))
                         (case (read-from-string (string-upcase (xsv name xe)))
                           (ListboxSelect
                            (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))

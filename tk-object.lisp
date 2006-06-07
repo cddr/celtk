@@ -35,6 +35,8 @@ See the Lisp Lesser GNU Public License for more details.
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))
 
+(defmethod parent-path ((self tk-object)) (path self))
+
 ;;; --- deftk --------------------
 
 (defmacro deftk (class superclasses

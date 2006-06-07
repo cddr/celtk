@@ -11,8 +11,8 @@
                  (make-instance 'module :name "tk-events.lisp")
                  (make-instance 'module :name "tk-object.lisp")
                  (make-instance 'module :name "widget.lisp")
-                 (make-instance 'module :name "font.lisp")
                  (make-instance 'module :name "layout.lisp")
+                 (make-instance 'module :name "font.lisp")
                  (make-instance 'module :name "timer.lisp")
                  (make-instance 'module :name "menu.lisp")
                  (make-instance 'module :name "label.lisp")
@@ -35,7 +35,9 @@
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name
-                                 "C:\\1-devtools\\cffi\\cffi"))
+                                 "C:\\1-devtools\\cffi\\cffi")
+                  (make-instance 'project-module :name
+                                 "..\\Cells\\gui-geometry\\gui-geometry"))
   :libraries nil
   :distributed-files nil
   :internally-loaded-files nil

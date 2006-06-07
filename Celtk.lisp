@@ -22,8 +22,8 @@ See the Lisp Lesser GNU Public License for more details.
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
   (:export
-   #:<1> #:tk-event-type #:xsv #:name #:x-root #:y-root
-   #:title$ #:pop-up
+   #:<1> #:tk-event-type #:xsv #:name #:x #:y #:x-root #:y-root
+   #:title$ #:pop-up #:path #:parent-path #:^keyboard-modifiers #:keyboard-modifiers
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
    #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label
@@ -61,7 +61,6 @@ See the Lisp Lesser GNU Public License for more details.
 (defparameter *tkw* nil)
 
 (define-symbol-macro .tkw (nearest self window))
-
 
 ; --- tk-format --- talking to wish/Tk -----------------------------------------------------
 
@@ -133,11 +132,12 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '( "photo"))
-            (no  '()))
+      (let ((yes '())
+            (no  '("font")))
         (declare (ignorable yes no))
-        (when (and (find-if (lambda (s) (search s tk$)) yes)
-                        (not (find-if (lambda (s) (search s tk$)) no)))
+        (when (and (or ;; (null yes)
+                     (find-if (lambda (s) (search s tk$)) yes))
+                (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))
       (assert *tki*)
 
@@ -194,7 +194,8 @@ See the Lisp Lesser GNU Public License for more details.
   (format nil "{~{~a~^ ~}}" (mapcar 'tk-send-value values)))
 
 (defmethod parent-path ((nada null)) "")
-(defmethod parent-path ((self t)) (path self))
+(defmethod parent-path ((other t)) "")
+
 
 ; --- tk eval  ----------------------------------------------------
 
@@ -212,6 +213,9 @@ See the Lisp Lesser GNU Public License for more details.
 (defun tk-eval-list (tk-form$ &rest fmt-args)
   (tk-format :grouped (apply 'format nil tk-form$ fmt-args))
   (parse-tcl-list-result (tcl-get-string-result *tki*)))
+
+#+test
+(parse-tcl-list-result "-ascent 58 -descent 15 -linespace 73 -fixed 0")
 
 (defun parse-tcl-list-result (result &aux item items)
   (when (plusp (length result))
@@ -239,5 +243,6 @@ See the Lisp Lesser GNU Public License for more details.
           else do (gather-item)
             (setf item nil)
           else do (push ch item)
-          finally (return (nreverse items))))))
+          finally (gather-item)
+            (return (nreverse items))))))
         
