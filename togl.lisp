@@ -71,7 +71,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Togl_DumpToEpsFile
 
 (eval-when (compile load eval)
-  (export '(togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
+  (export '(with-togl togl-interp togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
              togl togl-timer-using-class togl-post-redisplay togl-reshape-using-class
              togl-display-using-class togl-width togl-height togl-create-using-class)))
 
@@ -148,6 +148,13 @@ See the Lisp Lesser GNU Public License for more details.
     :id (gentemp "TOGL")
     :ident (c? (^path))))
 
+(defmacro with-togl ((togl-form width-var height-var) &body body &aux (togl-ptr (gensym)))
+  `(let* ((,togl-ptr (togl-ptr ,togl-form))
+          (*tki* (togl-interp ,togl-ptr))
+          (,width-var (togl-width ,togl-ptr))
+          (,height-var (togl-height ,togl-ptr)))
+     ,@body))
+
 (defmacro def-togl-callback (root (&optional (ptr-var 'togl-ptr)(self-var 'self)) &body preamble)
   (let ((register$ (format nil "TOGL-~a-FUNC" root))
         (cb$ (format nil "TOGL-~a" root))
@@ -183,18 +190,6 @@ See the Lisp Lesser GNU Public License for more details.
   (with-integrity (:client `(:make-tk ,self))
     (setf (gethash (^path) (dictionary .tkw)) self)
     (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
-      (path self)(tk-configurations self)))) ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
+      (path self)(tk-configurations self))))
+ ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
 
-
-;;;
-;;;(DEFCFUN ("Togl_DestroyFunc" TOGL-DESTROY-FUNC) :VOID (CALLBACK :POINTER))
-;;;(defcallback togl-destroy :void ((togl-ptr :pointer))
-;;;  (trc "togl-destroy ptr" togl-ptr (loop for k being the hash-keys of (tkwins *tkw*)
-;;;                                         collecting k))
-;;;  (unless (c-stopped)
-;;;    (let ((self (or (gethash (pointer-address togl-ptr) (tkwins *tkw*)) (gethash (togl-ident togl-ptr) (dictionary *tkw*)))))
-;;;      
-;;;      (togl-destroy-using-class self))))
-;;;(DEFMETHOD TOGL-DESTROY-USING-CLASS :AROUND ((SELF TOGL))
-;;;  (IF (CB-DESTROY SELF) (FUNCALL (CB-DESTROY SELF) SELF) (CALL-NEXT-METHOD)))
-;;;(DEFMETHOD TOGL-DESTROY-USING-CLASS ((SELF TOGL)))

@@ -135,7 +135,7 @@ See the Lisp Lesser GNU Public License for more details.
       (let ((yes '())
             (no  '("font")))
         (declare (ignorable yes no))
-        (when (and (or ;; (null yes)
+        (when t #+not (and (or ;; (null yes)
                      (find-if (lambda (s) (search s tk$)) yes))
                 (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))
@@ -178,7 +178,7 @@ See the Lisp Lesser GNU Public License for more details.
   ; all this just to display "[". Unsolved is how we will
   ; send a text label with a string /containing/ the character #\[
   ;
-  (trc "tk-send-value" c (char-code c) (format nil "\"\\~3,'0o\"" (char-code c)))
+  (trc nil "tk-send-value" c (char-code c) (format nil "\"\\~3,'0o\"" (char-code c)))
   (format nil "\"\\~3,'0o\"" (char-code c)))
 
 (defmethod tk-send-value (other)

@@ -20,7 +20,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;--- group geometry -----------------------------------------
 
-(defmodel inline-mixin (composite-widget)
+(defmodel inline-mixin (composite-widget widget)
   ((padx :initarg :padx :accessor padx :initform 0)
    (pady :initarg :pady :accessor pady :initform 0)
    (packing-side :initarg :packing-side :accessor packing-side :initform 'left)
@@ -55,7 +55,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;--- f r a m e --------------------------------------------------
 
-(deftk frame (composite-widget)
+(deftk frame (composite-widget widget)
   ()
   (:tk-spec frame -borderwidth -cursor	-highlightbackground -highlightcolor
     -highlightthickness -padx -pady -relief

@@ -47,10 +47,10 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmodel widget (family tk-object)
   ((path :accessor path :initarg :path
-     :initform (c? (trc nil "path calc" self (parent-path (fm-parent self)) (md-name self))
-                 (format nil "~(~a.~a~)"
-                     (parent-path (fm-parent self))
-                     (md-name self))))
+     :initform (c? (eko (nil "path" self (parent-path (fm-parent self))(md-name self))
+                     (format nil "~(~a.~a~)"
+                       (parent-path (fm-parent self))
+                       (md-name self)))))
    (tkwin :cell nil :accessor tkwin :initform nil)
    (xwin :cell nil :accessor xwin :initform nil)
    (packing :reader packing :initarg :packing :initform nil)
@@ -110,17 +110,12 @@ See the Lisp Lesser GNU Public License for more details.
     (tkwin-register self)
     (tk-create-event-handler-ex self 'widget-event-handler-callback -1)))
 
-;;;(defobserver relx ()
-;;;  (when new-value
-;;;    (tk-format `(:grid ,self)
-;;;      "place ~a ~a -relx ~a -rely ~a" (if old-value "configure" "")
-;;;      (^path) new-value (^rely))))
-
 (defobserver px ((self widget))
-  (when new-value
-    (tk-format `(:grid ,self)
-      "place ~a ~a -x ~a -y ~a" (if old-value "configure" "")
-      (^path) new-value (^py))))
+  (unless (typep self 'window)
+    (when new-value
+      (tk-format `(:grid ,self) ;; placing is like grid for this sort
+        "place ~a ~a -x ~a -y ~a" (if old-value "configure" "")
+        (^path) new-value (^py)))))
 
 (defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
   (let ((self (tkwin-widget client-data)))
