@@ -55,8 +55,8 @@ See the Lisp Lesser GNU Public License for more details.
    (xwin :cell nil :accessor xwin :initform nil)
    (packing :reader packing :initarg :packing :initform nil)
    (gridding :reader gridding :initarg :gridding :initform nil)
-   (px :reader px :initarg :px :initform nil)
-   (py :reader py :initarg :py :initform nil)
+   (parent-x :reader parent-x :initarg :parent-x :initform nil)
+   (parent-y :reader parent-y :initarg :parent-y :initform nil)
    (relx :reader relx :initarg :relx :initform nil)
    (rely :reader rely :initarg :rely :initform nil)
    (enabled :reader enabled :initarg :enabled :initform t)
@@ -69,7 +69,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "W")
     :event-handler nil #+debug (lambda (self xe)
-                                 (TRC "widget-event-handler" self (tk-event-type (xsv type xe))))))
+                                 (TRC "debug event handler" self (tk-event-type (xsv type xe))))))
 
 (eval-when (compile load eval)
   (export '()))
@@ -110,20 +110,21 @@ See the Lisp Lesser GNU Public License for more details.
     (tkwin-register self)
     (tk-create-event-handler-ex self 'widget-event-handler-callback -1)))
 
-(defobserver px ((self widget))
+(defobserver parent-x ((self widget))
   (unless (typep self 'window)
     (when new-value
       (tk-format `(:grid ,self) ;; placing is like grid for this sort
         "place ~a ~a -x ~a -y ~a" (if old-value "configure" "")
-        (^path) new-value (^py)))))
+        (^path) new-value (^parent-y)))))
 
 (defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
-  (let ((self (tkwin-widget client-data)))
-    (assert self () "widget-event-handler > no widget for tkwin ~a" client-data)
-    (widget-event-handle self xe)))
+  (bif (self (tkwin-widget client-data))
+    (widget-event-handle self xe)
+    ;; sometimes I hit the next branch restarting after crash....
+    (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
 
-(defmethod widget-event-handle ((self widget) xe)
-  (bif (h (^event-handler))
+(defmethod widget-event-handle ((self widget) xe) ;; override for class-specific handling
+  (bif (h (^event-handler)) ;; support instance-specific handlers
     (funcall h self xe)
     #+shhh (case (xevent-type xe)
       (:buttonpress

@@ -70,7 +70,7 @@ See the Lisp Lesser GNU Public License for more details.
   ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
 
 (eval-when (compile load eval)
-  (export '(title$ active)))
+  (export '(title$ active .time)))
 
 (defvar *app*)
 
@@ -79,28 +79,28 @@ See the Lisp Lesser GNU Public License for more details.
      :initarg :app-time
      :accessor app-time)))
 
+(define-symbol-macro .time (app-time *app*))
+
 (defmethod path ((self application)) nil)
 
 (defun app-idle (self)
-  (setf (^app-time) (now)))
+  (setf (^app-time) (get-internal-real-time)))
 
-(defmodel window (composite-widget)
-  ((title$ :initarg :title$ :accessor title$
-      :initform (c? (string-capitalize (class-name (class-of self)))))
-    (dictionary :initarg :dictionary :initform (make-hash-table :test 'equalp) :accessor dictionary)
-    (tkwins :initform (make-hash-table) :reader tkwins)
-    (xwins :initform (make-hash-table) :reader xwins)
-    (keyboard-modifiers :initarg :keyboard-modifiers :initform (c-in nil) :accessor keyboard-modifiers)
-    (callbacks :initarg :callbacks :accessor callbacks
-      :initform (make-hash-table :test #'eq))
-    (edit-style :initarg :edit-style :accessor edit-style :initform (c-in nil))
-    (tk-scaling :initarg :tk-scaling :accessor tk-scaling
-      :initform (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
-    (tkfonts-to-load :initarg :tkfonts-to-load :accessor tkfonts-to-load :initform nil)
-    (tkfont-sizes-to-load :initarg :tkfont-sizes-to-load :accessor tkfont-sizes-to-load :initform nil)
-    (tkfont-info :initarg :tkfont-info :accessor tkfont-info
-      :initform (tkfont-info-loader))
-    (initial-focus :initarg :initial-focus :accessor initial-focus :initform nil)))
+(defmd window (composite-widget)
+  (title$ (c? (string-capitalize (class-name (class-of self)))))
+  (dictionary (make-hash-table :test 'equalp))
+  (tkwins (make-hash-table))
+  (xwins (make-hash-table))
+  (keyboard-modifiers (c-in nil))
+  (callbacks (make-hash-table :test #'eq))
+  (edit-style (c-in nil))
+  (tk-scaling (c? 1.3 #+tki (read-from-string (tk-eval "tk scaling"))))
+  tkfonts-to-load
+  tkfont-sizes-to-load
+  (tkfont-info (tkfont-info-loader))
+  initial-focus
+  on-key-down
+  on-key-up)
 
 (defobserver initial-focus ()
   (when new-value

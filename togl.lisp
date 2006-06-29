@@ -71,7 +71,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Togl_DumpToEpsFile
 
 (eval-when (compile load eval)
-  (export '(with-togl togl-interp togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
+  (export '(togl with-togl togl-interp togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
              togl togl-timer-using-class togl-post-redisplay togl-reshape-using-class
              togl-display-using-class togl-width togl-height togl-create-using-class)))
 

@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (May 22, 2006 0:51)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Jun 28, 2006 10:53)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -35,9 +35,7 @@
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name
-                                 "C:\\1-devtools\\cffi\\cffi")
-                  (make-instance 'project-module :name
-                                 "..\\Cells\\gui-geometry\\gui-geometry"))
+                                 "C:\\1-devtools\\cffi\\cffi"))
   :libraries nil
   :distributed-files nil
   :internally-loaded-files nil

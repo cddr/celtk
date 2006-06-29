@@ -52,6 +52,9 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
+#+(and allegrocl ide (not runtime-system))
+(ide::defdefiner defcallback defun)
+
 (defvar *tki* nil)
 (defparameter *windows-being-destroyed* nil)
 (defparameter *windows-destroyed* nil)
@@ -135,7 +138,7 @@ See the Lisp Lesser GNU Public License for more details.
       (let ((yes '())
             (no  '("font")))
         (declare (ignorable yes no))
-        (when t #+not (and (or ;; (null yes)
+        (when #+not t (and (or ;; (null yes)
                      (find-if (lambda (s) (search s tk$)) yes))
                 (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))

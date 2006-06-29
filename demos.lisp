@@ -35,7 +35,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :kids (c? (the-kids                
                  (mk-label :text "hi, Mom"
-                   :px 100
+                   :parent-x 100
                    :py 20)))))
 
 (defmodel one-button-window (window)

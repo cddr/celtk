@@ -23,10 +23,11 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-when (compile load eval)
   (export '(tk-scaling run-window test-window)))
 
-(defun run-window (root-class)
+(defun run-window (root-class &optional (resetp t))
   (declare (ignorable root-class))
   (setf *tkw* nil)
-  (cells-reset 'tk-user-queue-handler)
+  (when resetp
+    (cells-reset 'tk-user-queue-handler))
   (tk-interp-init-ensure)
 
   (setf *tki* (Tcl_CreateInterp))
@@ -34,7 +35,13 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
+  
   (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command) (null-pointer) (null-pointer))
+
+  ;; these next exist because of limitations in the Tcl API. eg, the keypress event does not
+  ;; include enough info to extract the keysym directly, and the function to extract the
+  ;; keysym is not exposed. The keysym, btw, is the portable representation of key events.
+
   (tcl-create-command *tki* "do-key-down" (get-callback 'do-on-key-down) (null-pointer) (null-pointer))
   (tcl-create-command *tki* "do-key-up" (get-callback 'do-on-key-up) (null-pointer) (null-pointer))
 
@@ -46,13 +53,15 @@ See the Lisp Lesser GNU Public License for more details.
                                  :fm-parent *parent*)))))))
 
   (assert (tkwin *tkw*))
-
-  (tk-create-event-handler-ex *tkw* 'main-window-proc -1)
   
   (tk-format `(:fini) "wm deiconify .")
   (tk-format-now "bind . <Escape> {destroy .}")
+  ;
+  ; see above for why we are converting key x-events to application key virtual events:
+  ;
   (tk-format-now "bind . <KeyPress> {do-key-down %W %K}")
   (tk-format-now "bind . <KeyRelease> {do-key-up %W %K}")
+
   (tcl-do-one-event-loop))
 
 (defun ensure-destruction (w)
@@ -76,10 +85,9 @@ See the Lisp Lesser GNU Public License for more details.
 (defun keysym-to-modifier (keysym)
   (gethash keysym *keyboard-modifiers*))
 
-(defcallback main-window-proc :void  ((client-data :pointer)(xe :pointer))
-  (let ((*tkw* (tkwin-widget client-data)))
-    (assert (typep *tkw* 'window))
-    (TRC nil "main window event" (xevent-type xe))
+(defmethod widget-event-handle ((self window) xe)
+  (let ((*tkw* self))
+    (TRC nil "main window event" *tkw* (xevent-type xe))
     (flet ((give-to-window ()
              (bwhen (eh (event-handler *tkw*))
                (funcall eh *tkw* xe))))
@@ -94,7 +102,9 @@ See the Lisp Lesser GNU Public License for more details.
            (trc nil "main-window-proc :" n$ (unless (null-pointer-p (xsv user-data xe))
                                               (tcl-get-string (xsv user-data xe))))
            (case (read-from-string (string-upcase n$))
-             (keypress (let ((keysym (tcl-get-string (xsv user-data xe))))
+             (keypress (trc "going after keysym")
+               (let ((keysym (tcl-get-string (xsv user-data xe))))
+                         (trc "keypress keysym!!!!" (tcl-get-string (xsv user-data xe)))
                          (bIf (mod (keysym-to-modifier keysym))
                            (eko ("modifiers now")
                              (pushnew mod (keyboard-modifiers *tkw*)))
@@ -122,8 +132,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defun tcl-do-one-event-loop ()
   (loop while (plusp (tk-get-num-main-windows))
-      do (loop until (zerop (Tcl_DoOneEvent 2))
-             do (app-idle *app*)) ;; 2== TCL_DONT_WAIT
+      do (loop until (zerop (Tcl_DoOneEvent 2)) ;; 2== TCL_DONT_WAIT
+             do (app-idle *app*))
         (app-idle *app*)
         (sleep *event-loop-delay*) ;; give the IDE a few cycles
       finally
@@ -133,7 +143,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod window-idle ((self window)))
 
-(defun test-window (root-class)
+(defun test-window (root-class &optional (resetp t))
   "nails existing window as a convenience in iterative development"
   (declare (ignorable root-class))
 
@@ -144,7 +154,7 @@ See the Lisp Lesser GNU Public License for more details.
     (force-output *tkw*)
     (setf *tkw* nil))
 
-  (run-window root-class))
+  (run-window root-class resetp))
 
 ;;; --- commands -----------------------------------------------------------------
 
@@ -163,7 +173,9 @@ See the Lisp Lesser GNU Public License for more details.
                (args (loop for argn upfrom 1 below argc
                          collecting (mem-aref argv :string argn))))
            (bif (self (gethash (car args) (dictionary *tkw*)))
-             (apply ',do-on-name self (rest args))
+             (progn
+               (trc nil "defcommand > " ',^on-name self (cdr args))
+               (apply ',do-on-name self (rest args)))
              (progn
                (break ",do-on-name> Target widget ~a does not exist" (car args))
                #+anyvalue? (tcl-set-result interp
@@ -172,6 +184,9 @@ See the Lisp Lesser GNU Public License for more details.
                1)))))))
 
 (defcommand command)
-(defcommand key-up)
+;
+; see notes elsewhere for why Tcl API deficiencies require augmented key handling via app virtual events
+;
 (defcommand key-down)
+(defcommand key-up)
 

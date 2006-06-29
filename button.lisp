@@ -18,10 +18,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
-(defcallback foo :int ((a :int) (b :int))
-   (declare (ignore b))
-   a)
-
 ;--- button ----------------------------------------------
 
 (deftk button (commander widget)
