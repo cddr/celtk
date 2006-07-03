@@ -22,6 +22,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
   (:export
+   #:right #:left
    #:<1> #:tk-event-type #:xsv #:name #:x #:y #:x-root #:y-root
    #:title$ #:pop-up #:path #:parent-path #:^keyboard-modifiers #:keyboard-modifiers
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
@@ -45,7 +46,7 @@ See the Lisp Lesser GNU Public License for more details.
    #:timer #:timers #:repeat #:executions #:state #:timer-reset #:make-timer-steps
    #:^widget-menu #:widget-menu #:tk-format-now
    #:coords #:^coords #:tk-translate-keysym
-    #:*tkw*))
+   #:*tkw*))
 
 (defpackage :celtk-user
   (:use :common-lisp :utils-kt :cells :celtk))

@@ -23,7 +23,7 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-when (compile load eval)
   (export '(tk-scaling run-window test-window)))
 
-(defun run-window (root-class &optional (resetp t))
+(defun run-window (root-class &optional (resetp t) &rest window-initargs)
   (declare (ignorable root-class))
   (setf *tkw* nil)
   (when resetp
@@ -49,8 +49,10 @@ See the Lisp Lesser GNU Public License for more details.
     (setf *app*
       (make-instance 'application
         :kids (c? (the-kids
-                   (setf *tkw* (make-instance root-class
-                                 :fm-parent *parent*)))))))
+                   (setf *tkw* (apply 'make-instance root-class
+                                 :fm-parent *parent*
+                                 window-initargs))))
+        )))
 
   (assert (tkwin *tkw*))
   
@@ -143,7 +145,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod window-idle ((self window)))
 
-(defun test-window (root-class &optional (resetp t))
+(defun test-window (root-class &optional (resetp t) &rest window-initargs)
   "nails existing window as a convenience in iterative development"
   (declare (ignorable root-class))
 
@@ -154,7 +156,7 @@ See the Lisp Lesser GNU Public License for more details.
     (force-output *tkw*)
     (setf *tkw* nil))
 
-  (run-window root-class resetp))
+  (apply 'run-window root-class resetp window-initargs))
 
 ;;; --- commands -----------------------------------------------------------------
 

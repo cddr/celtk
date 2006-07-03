@@ -107,26 +107,28 @@ See the Lisp Lesser GNU Public License for more details.
     (tk-format '(:fini new-value) "focus ~a" (path new-value))))
 
 (defun tkfont-info-loader ()
-    (c? (eko (nil "tkfinfo")
-          (loop with scaling = (^tk-scaling)
-              for (tkfont fname) in (^tkfonts-to-load)
-              collect (cons tkfont
-                        (apply 'vector
-                          (loop for fsize in (^tkfont-sizes-to-load)
-                                for id = (format nil "~(~a-~2,'0d~)" tkfont fsize)
-                              for tkf = (tk-eval "font create ~a -family {~a} -size ~a"
-                                          id fname fsize)
-                              for (nil ascent nil descent nil linespace nil fixed) = (tk-eval-list "font metrics ~a" tkf)
-                              collect (make-tkfinfo :ascent (round (parse-integer ascent) scaling)
-                                        :id id
-                                        :family fname
-                                        :size fsize
-                                        :descent (round (parse-integer descent) scaling)
-                                        :linespace (round (parse-integer linespace) scaling)
-                                        :fixed (plusp (parse-integer fixed))
-                                        :em (round (parse-integer
-                                                    (tk-eval "font measure ~(~a~) \"m\"" tkfont))
-                                              scaling)))))))))
+  (c? (eko (nil "tkfinfo")
+        (loop with scaling = (^tk-scaling)
+            for (tkfont fname) in (^tkfonts-to-load)
+            collect (cons tkfont
+                      (apply 'vector
+                        (loop for fsize in (^tkfont-sizes-to-load)
+                            for id = (format nil "~(~a-~2,'0d~)" tkfont fsize)
+                            for tkf = (tk-eval "font create ~a -family {~a} -size ~a"
+                                        id fname fsize)
+                            for (nil ascent nil descent nil linespace nil fixed) = (tk-eval-list "font metrics ~a" tkf)
+                            collect 
+                              (progn (trc nil "tkfontloaded" id fname fsize tkfont tkf)
+                                (make-tkfinfo :ascent (round (parse-integer ascent) scaling)
+                                  :id id
+                                  :family fname
+                                  :size fsize
+                                  :descent (round (parse-integer descent) scaling)
+                                  :linespace (round (parse-integer linespace) scaling)
+                                  :fixed (plusp (parse-integer fixed))
+                                  :em (round (parse-integer
+                                              (tk-eval "font measure ~(~a~) \"m\"" tkfont))
+                                        scaling))))))))))
 
 (defobserver title$ ((self window))
    (tk-format '(:configure "title") "wm title . ~s" (or new-value "Untitled")))

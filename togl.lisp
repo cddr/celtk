@@ -178,7 +178,9 @@ See the Lisp Lesser GNU Public License for more details.
        (defmethod ,(intern uc$) ((self togl))))))
 
 (def-togl-callback create ()
-  (setf (togl-ptr self) togl-ptr)
+  (trc "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr self)
+  (setf (togl-ptr self) (setf cl-ftgl::*ftgl-ogl* ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
+                          togl-ptr))
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
 
 (def-togl-callback display ())
