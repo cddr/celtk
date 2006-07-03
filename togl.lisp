@@ -20,7 +20,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 
 (define-foreign-library Togl
-    (:darwin (:or "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
+  (:darwin (:or "libTogl1.7.dylib"
+                "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
   (:windows (:or "/tcl/lib/togl/togl17.dll"))
   (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
 

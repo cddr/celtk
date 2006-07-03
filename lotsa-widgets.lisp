@@ -19,6 +19,15 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :celtk-user)
 
+;;; Creates a pathname with NAME and TYPE in the same
+;;; directory/host/device/whatever as this lisp file. Tries to get
+;;; that at compile time to cope with some useful ASDF extensions that
+;;; place fasls in arbitrary places.
+(defun data-pathname (name type)
+  (merge-pathnames (make-pathname :name name :type type)
+                   #.(or *compile-file-truename* *load-truename*)))
+
+
 (defmodel lotsa-widgets (window)
   ()
   (:default-initargs
@@ -27,9 +36,7 @@ See the Lisp Lesser GNU Public License for more details.
                  
                  (mk-row (:packing (c?pack-self))
                    (mk-label :text "aaa"
-                     :image-files (list (list 'kt (make-pathname #+lispworks :host #-lispworks :device "c"
-                                                    :directory '(:absolute "0dev" "Celtk")
-                                                    :name "kt69" :type "gif")))
+                     :image-files (list (list 'kt (data-pathname "kt69" "gif")))
                      :height 200
                      :width 300
                      :image (c? (format nil "~(~a.~a~)" (ctk::^path) 'kt)))
@@ -145,10 +152,7 @@ See the Lisp Lesser GNU Public License for more details.
    :height 350
    :kids (c? (the-kids
               (mk-bitmap :coords (list 140 140)
-                :bitmap (conc$ "@" (namestring (make-pathname
-                                                :directory '(:absolute "0dev" "Celtk")
-                                                :name "x1"
-                                                :type "xbm"))))
+                :bitmap (conc$ "@" (namestring (data-pathname "x1" "xbm"))))
               (mk-rectangle :coords (list 10 10 100 60)
                 :tk-fill "red")
               (mk-text-item :coords (list 100 80)
