@@ -44,7 +44,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; Timer is totally a work-in-progress with much development ahead.
 ;;;
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(repeat ^repeat)))
 
 (defmodel timer ()

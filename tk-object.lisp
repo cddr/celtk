@@ -59,7 +59,7 @@ eventually thanks to DEFCOMMAND")
             collecting `(setf (get ',slot-name 'tk-config-option) ',tk-option)
             into outputs
             finally (return (values slot-defs outputs)))
-      `(eval-when (compile load eval)
+      `(eval-now!
          (defmodel ,class ,(or superclasses '(tk-object))
            (,@(append std-slots slots))
            ,@(remove-if (lambda (k) (find k '(:default-initargs :tk-spec))) defclass-options :key 'car)
@@ -84,7 +84,7 @@ eventually thanks to DEFCOMMAND")
       collecting (list slot-name (if (atom tk-option-def)
                                      tk-option-def (cadr tk-option-def)))))
 
-(eval-when (compile load eval)
+(eval-now!
   (defun de- (sym)
     (remove #\- (symbol-name sym) :end 1)))
   

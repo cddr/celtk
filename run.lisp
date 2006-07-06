@@ -20,7 +20,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- running a Celtk (window class, actually) --------------------------------------
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(tk-scaling run-window test-window)))
 
 (defun run-window (root-class &optional (resetp t) &rest window-initargs)
@@ -149,12 +149,9 @@ See the Lisp Lesser GNU Public License for more details.
   "nails existing window as a convenience in iterative development"
   (declare (ignorable root-class))
 
-  #+tki (when (and *tkw* (open-stream-p *tkw*))
-    (format *tkw* "wm withdraw .~%")
-    (force-output *tkw*)
-    (format *tkw* "destroy .%")
-    (force-output *tkw*)
-    (setf *tkw* nil))
+  #+notquite (when (and *tkw* (fm-parent *tkw*)) ;; probably a better way to test if the window is still alive
+    (not-to-be (fm-parent *tkw*))
+    (setf *tkw* nil ctk::*app* nil))
 
   (apply 'run-window root-class resetp window-initargs))
 

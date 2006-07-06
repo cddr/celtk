@@ -71,7 +71,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Togl_FreeColorOverlay
 ;; Togl_DumpToEpsFile
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(togl with-togl togl-interp togl-swap-buffers togl-post-redisplay togl-ptr togl-reshape-func
              togl togl-timer-using-class togl-post-redisplay togl-reshape-using-class
              togl-display-using-class togl-width togl-height togl-create-using-class)))
@@ -179,9 +179,11 @@ See the Lisp Lesser GNU Public License for more details.
        (defmethod ,(intern uc$) ((self togl))))))
 
 (def-togl-callback create ()
-  (trc "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr self)
-  (setf (togl-ptr self) (setf cl-ftgl::*ftgl-ogl* ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-                          togl-ptr))
+  (trc nil "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr self)
+;;;  (setf (togl-ptr self) (setf cl-ftgl::*ftgl-ogl* ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
+;;;                          togl-ptr))
+
+  (setf (togl-ptr self) togl-ptr)
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
 
 (def-togl-callback display ())

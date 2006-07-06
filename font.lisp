@@ -20,7 +20,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- fonts obtained from Tk-land ---------------
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(make-tkfinfo tkfinfo-family tkfinfo-size tkfinfo-slant tkfinfo-ascent  tkfinfo-linespace tkfinfo-fixed
              tkfont-id tkfont-info tkfinfo-ascent tkfont-height tkfont-ascent 
              tkfinfo-descent ^tkfont-descent ^tkfont-find
@@ -31,7 +31,7 @@ See the Lisp Lesser GNU Public License for more details.
   `(progn ,@(loop for fn-name in fn-names
                   collecting (let ((^name (format nil "^~:@(~a~)" fn-name)))
                                `(progn
-                                  (eval-when (compile load eval)
+                                  (eval-now!
                                     (export '(,(intern ^name))))
                                   (defmacro ,(intern ^name) ()
                                     `(,',fn-name self)))))))

@@ -68,7 +68,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ; --- tk-format --- talking to wish/Tk -----------------------------------------------------
 
-(defconstant +tk-client-task-priority+
+(defparameter +tk-client-task-priority+
     '(:delete :forget :destroy 
        :pre-make-tk :make-tk :make-tk-menubutton :post-make-tk 
        :variable :bind :selection :trace :configure :grid :pack :fini))

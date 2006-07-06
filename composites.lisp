@@ -69,7 +69,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defmodel composite-widget (widget)
   ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(title$ active .time)))
 
 (defvar *app*)

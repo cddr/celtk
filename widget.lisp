@@ -71,7 +71,7 @@ See the Lisp Lesser GNU Public License for more details.
     :event-handler nil #+debug (lambda (self xe)
                                  (TRC "debug event handler" self (tk-event-type (xsv type xe))))))
 
-(eval-when (compile load eval)
+(eval-now!
   (export '()))
 
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
@@ -153,7 +153,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- items -----------------------------------------------------------------------
 
-(eval-when (compile load eval)
+(eval-now!
   (export '(canvas-offset ^canvas-offset coords-tweak ^coords-tweak caret-tweak ^caret-tweak
              decorations ^decorations)))
 
