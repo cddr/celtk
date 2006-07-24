@@ -167,11 +167,14 @@ See the Lisp Lesser GNU Public License for more details.
          (callback :pointer))
        (defcallback ,(intern cb$) :void ((,ptr-var :pointer))
          (unless (c-stopped)
-           (let ((,self-var (or (gethash (pointer-address ,ptr-var) (tkwins *tkw*))
-                              (gethash (togl-ident ,ptr-var)(dictionary *tkw*)))))
-             ,@preamble
-             (trc nil "selves" ,cb$ (togl-ident ,ptr-var) (gethash (pointer-address ,ptr-var) (tkwins *tkw*))(gethash (togl-ident ,ptr-var)(dictionary *tkw*)))
-             (,(intern uc$) ,self-var))))
+           (bif (,self-var (or (gethash (pointer-address ,ptr-var) (tkwins *tkw*))
+                             (gethash (togl-ident ,ptr-var)(dictionary *tkw*))))
+             (progn
+               ,@preamble
+               (trc nil "selves" ,cb$ (togl-ident ,ptr-var) (gethash (pointer-address ,ptr-var) (tkwins *tkw*))(gethash (togl-ident ,ptr-var)(dictionary *tkw*)))
+               (,(intern uc$) ,self-var))
+             (trc "WARNING: Togl callback ~a sees unknown togl pointer ~a :address ~a :ident ~a"
+               ,cb$ ,ptr-var (pointer-address ,ptr-var) (togl-ident ,ptr-var)))))
        (defmethod ,(intern uc$) :around ((self togl))
          (if (,(intern cb-slot$) self)
                (funcall (,(intern cb-slot$) self) self)

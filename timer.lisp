@@ -79,8 +79,8 @@ See the Lisp Lesser GNU Public License for more details.
                      (funcall (^action) self)
                      (setf (^executed) t))))
    (after-factory :reader after-factory
-     :initform (c? (bwhen (rpt (eko (nil ">>> repeat") (when (eq (^state) :on)
-                               (^repeat))))
+     :initform (c? (bwhen (rpt (when (eq (^state) :on)
+                               (^repeat)))
                    (when (or (zerop (^executions)) (^executed)) ;; dispatch initially or after an execution
                      (when (zerop (^executions))
                        (setf (elapsed self) (now)))
@@ -90,19 +90,23 @@ See the Lisp Lesser GNU Public License for more details.
                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
                          (set-timer self (^delay))))))))))
 
+(defobserver state ((self timer))
+  (unless (eq new-value :on)
+    (trc "bingo!!!!!!!!!!!!!!!!!!!!! state takes out timer" self)
+    (cancel-timer self)))
+
 (defun set-timer (self time)
   (let ((callback-id (symbol-name (gentemp "AFTER"))))
     (setf (gethash callback-id (dictionary *tkw*)) self)
     (setf (cancel-id self) (tk-eval "after ~a {do-on-command ~a}" time callback-id))))
 
 (defun cancel-timer (timer)
-  (setf (state timer) :off)
   (when (cancel-id timer)
-      (tk-format-now "after cancel ~a" (cancel-id timer)))) ;; Tk doc says OK if cancelling already executed
+    (tk-format-now "after cancel ~a" (cancel-id timer)))) ;; Tk doc says OK if cancelling already executed
 
 (defobserver timers ((self tk-object) new-value old-value)
   (dolist (k (set-difference old-value new-value))
-    (cancel-timer k)))
+    (setf (state k) :off))) ;; actually could be anything but :on
 
 
     
