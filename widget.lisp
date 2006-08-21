@@ -77,11 +77,17 @@ See the Lisp Lesser GNU Public License for more details.
 (defun tk-create-event-handler-ex (widget callback-name &rest masks)
   (let ((self-tkwin (widget-to-tkwin widget)))
     (assert (not (null-pointer-p self-tkwin)))
-    (trc nil "setting up widget virtual-event handler" widget :tkwin self-tkwin)
+    (trc nil "setting up widget virtual-event handler" widget callback-name :tkwin self-tkwin :masks masks)
+    (tk-create-event-handler self-tkwin
+      (foreign-masks-combine 'tk-event-mask :PointerMotionMask)
+      (get-callback callback-name)
+      self-tkwin)
     (tk-create-event-handler self-tkwin
       (apply 'foreign-masks-combine 'tk-event-mask masks)
       (get-callback callback-name)
       self-tkwin)))
+
+
 
 (defun widget-menu (self key)
   (or (find key (^menus) :key 'md-name)
@@ -124,12 +130,11 @@ See the Lisp Lesser GNU Public License for more details.
     (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
 
 (defmethod widget-event-handle ((self widget) xe) ;; override for class-specific handling
+  (trc nil "bingo widget-event-handle" (xevent-type xe))
   (bif (h (^event-handler)) ;; support instance-specific handlers
     (funcall h self xe)
-    #+shhh (case (xevent-type xe)
-      (:buttonpress
-       (trc "button pressed:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))
-      
+    (case (xevent-type xe)
+      (:buttonpress (trc "button pressed:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))
       (:buttonrelease (trc "button released:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))(:MotionNotify
        (xevent-dump xe))
       (:virtualevent))))

@@ -146,6 +146,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :double t
     :rgba t
+    :alpha t
     :id (gentemp "TOGL")
     :ident (c? (^path))))
 
@@ -183,8 +184,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (def-togl-callback create ()
   (trc nil "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr self)
-  (setf (togl-ptr self) (setf cl-ftgl::*ftgl-ogl* ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-                          togl-ptr))
+  (setf cl-ftgl::*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
 
   (setf (togl-ptr self) togl-ptr)
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
