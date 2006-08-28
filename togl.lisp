@@ -157,6 +157,7 @@ See the Lisp Lesser GNU Public License for more details.
           (,height-var (togl-height ,togl-ptr)))
      ,@body))
 
+
 (defmacro def-togl-callback (root (&optional (ptr-var 'togl-ptr)(self-var 'self)) &body preamble)
   (let ((register$ (format nil "TOGL-~a-FUNC" root))
         (cb$ (format nil "TOGL-~a" root))
@@ -183,9 +184,9 @@ See the Lisp Lesser GNU Public License for more details.
        (defmethod ,(intern uc$) ((self togl))))))
 
 (def-togl-callback create ()
-  (trc nil "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr self)
-  (setf cl-ftgl::*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-
+  (trc "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr )
+  #+cl-ftgl (setf cl-ftgl::*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
+  (ogl::kt-opengl-reset)
   (setf (togl-ptr self) togl-ptr)
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
 
