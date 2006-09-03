@@ -99,7 +99,7 @@ certainly wrong (or the class should be canvas-scroller).
   ; to defer things until The Right Time. Which brings us back to Tk. Inspect the source of
   ; tk-user-queue-handler and search the Celtk source for "with-integrity (:client" to see how Celtk
   ; manages to talk to Tk in the order Tk likes. And hack the function tk-format-now to have
-  ; Celtk dump the TCL/Tk code being sent to wish during initialization, and notice how un-random it looks. You can
+  ; Celtk dump the code it has evaluated by TCL/Tk during initialization, and notice how un-random it looks. You can
   ; then comment out the above specification of a Tk-savvy handler to see (a) the order that would have happened
   ; before Cells3 and (b) the demo collapse in a broken heap. 
   ;
@@ -393,7 +393,6 @@ certainly wrong (or the class should be canvas-scroller).
                              for y = (+ (* 50 (cos angle-2)) 200 (* 150 (cos w)))
                              nconcing (list x y))))))
 
-
 (defun (setf moire-spin) (repeat self)
   (setf (repeat (car (timers self))) repeat)) ;; just hiding the implementation
 
@@ -453,3 +452,6 @@ certainly wrong (or the class should be canvas-scroller).
 (defun mk-entry-numeric (&rest iargs)
   (apply 'make-instance 'entry-numeric :fm-parent *parent* iargs))
   
+(defun ctk::ltktest-ci ()
+  (cells-reset 'tk-user-queue-handler)
+  (ctk:test-window 'ltktest-cells-inside))

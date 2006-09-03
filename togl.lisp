@@ -185,8 +185,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 (def-togl-callback create ()
   (trc "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr )
-  #+cl-ftgl (setf cl-ftgl::*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-  (ogl::kt-opengl-reset)
+  ;;#+cl-ftgl (setf cl-ftgl::*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
+  ;;(ogl::kt-opengl-reset)
   (setf (togl-ptr self) togl-ptr)
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
 

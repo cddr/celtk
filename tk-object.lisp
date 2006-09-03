@@ -34,6 +34,11 @@ eventually thanks to DEFCOMMAND")
    (user-errors :initarg :user-errors :accessor user-errors :initform nil))
   (:documentation "Root class for widgets and (canvas) items"))
 
+(defmethod not-to-be :before ((self tk-object))
+  (loop for timer in (^timers) do
+        (setf (state timer) :off)
+        (not-to-be timer)))
+
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))
 

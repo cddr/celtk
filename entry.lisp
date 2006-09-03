@@ -40,10 +40,10 @@ See the Lisp Lesser GNU Public License for more details.
     :xscrollcommand (c-in nil)
     :textvariable (c? (intern (^path)))
     :event-handler (lambda (self xe)
-                     (TRC nil "widget-event-handler" self (xsv type xe) )
+                     (TRC nil "ENTRY event-handler" self (xsv type xe) (tk-event-type (xsv type xe)))
                      (case (tk-event-type (xsv type xe))
                        (:virtualevent
-                        (trc nil "v/e" (xsv name xe))
+                        (trc nil "ENTRY virtual event" (xsv name xe))
                         (case (read-from-string (string-upcase (xsv name xe)))
                           (trace
                            (TRC nil "entry e/h trace" self (when (plusp (xsv user-data xe))

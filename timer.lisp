@@ -74,10 +74,13 @@ See the Lisp Lesser GNU Public License for more details.
    
    (on-command :reader on-command
      :initform (lambda (self)
-                 (when (eq (^state) :on)
+                 (unless (md-dead self)
+                   (trc nil "timer on-command dispatched!!!!!" self)
+                   (when (eq (^state) :on)
                      (assert (^action))
                      (funcall (^action) self)
-                     (setf (^executed) t))))
+                     (setf (^executed) t)))))
+
    (after-factory :reader after-factory
      :initform (c? (bwhen (rpt (when (eq (^state) :on)
                                (^repeat)))
@@ -92,7 +95,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defobserver state ((self timer))
   (unless (eq new-value :on)
-    (trc "bingo!!!!!!!!!!!!!!!!!!!!! state takes out timer" self)
     (cancel-timer self)))
 
 (defun set-timer (self time)
