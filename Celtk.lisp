@@ -24,7 +24,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:export
    #:right #:left
    #:<1> #:tk-event-type #:xsv #:name #:x #:y #:x-root #:y-root
-   #:title$ #:pop-up #:path #:parent-path #:^keyboard-modifiers #:keyboard-modifiers
+   #:title$ #:pop-up #:path #:parent-path #:^keyboard-modifiers
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
    #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label

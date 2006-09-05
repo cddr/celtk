@@ -53,7 +53,7 @@ See the Lisp Lesser GNU Public License for more details.
                                  :fm-parent *parent*
                                  window-initargs))))
         )))
-
+  
   (assert (tkwin *tkw*))
   
   (tk-format `(:fini) "wm deiconify .")
@@ -89,29 +89,32 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod widget-event-handle ((self window) xe)
   (let ((*tkw* self))
-    (TRC nil "main window event" *tkw* (xevent-type xe))
+    (TRC nil "main window event" self *tkw* (xevent-type xe))
     (flet ((give-to-window ()
              (bwhen (eh (event-handler *tkw*))
                (funcall eh *tkw* xe))))
       (case (xevent-type xe)
         ((:MotionNotify :buttonpress)
          #+shhh (call-dump-event client-data xe))
+
         (:destroyNotify
          (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
            (ensure-destruction *tkw*)))
+
         (:virtualevent
          (bwhen (n$ (xsv name xe))
            (trc nil "main-window-proc :" n$ (unless (null-pointer-p (xsv user-data xe))
                                               (tcl-get-string (xsv user-data xe))))
            (case (read-from-string (string-upcase n$))
-             (keypress (trc "going after keysym")
+             (keypress (break "this works??: going after keysym")
                (let ((keysym (tcl-get-string (xsv user-data xe))))
                          (trc "keypress keysym!!!!" (tcl-get-string (xsv user-data xe)))
                          (bIf (mod (keysym-to-modifier keysym))
                            (eko ("modifiers now")
                              (pushnew mod (keyboard-modifiers *tkw*)))
                            (trc "unhandled pressed keysym" keysym))))
-             (keyrelease (let ((keysym (tcl-get-string (xsv user-data xe))))
+             (keyrelease (break "this works??: going after keysym")
+               (let ((keysym (tcl-get-string (xsv user-data xe))))
                            (bIf (mod (keysym-to-modifier keysym))
                              (eko ("modifiers now")
                                (setf (keyboard-modifiers *tkw*)
@@ -123,14 +126,15 @@ See the Lisp Lesser GNU Public License for more details.
              (window-destroyed
               (ensure-destruction *tkw*))
              
-             (otherwise (give-to-window)))))
+             (otherwise
+              (give-to-window)))))
         (otherwise (give-to-window)))
       0)))
 
 ;; Our own event loop ! - Use this if it is desirable to do something
 ;; else between events
 
-(defparameter *event-loop-delay* 0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
+(defparameter *event-loop-delay*  0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
 (defun tcl-do-one-event-loop ()
   (loop while (plusp (tk-get-num-main-windows))

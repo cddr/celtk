@@ -86,6 +86,8 @@ See the Lisp Lesser GNU Public License for more details.
 (defun app-idle (self)
   (setf (^app-time) (get-internal-real-time)))
 
+(export! keyboard-modifiers)
+
 (defmd window (composite-widget)
   (title$ (c? (string-capitalize (class-name (class-of self)))))
   (dictionary (make-hash-table :test 'equalp))
@@ -101,6 +103,21 @@ See the Lisp Lesser GNU Public License for more details.
   initial-focus
   on-key-down
   on-key-up)
+
+
+
+(defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
+  (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
+  (bwhen (mod (keysym-to-modifier keysym))
+    (eko (nil "modifiers after adding" mod)
+      (pushnew mod (keyboard-modifiers .tkw)))))
+
+(defmethod do-on-key-up :before (self &rest args &aux (keysym (car args)))
+  (trc nil "ctk::do-on-key-up before" keysym (keyboard-modifiers .tkw))
+  (bwhen (mod (keysym-to-modifier keysym))
+    (eko (nil "modifiers after removing" mod)
+      (setf (keyboard-modifiers .tkw)
+        (delete mod (keyboard-modifiers .tkw))))))
 
 (defobserver initial-focus ()
   (when new-value

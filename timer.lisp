@@ -93,6 +93,9 @@ See the Lisp Lesser GNU Public License for more details.
                        (with-integrity (:client `(:fini ,self)) ;; just guessing as to when, not sure it matters
                          (set-timer self (^delay))))))))))
 
+(defmethod not-to-be :before ((self timer))
+  (setf (state self) :off))
+
 (defobserver state ((self timer))
   (unless (eq new-value :on)
     (cancel-timer self)))

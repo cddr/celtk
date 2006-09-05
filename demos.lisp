@@ -19,6 +19,35 @@ See the Lisp Lesser GNU Public License for more details.
 (in-package :celtk-user)
 
 
+(defmodel my-test (window)
+ ((my-mode :accessor my-mode :initform (c? (evenp (selection (fm! :my-selector))))))
+ (:default-initargs
+     :id :my-test-id
+   :kids (c? (the-kids
+              (mk-stack ("stack"  :packing (c?pack-self "-side bottom") :relief 'ridge)
+                        (mk-entry :id :my-entry
+                                  :md-value (c-in "abc"))
+                        (mk-row ( "row"  #| :packing (c?pack-self "-side bottom") |# :relief 'ridge)
+                                (mk-label :text (c? (format nil "selection: ~a"  (selection (fm^ :my-selector)))))
+                              (mk-label :text "Labeltext")
+                              (mk-button-ex ("Reset" (setf (selection (fm^ :my-selector)) 1)))
+                              (mk-stack ((c? (format nil "current selection: ~a" (^selection))) :id :my-selector :selection (c-in 1) :relief 'ridge)
+                                        (mk-radiobutton-ex ("selection 1" 1))
+                                        (mk-radiobutton-ex ("selection 2" 2))
+                                        (mk-radiobutton-ex ("selection 3" 3))
+                                        (mk-radiobutton-ex ("selection 4" 4)))
+                              (mk-label :text (c? (format nil "selection: ~a"  (selection (fm^ :my-selector)))))
+                              ))))))
+
+(defobserver my-mode ((self my-test) new-value old-value old-value-bound-p)
+ (format t "~% mode changed from ~a to ~a" old-value new-value))
+
+(defun ctk::franks-test ()
+  (run-window 'my-test))
+
+#+test 
+(ctk::franks-test)
+
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
    ;;'place-test

@@ -25,19 +25,14 @@ See the Lisp Lesser GNU Public License for more details.
   ((.md-name :cell nil :initform (gentemp "TK") :initarg :id)
    (tk-class :cell nil :initform nil :initarg :tk-class :reader tk-class)
    
-   (timers :initarg :timers :accessor timers :initform nil)
+   (timers :owning t :initarg :timers :accessor timers :initform nil)
    (on-command :initarg :on-command :accessor on-command :initform nil)
    (on-key-down :initarg :on-key-down :accessor on-key-down :initform nil
-     :documentation "Long story. Tcl C API sucks for keypress events. This gets dispatched
+     :documentation "Long story. Tcl C API weak for keypress events. This gets dispatched
 eventually thanks to DEFCOMMAND")
    (on-key-up :initarg :on-key-up :accessor on-key-up :initform nil)
    (user-errors :initarg :user-errors :accessor user-errors :initform nil))
   (:documentation "Root class for widgets and (canvas) items"))
-
-(defmethod not-to-be :before ((self tk-object))
-  (loop for timer in (^timers) do
-        (setf (state timer) :off)
-        (not-to-be timer)))
 
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))
