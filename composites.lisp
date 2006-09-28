@@ -102,9 +102,8 @@ See the Lisp Lesser GNU Public License for more details.
   (tkfont-info (tkfont-info-loader))
   initial-focus
   on-key-down
-  on-key-up)
-
-
+  on-key-up
+  (decoration (c-in :normal)))
 
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
@@ -118,6 +117,17 @@ See the Lisp Lesser GNU Public License for more details.
     (eko (nil "modifiers after removing" mod)
       (setf (keyboard-modifiers .tkw)
         (delete mod (keyboard-modifiers .tkw))))))
+
+(defobserver decoration ((self window)) ;; == wm overrideredirect 0|1
+  (assert (or (eq new-value nil)        ;; Does not change decoration
+	      (eq new-value :normal)    ;; "normal"
+              (eq new-value :none)))    ;; No title bar, no nothing ...
+  (if (not (eq new-value old-value))
+      (case new-value
+	(:none    (tk-format '(:pre-make-tk new-value)
+			     "wm overrideredirect ~a 1" (^path)))
+	(:normal  (tk-format '(:pre-make-tk new-value)
+			     "wm overrideredirect ~a 0" (^path))))))
 
 (defobserver initial-focus ()
   (when new-value
