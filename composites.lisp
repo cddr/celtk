@@ -70,7 +70,7 @@ See the Lisp Lesser GNU Public License for more details.
   ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
 
 (eval-now!
-  (export '(title$ active .time)))
+  (export '(title$ active .time decoration)))
 
 (defvar *app*)
 
