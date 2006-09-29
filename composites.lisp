@@ -18,6 +18,19 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
+(eval-now!
+  (export '(title$ active .time decoration)))
+
+(export! application
+         keyboard-modifiers
+	 iconify
+	 deiconify
+	 full-screen-no-deco-window
+	 screen-width
+	 screen-height)
+
+;;; --- decoration -------------------------------------------
+
 (defmd decoration-mixin ()
   (decoration (c-in :normal)))
 
@@ -70,9 +83,6 @@ See the Lisp Lesser GNU Public License for more details.
 (defmodel composite-widget (widget)
   ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
 
-(eval-now!
-  (export '(title$ active .time decoration)))
-
 (defvar *app*)
 
 (defmodel application (family)
@@ -86,8 +96,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defun app-idle (self)
   (setf (^app-time) (get-internal-real-time)))
-
-(export! keyboard-modifiers)
 
 (defmd window (composite-widget decoration-mixin)
   (title$ (c? (string-capitalize (class-name (class-of self)))))
@@ -104,6 +112,26 @@ See the Lisp Lesser GNU Public License for more details.
   initial-focus
   on-key-down
   on-key-up)
+
+(defun screen-width ()
+  (let ((*tkw* *tkw*))
+    (tk-format-now "winfo screenwidth .")))
+
+(defun screen-height ()
+  (let ((*tkw* *tkw*))
+    (tk-format-now "winfo screenheight .")))
+
+(defmodel full-screen-no-deco-window (window)
+  ())
+
+(defmethod initialize-instance :before ((self full-screen-no-deco-window)
+					&key &allow-other-keys)
+  (tk-format '(:pre-make-tk self)
+	     "wm geometry . [winfo screenwidth .]x[winfo screenheight .]+0+0")
+  (tk-format '(:pre-make-tk self) "update idletasks")
+  #-macosx (tk-format '(:pre-make-tk self) "wm attributes . -topmost yes")
+  (tk-format '(:pre-make-tk self) "wm overrideredirect . yes")
+  )
 
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
@@ -187,4 +215,15 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod path ((self window)) ".")
 (defmethod parent-path ((self window)) "")
+
+(defmethod iconify ((self window))
+  (%%do-decoration self :normal)
+  (tk-format `(:fini) "wm iconify ~a" (^path)))
+
+(defmethod deiconify ((self window))
+  (%%do-decoration self (decoration self))
+  (tk-format `(:fini) "wm deiconify ~a" (^path)))
+
+
+
 
