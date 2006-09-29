@@ -18,11 +18,12 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
-
+(defmd decoration-mixin ()
+  (decoration (c-in :normal)))
 
 ;;; --- toplevel ---------------------------------------------
 
-(deftk toplevel (widget)
+(deftk toplevel (widget decoration-mixin)
   ()
   (:tk-spec toplevel
     -borderwidth -cursor -highlightbackground -highlightcolor
@@ -35,7 +36,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;; --- panedwindow -----------------------------------------
 
-(deftk panedwindow (widget)
+(deftk panedwindow (widget decoration-mixin)
   ()
   (:tk-spec panedwindow
     -background -borderwidth -cursor -height
@@ -88,7 +89,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (export! keyboard-modifiers)
 
-(defmd window (composite-widget)
+(defmd window (composite-widget decoration-mixin)
   (title$ (c? (string-capitalize (class-name (class-of self)))))
   (dictionary (make-hash-table :test 'equalp))
   (tkwins (make-hash-table))
@@ -102,8 +103,7 @@ See the Lisp Lesser GNU Public License for more details.
   (tkfont-info (tkfont-info-loader))
   initial-focus
   on-key-down
-  on-key-up
-  (decoration (c-in :normal)))
+  on-key-up)
 
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
@@ -118,16 +118,41 @@ See the Lisp Lesser GNU Public License for more details.
       (setf (keyboard-modifiers .tkw)
         (delete mod (keyboard-modifiers .tkw))))))
 
-(defobserver decoration ((self window)) ;; == wm overrideredirect 0|1
+;;; Helper function that actually executes decoration change
+(defun %%do-decoration (widget decoration)
+  (let ((path (path widget)))
+    (ecase decoration
+      (:none    (progn
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm withdraw ~a" path)    
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm overrideredirect ~a 1" path)
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm deiconify ~a" path)
+		  (tk-format '(:pre-make-tk decoration)
+			     "update idletasks" path)
+		  ))
+      (:normal  (progn
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm withdraw ~a" path)    
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm overrideredirect ~a 0" path)
+		  (tk-format '(:pre-make-tk decoration)
+			     "wm deiconify ~a" path)
+		  (tk-format '(:pre-make-tk decoration)
+			     "update idletasks" path))))))
+
+;;; Decoration observer for all widgets that inherit from decoration-mixin
+;;; On Mac OS X this is a one-way operation. When created without decorations
+;;; then it is not possible to restore the decorations and vice versa. So on
+;;; OS X the window decoration will stay as you created the window with.
+
+(defobserver decoration ((self decoration-mixin)) ;; == wm overrideredirect 0|1
   (assert (or (eq new-value nil)        ;; Does not change decoration
 	      (eq new-value :normal)    ;; "normal"
               (eq new-value :none)))    ;; No title bar, no nothing ...
   (if (not (eq new-value old-value))
-      (case new-value
-	(:none    (tk-format '(:pre-make-tk new-value)
-			     "wm overrideredirect ~a 1" (^path)))
-	(:normal  (tk-format '(:pre-make-tk new-value)
-			     "wm overrideredirect ~a 0" (^path))))))
+      (%%do-decoration self new-value)))
 
 (defobserver initial-focus ()
   (when new-value
