@@ -18,6 +18,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
+
+
 ;;; --- running a Celtk (window class, actually) --------------------------------------
 
 (eval-now!
@@ -65,6 +67,8 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-format-now "bind . <KeyRelease> {do-key-up %W %K}")
 
   (tcl-do-one-event-loop))
+
+
 
 (defun ensure-destruction (w)
   (TRC nil "ensure-destruction entry" W)

@@ -103,31 +103,6 @@ See the Lisp Lesser GNU Public License for more details.
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
         (funcall task)))
 
-(defun replace-char (txt char with)
-  (let ((pos (search char txt)))
-    (loop
-       while pos
-       do
-         (progn
-           ;;(dbg "txt: ~a -> " txt)
-           (setf txt (concatenate 'string (subseq txt 0 pos) with (subseq txt (1+ pos))))
-           ;;(dbg " ~a~&" txt)
-           (setf pos (search char txt :start2 (+ pos (length with)))))))
-  txt)
-
-(defun tkescape (txt)
-  (setf txt (format nil "~a" txt))
-  (replace-char
-   (replace-char
-    (replace-char
-     (replace-char
-      (replace-char
-       txt "\\" "\\\\")
-      "$" "\\$")
-     "[" "\\[")
-    "]" "\\]")
-   "\"" "\\\""))
-
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
     (let* ((*print-circle* nil)

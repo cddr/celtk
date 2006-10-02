@@ -87,8 +87,6 @@ See the Lisp Lesser GNU Public License for more details.
       (get-callback callback-name)
       self-tkwin)))
 
-
-
 (defun widget-menu (self key)
   (or (find key (^menus) :key 'md-name)
     (break "The only menus I see are~{ ~a,~} not requested ~a" (mapcar 'md-name (^menus)) key)))
@@ -106,10 +104,9 @@ See the Lisp Lesser GNU Public License for more details.
   (setf (gethash (^path) (dictionary .tkw)) self)
   (trc nil "mktki" self (^path))
   (with-integrity (:client `(:make-tk ,self))
-      (when (tk-class self)
-        (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
-          (tk-class self) (path self)(tk-configurations self)))
-      #+tryinafter (tkwin-register self)))
+    (when (tk-class self)
+      (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
+        (tk-class self) (path self)(tk-configurations self)))))
 
 (defmethod make-tk-instance :after ((self widget)) 
   (with-integrity (:client `(:post-make-tk ,self))
@@ -266,7 +263,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defobserver image-files ()
   (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
       do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file {~a}"
-           (^path) name (progn #+not tkescape (namestring file-pathname)))))
+           (^path) name (namestring file-pathname))))
 
 
 ;;; --- menus ---------------------------------

@@ -1,11 +1,12 @@
-;; -*- lisp-version: "8.0 [Windows] (May 22, 2006 0:51)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Aug 24, 2006 21:48)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
 (defpackage :GEARS)
 
 (define-project :name :gears
-  :modules (list (make-instance 'module :name "gears.lisp"))
+  :modules (list (make-instance 'module :name "gears.lisp")
+                 (make-instance 'module :name "nehe-02"))
   :projects (list (make-instance 'project-module :name "..\\CELTK")
                   (make-instance 'project-module :name
                                  "C:\\1-devtools\\cl-opengl\\glu"))
@@ -77,7 +78,7 @@
   :old-space-size 256000
   :new-space-size 6144
   :runtime-build-option :standard
-  :on-initialization 'gears::gears
+  :on-initialization 'gears::nehe-02
   :on-restart 'do-default-restart)
 
 ;; End of Project Definition

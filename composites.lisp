@@ -32,7 +32,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; --- decoration -------------------------------------------
 
 (defmd decoration-mixin ()
-  (decoration (c-in :normal)))
+  (decoration (c-in nil)))
 
 ;;; --- toplevel ---------------------------------------------
 
@@ -113,6 +113,9 @@ See the Lisp Lesser GNU Public License for more details.
   on-key-down
   on-key-up)
 
+(defmethod make-tk-instance ((self window)) 
+  (setf (gethash (^path) (dictionary .tkw)) self))
+
 (defun screen-width ()
   (let ((*tkw* *tkw*))
     (tk-format-now "winfo screenwidth .")))
@@ -133,6 +136,7 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-format '(:pre-make-tk self) "wm overrideredirect . yes")
   )
 
+
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
   (bwhen (mod (keysym-to-modifier keysym))
@@ -148,6 +152,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; Helper function that actually executes decoration change
 (defun %%do-decoration (widget decoration)
+  (break "hunh?")
   (let ((path (path widget)))
     (ecase decoration
       (:none    (progn

@@ -90,8 +90,12 @@ See the Lisp Lesser GNU Public License for more details.
   (togl-timer-func (callback togl-timer)) ;; probably want to make this optional
   )
 
+(export! togl-ptr-set ^togl-ptr-set)
+
 (deftk togl (widget)
-  ((togl-ptr :cell nil :initform nil :initarg :togl-ptr :accessor togl-ptr)
+  ((togl-ptr :cell nil  :initform nil :initarg :togl-ptr :accessor togl-ptr)
+   (togl-ptr-set :initform (c-in nil) :initarg :togl-ptr-set :accessor togl-ptr-set
+     :documentation "very complicated, don't ask (togl-ptr cannot wait on ufb processing)")
    (cb-create :initform nil :initarg :cb-create :reader cb-create)
    (cb-display :initform nil :initarg :cb-display :reader cb-display)
    (cb-reshape :initform nil :initarg :cb-reshape :reader cb-reshape)
@@ -150,6 +154,11 @@ See the Lisp Lesser GNU Public License for more details.
     :id (gentemp "TOGL")
     :ident (c? (^path))))
 
+(export! togl-redisp)
+(defun togl-redisp (togl)
+  (when (togl-ptr togl)
+    (togl-post-redisplay (togl-ptr togl))))
+
 (defmacro with-togl ((togl-form width-var height-var) &body body &aux (togl-ptr (gensym)))
   `(let* ((,togl-ptr (togl-ptr ,togl-form))
           (*tki* (togl-interp ,togl-ptr))
@@ -184,10 +193,11 @@ See the Lisp Lesser GNU Public License for more details.
        (defmethod ,(intern uc$) ((self togl))))))
 
 (def-togl-callback create ()
-  (trc "!!!!!!!!!!!!!!!!!! about to install togl-ptr!!!!!!!!!!!!!!!!!!" togl-ptr )
+  (trc "___________________ TOGL SET UP _________________________________________" togl-ptr )
   #+cl-ftgl (setf cl-ftgl:*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
   #+kt-opengl (kt-opengl:kt-opengl-reset)
-  (setf (togl-ptr self) togl-ptr)
+  (setf (togl-ptr self) togl-ptr) ;; this cannot be deferred
+  (setf (togl-ptr-set self) togl-ptr) ;; this gets deferred, which is OK
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
 
 (def-togl-callback display ())
@@ -198,7 +208,6 @@ See the Lisp Lesser GNU Public License for more details.
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))
     (setf (gethash (^path) (dictionary .tkw)) self)
+    (trc "making togl!!!!!!!!!!!!" (path self)(tk-configurations self))
     (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
       (path self)(tk-configurations self))))
- ;; this leads to "togl <path> [-<config option> <value]*", in turn to togl_create
-
