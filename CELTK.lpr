@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (Aug 24, 2006 21:48)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Oct 17, 2006 12:56)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -104,7 +104,7 @@
   :old-space-size 256000
   :new-space-size 6144
   :runtime-build-option :standard
-  :on-initialization 'celtk::tk-test
+  :on-initialization 'celtk::ltktest-ci
   :on-restart 'do-default-restart)
 
 ;; End of Project Definition

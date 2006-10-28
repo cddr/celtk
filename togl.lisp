@@ -208,6 +208,6 @@ See the Lisp Lesser GNU Public License for more details.
 (defmethod make-tk-instance ((self togl))
   (with-integrity (:client `(:make-tk ,self))
     (setf (gethash (^path) (dictionary .tkw)) self)
-    (trc "making togl!!!!!!!!!!!!" (path self)(tk-configurations self))
+    (trc nil "making togl!!!!!!!!!!!!" (path self)(tk-configurations self))
     (tk-format-now "togl ~a ~{~(~a~) ~a~^ ~}"
       (path self)(tk-configurations self))))

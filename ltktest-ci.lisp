@@ -119,6 +119,9 @@ certainly wrong (or the class should be canvas-scroller).
 ; which operates on the outside world via observers (on-change callbacks) triggered
 ; automatically by the Cells engine. See DEFOBSERVER.
 
+(defun ctk::ltktest-ci ()
+  (cells-reset 'tk-user-queue-handler)
+  (ctk:test-window 'ltktest-cells-inside))
 
 (defmodel ltktest-cells-inside (window)
   ()
@@ -452,6 +455,3 @@ certainly wrong (or the class should be canvas-scroller).
 (defun mk-entry-numeric (&rest iargs)
   (apply 'make-instance 'entry-numeric :fm-parent *parent* iargs))
   
-(defun ctk::ltktest-ci ()
-  (cells-reset 'tk-user-queue-handler)
-  (ctk:test-window 'ltktest-cells-inside))

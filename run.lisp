@@ -138,7 +138,7 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Our own event loop ! - Use this if it is desirable to do something
 ;; else between events
 
-(defparameter *event-loop-delay*  0.08 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
+(defparameter *event-loop-delay*  .10 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
 (defun tcl-do-one-event-loop ()
   (loop while (plusp (tk-get-num-main-windows))
