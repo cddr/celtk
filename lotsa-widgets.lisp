@@ -198,7 +198,7 @@ See the Lisp Lesser GNU Public License for more details.
               
     (mk-label :text "Four score and seven years ago today, our fathers broguht forth on this continent a new nation..."
       :wraplength 200
-      :justify 'left
+      :tk-justify 'left
       :tkfont (c? (list
                  (selection (fm^ :font-face))
                  (md-value (fm^ :font-size)))))))

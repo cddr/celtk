@@ -98,7 +98,7 @@ See the Lisp Lesser GNU Public License for more details.
     -command -invalidcommand -increment
     -highlightbackground -highlightcolor -highlightthickness 
     -insertbackground -insertborderwidth -insertofftime -insertontime
-    -insertwidth -jump -justify -orient
+    -insertwidth -jump (tk-justify -justify) -orient
     -padx -pady -relief -repeatdelay
     -repeatinterval -selectbackground -selectborderwidth -selectforeground
     -readonlybackground -state -to

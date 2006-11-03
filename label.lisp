@@ -25,7 +25,7 @@ See the Lisp Lesser GNU Public License for more details.
     -background -bitmap -borderwidth -compound -cursor
     -disabledforeground   (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
-    -justify
+    (tk-justify -justify)
     -padx -pady -relief -takefocus -text -textvariable -underline
     -height -state -width -wraplength)
   (:default-initargs
@@ -40,7 +40,7 @@ See the Lisp Lesser GNU Public License for more details.
     -background -bitmap -borderwidth -compound -cursor
     -disabledforeground    (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
-    -justify 
+    (tk-justify -justify) 
     -padx -pady -relief 
     -takefocus -text -textvariable
     -underline -wraplength -width -state -height)

@@ -33,7 +33,7 @@ See the Lisp Lesser GNU Public License for more details.
     ;; -- special ---
     -anchor
     (tkfont -font)
-    -justify
+    (tk-justify -justify)
     -text
     -underline
     -width)

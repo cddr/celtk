@@ -29,7 +29,7 @@ See the Lisp Lesser GNU Public License for more details.
     -disabledforeground  -disabledbackground -exportselection (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness
     -insertbackground -insertborderwidth -insertofftime -insertontime
-    -insertwidth  -justify 
+    -insertwidth  (tk-justify -justify) 
     -relief -selectbackground -selectborderwidth -selectforeground
     -takefocus -textvariable
     -xscrollcommand

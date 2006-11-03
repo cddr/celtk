@@ -27,7 +27,7 @@ See the Lisp Lesser GNU Public License for more details.
     -background -bitmap -borderwidth -cursor
     -disabledforeground    (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
-    -justify 
+    (tk-justify -justify) 
     -padx -pady -relief -repeatdelay
     -repeatinterval -takefocus -text -textvariable
     -underline -wraplength
@@ -53,7 +53,7 @@ See the Lisp Lesser GNU Public License for more details.
     -background -bitmap -borderwidth -compound -cursor
     -disabledforeground   (tkfont -font) -foreground
     -highlightbackground -highlightcolor -highlightthickness -image
-    -justify -padx -pady -relief -takefocus -text -textvariable
+    (tk-justify -justify) -padx -pady -relief -takefocus -text -textvariable
     -underline -wraplength 
     -command -height -indicatoron -offrelief 
     -overrelief -selectcolor -selectimage -state -tristateimage 

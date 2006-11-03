@@ -242,7 +242,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
   (:tk-spec menubutton -activebackground -activeforeground -anchor -background
     -bitmap -borderwidth -cursor -disabledforeground
     (tkfont -font) -foreground -highlightbackground -highlightcolor
-    -highlightthickness -image -justify -padx
+    -highlightthickness -image (tk-justify -justify) -padx
     -pady -relief -takefocus -text
     -textvariable -underline -wraplength
     -compound -direction -height -indicatoron

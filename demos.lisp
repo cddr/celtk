@@ -172,7 +172,7 @@ See the Lisp Lesser GNU Public License for more details.
                     :entry-values (c? (subseq (tk-eval-list "font families") 4 10)))
                    (mk-label :text "Four score and seven years ago today, our fathers broguht forth on this continent a new nation..."
                      :wraplength 200
-                     :justify 'left
+                     :tk-justify 'left
                      :tkfont (c? (list
                                   (selection (fm^ :font-face))
                                   14))))))))
