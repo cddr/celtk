@@ -113,6 +113,9 @@ See the Lisp Lesser GNU Public License for more details.
   on-key-down
   on-key-up)
 
+(export! .control-key-p)
+(define-symbol-macro .control-key-p (find :control (keyboard-modifiers .tkw)))
+
 (defmethod make-tk-instance ((self window)) 
   (setf (gethash (^path) (dictionary .tkw)) self))
 

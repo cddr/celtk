@@ -192,13 +192,13 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     -offvalue
     -onvalue)
   (:default-initargs
-    :md-value (c-in nil)
+    :value (c-in nil)
     :tk-variable (c? (format nil "~a.~(~a~)" (path .parent)(md-name self)))
     :on-command  (lambda (self)
-                   (setf (^md-value) (not (^md-value))))))
+                   (setf (^value) (not (^value))))))
 
-(defobserver .md-value ((self menu-entry-checkbutton))
-  (trc nil "defobserver md-value menu-entry-checkbutton" self new-value old-value-boundp)
+(defobserver .value ((self menu-entry-checkbutton))
+  (trc nil "defobserver value menu-entry-checkbutton" self new-value old-value-boundp)
   (when (and new-value (not old-value-boundp))
     (tk-format `(:variable ,self) "set ~a ~a" (^tk-variable) (if new-value 1 0))))
 

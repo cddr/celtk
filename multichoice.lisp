@@ -34,18 +34,18 @@ See the Lisp Lesser GNU Public License for more details.
     -tickinterval -to (-tk-variable nil))
   (:default-initargs
       :id (gentemp "SCL")
-      :md-value (c-in nil)
+      :value (c-in nil)
     :tk-variable nil ;;(c? (^path))
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :on-command (lambda (self value)
                   ;; (trc "hi scale" self value)
-                  (setf (^md-value) (parse-integer value)))))
+                  (setf (^value) (parse-integer value)))))
 
 (defmethod make-tk-instance :after ((self scale))
   "Still necessary?"
-  (when (^md-value)
-    (tk-format `(:variable ,self) "~a set ~a"  (^path) (^md-value))))
+  (when (^value)
+    (tk-format `(:variable ,self) "~a set ~a"  (^path) (^value))))
 
 ; --- listbox --------------------------------------------------------------
 
@@ -70,11 +70,11 @@ See the Lisp Lesser GNU Public License for more details.
                           (ListboxSelect
                            (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
                              (setf (selection (selector self))
-                               (md-value (elt (^kids) selection)))))))))))
+                               (value (elt (^kids) selection)))))))))))
 
 (defmodel listbox-item (tk-object)
   ((item-text :initarg :item-text :accessor item-text
-     :initform (c? (format nil "~a" (^md-value))))))
+     :initform (c? (format nil "~a" (^value))))))
 
 (defmethod make-tk-instance ((self listbox-item))
   (trc nil "make-tk-instance listbox-item insert" self)
@@ -106,22 +106,22 @@ See the Lisp Lesser GNU Public License for more details.
     -troughcolor -underline -xscrollcommand  
     -validate -validatecommand (tk-values -values) -width -wrap)
   (:default-initargs
-      :md-value (c-in nil)
+      :value (c-in nil)
       :id (gentemp "SPN")
       :textVariable (c? (^path))
     :xscrollcommand (c-in nil)
     :command (c? (format nil "do-on-command ~a %s" (^path)))
     :on-command (c? (lambda (self text)
                       (eko ("variable mirror command fired !!!!!!!" text)
-                        (setf (^md-value) text))))))
+                        (setf (^value) text))))))
 
-(defobserver .md-value ((self spinbox))
+(defobserver .value ((self spinbox))
   (when new-value
     (tk-format `(:variable ,self) "set ~a ~a" (^path) (tk-send-value new-value))))
 
 (defobserver initial-value ((self spinbox))
   (when new-value
     (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
-    (setf (^md-value) new-value)))
+    (setf (^value) new-value)))
 
 

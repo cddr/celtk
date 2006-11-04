@@ -46,7 +46,7 @@ See the Lisp Lesser GNU Public License for more details.
                    (mk-stack ()
                      (mk-text-widget
                       :id :my-text
-                      :md-value (c?n "hello, world")
+                      :value (c?n "hello, world")
                       :height 8
                       :width 25)
                      
@@ -60,14 +60,14 @@ See the Lisp Lesser GNU Public License for more details.
                      (mk-row ()
                        (mk-checkbutton :id :check-me
                          :text "Check Me"
-                         :md-value (c-in t))
+                         :value (c-in t))
                        (mk-label :text (c? (if (fm^v :check-me) "checked" "unchecked"))))
                      (mk-row ()
                        (mk-button-ex ("Time now?" (setf (fm^v :push-time)
                                                     (get-universal-time))))
-                       (mk-label :text (c? (time-of-day (^md-value)))
+                       (mk-label :text (c? (time-of-day (^value)))
                          :id :push-time
-                         :md-value (c-in (get-universal-time))))
+                         :value (c-in (get-universal-time))))
                      
                      (style-by-edit-menu)
                      
@@ -98,7 +98,7 @@ See the Lisp Lesser GNU Public License for more details.
   (mk-stack ()
     (mk-spinbox
      :id :spin-pkg
-     :md-value (cells::c?n "cells")
+     :value (cells::c?n "cells")
      :tk-values (mapcar 'down$
                   (sort (mapcar 'package-name
                           (list-all-packages))
@@ -107,7 +107,7 @@ See the Lisp Lesser GNU Public License for more details.
      :id :spinpkg-sym-list
      :list-height 6
      :list-item-keys (c? (let* ((spinner (fm^ :spin-pkg))
-                                (item (when spinner (md-value spinner)))
+                                (item (when spinner (value spinner)))
                                 (pkg (find-package (string-upcase item))))
                            (when pkg
                              (loop for sym being the symbols in pkg
@@ -118,7 +118,7 @@ See the Lisp Lesser GNU Public License for more details.
      :list-item-factory (lambda (sym)
                           (make-instance 'listbox-item
                             :fm-parent *parent*
-                            :md-value sym
+                            :value sym
                             :item-text (down$ (symbol-name sym)))))))
 
 (defun duelling-scrolled-lists ()
@@ -131,7 +131,7 @@ See the Lisp Lesser GNU Public License for more details.
      :list-item-factory (lambda (pkg)
                           (make-instance 'listbox-item
                             :fm-parent *parent*
-                            :md-value pkg
+                            :value pkg
                             :item-text (down$ (package-name pkg)))))
     (mk-scrolled-list
      :id :pkg-sym-list
@@ -142,7 +142,7 @@ See the Lisp Lesser GNU Public License for more details.
                                collecting sym)))
      :list-item-factory (lambda (sym)
                           (make-instance 'listbox-item
-                            :md-value sym
+                            :value sym
                             :fm-parent *parent*
                             :item-text (down$ (symbol-name sym)))))))
 
@@ -190,7 +190,7 @@ See the Lisp Lesser GNU Public License for more details.
        :entry-values (c? (subseq (tk-eval-list "font families") 4 10)))
                           
       (mk-scale :id :font-size
-        :md-value (c-in 14)
+        :value (c-in 14)
         :tk-label "Font Size"
         :from 7 :to 24 
         :orient 'horizontal))
@@ -201,7 +201,7 @@ See the Lisp Lesser GNU Public License for more details.
       :tk-justify 'left
       :tkfont (c? (list
                  (selection (fm^ :font-face))
-                 (md-value (fm^ :font-size)))))))
+                 (value (fm^ :font-size)))))))
 
 (defun demo-all-menubar ()
   (mk-menubar
@@ -219,7 +219,7 @@ See the Lisp Lesser GNU Public License for more details.
                                       (mk-menu-entry-command :label "Close" :command "{destroy .}")
                                       (mk-menu-entry-separator)
                                       (mk-menu-entry-command :label "Quit"
-                                        :state (c? (if t ;; (md-value (fm^ :check-me))
+                                        :state (c? (if t ;; (value (fm^ :check-me))
                                                        'normal 'disabled))
                                         :command "tk_getOpenFile"))))))) ;; 'exit' in production, but under dev would take out Lisp IDE
               (mk-menu-entry-cascade
@@ -259,6 +259,6 @@ See the Lisp Lesser GNU Public License for more details.
                                                                   collecting (mk-menu-entry-radiobutton :label label :value value))))))))
                                       (mk-menu-entry-separator)
                                       (mk-menu-entry-checkbutton :id :app-font-italic :label "Italic")
-                                      (mk-menu-entry-checkbutton :id :app-font-bold :label "Bold" :md-value (c-in t))))))))))))
+                                      (mk-menu-entry-checkbutton :id :app-font-bold :label "Bold" :value (c-in t))))))))))))
 
 

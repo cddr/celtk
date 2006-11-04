@@ -26,7 +26,7 @@ See the Lisp Lesser GNU Public License for more details.
    :kids (c? (the-kids
               (mk-stack ("stack"  :packing (c?pack-self "-side bottom") :relief 'ridge)
                         (mk-entry :id :my-entry
-                                  :md-value (c-in "abc"))
+                                  :value (c-in "abc"))
                         (mk-row ( "row"  #| :packing (c?pack-self "-side bottom") |# :relief 'ridge)
                                 (mk-label :text (c? (format nil "selection: ~a"  (selection (fm^ :my-selector)))))
                               (mk-label :text "Labeltext")
@@ -81,13 +81,13 @@ See the Lisp Lesser GNU Public License for more details.
                   :kids (c? (the-kids
                              (mk-text-widget
                               :id :my-text
-                              :md-value (c?n "[bzbzbzbz]")
+                              :value (c?n "[bzbzbzbz]")
                               :height 8
                               :width 25)
                              (make-instance 'entry
                                :id :entree
                                :fm-parent *parent*
-                               :md-value (c-in "Boots"))
+                               :value (c-in "Boots"))
                              ;;;                           (make-instance 'button
                              ;;;                             :fm-parent *parent*
                              ;;;                             :text "read"
@@ -100,7 +100,7 @@ See the Lisp Lesser GNU Public License for more details.
                              ;;;                                               (trc "we got scale callbacks" self (parse-integer value)))))
                              ;;;                           (mk-spinbox
                              ;;;                            :id :spin-pkg
-                             ;;;                            :md-value (c-in "cells") ;;(cells::c?n "cells")
+                             ;;;                            :value (c-in "cells") ;;(cells::c?n "cells")
                              ;;;                            :tk-values (mapcar 'down$
                              ;;;                                         (sort (mapcar 'package-name
                              ;;;                                                 (list-all-packages))
@@ -135,7 +135,7 @@ See the Lisp Lesser GNU Public License for more details.
                  (mk-stack (:packing (c?pack-self))
                    (mk-spinbox
                     :id :spin-pkg
-                    :md-value (c-in "cells") ;;(cells::c?n "cells")
+                    :value (c-in "cells") ;;(cells::c?n "cells")
                     :tk-values (mapcar 'down$
                                  (sort (mapcar 'package-name
                                          (list-all-packages))
@@ -145,7 +145,7 @@ See the Lisp Lesser GNU Public License for more details.
                     :list-height 6
                     :list-item-keys (c? (trc "enter item keys" self (fm^ :spin-pkg))
                                       (let* ((spinner (fm^ :spin-pkg))
-                                               (item (when spinner (md-value spinner)))
+                                               (item (when spinner (value spinner)))
                                                (pkg (find-package (string-upcase item))))
                                           (when pkg
                                             (loop for sym being the symbols in pkg
@@ -156,7 +156,7 @@ See the Lisp Lesser GNU Public License for more details.
                     :list-item-factory (lambda (sym)
                                          (make-instance 'listbox-item
                                            :fm-parent *parent*
-                                           :md-value sym
+                                           :value sym
                                            :item-text (down$ (symbol-name sym)))))
                    (mk-label :text (c? (selection (fm^ :spinpkg-sym-list)))))))))
 
@@ -194,16 +194,16 @@ See the Lisp Lesser GNU Public License for more details.
 (defmodel font-view (frame-stack)
   ()
   (:default-initargs
-      :md-value (c? (tk-eval-list "font families"))
+      :value (c? (tk-eval-list "font families"))
     :pady 2 :padx 4
     :packing-side 'left
     :layout-anchor 'nw
     :kids (c? (the-kids
                (mk-spinbox :id :font-face
-                 :md-value (c-in (car (^md-value)))
-                 :tk-values (c? (md-value .parent)))
+                 :value (c-in (car (^value)))
+                 :tk-values (c? (value .parent)))
                (mk-scale :id :font-size
-                 :md-value (c-in 14)
+                 :value (c-in 14)
                  :tk-label "Font Size"
                  :from 7 :to 24 
                  :orient 'horizontal)
@@ -211,8 +211,8 @@ See the Lisp Lesser GNU Public License for more details.
                  :text "Four score seven years ago today"
                  :wraplength 600
                  :tkfont (c? (list ;; format nil "{{~{~a~^ ~}} ~a}" ;; eg, {{wp greek century} 24}
-                            (md-value (fm^ :font-face))
-                            (md-value (fm^ :font-size)))))))))
+                            (value (fm^ :font-face))
+                            (value (fm^ :font-size)))))))))
 
 #| 06-02-14 following stuff not resurrected after latest revisions to Celtk
 
@@ -224,12 +224,12 @@ See the Lisp Lesser GNU Public License for more details.
 (defmodel file-open (toplevel)
   ()
   (:default-initargs
-    :md-value (c? (directory "\\windows\\fonts\\*.ttf"))
+    :value (c? (directory "\\windows\\fonts\\*.ttf"))
     :pady 2 :padx 4
     :kids  (c? (the-kids
                 (mk-spinbox :id :font-face
-                  :md-value (c-in (car (^md-value)))
-                 :tk-values (c? (mapcar 'pathname-name (md-value .parent))))
+                  :value (c-in (car (^value)))
+                 :tk-values (c? (mapcar 'pathname-name (value .parent))))
                 (mk-button-ex ("Open" (progn
                                      (tk-format `(:destroy ,self) "destroy ~a" (path (upper self toplevel)))
                                      (not-to-be (upper self toplevel))))

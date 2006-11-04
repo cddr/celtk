@@ -216,7 +216,7 @@ certainly wrong (or the class should be canvas-scroller).
               ; solution to this riddle.
               ;
               (mk-entry-numeric :id :point-ct
-                :md-value (c-in "42")
+                :value (c-in "42")
                 ;
                 ; to help motivate "why Cells?" a little more, we deviate from ltktest 'classic" and
                 ; start having the widgets take more interesting effect: The entry field now determines the number
@@ -240,7 +240,7 @@ certainly wrong (or the class should be canvas-scroller).
                                  ; from outside the model.
                                  ;
                                  (handler-case
-                                     (let ((num (parse-integer (^md-value))))
+                                     (let ((num (parse-integer (^value))))
                                        (cond
                                         ((< num 2)
                                          (list (format nil "Yo, Euclid, at least two, not: ~a!!" num)))
@@ -256,7 +256,7 @@ certainly wrong (or the class should be canvas-scroller).
               ; As you edit the field, if you key in an invalid (non-digit) character, the background
               ; immediately turns red. Delete it and it reverts to the default.
               ;
-              ; The interesting question is, how does the md-value slot of the Lisp instance stay
+              ; The interesting question is, how does the value slot of the Lisp instance stay
               ; current with the text being edited in the Tk entry widget? Here we have a fundamental
               ; difference between Ltk and Celtk. Ltk lets Tk take care of everything, including
               ; storing the data. eg, (text my-entry) is an accessor call that asks Tk the value of
@@ -265,7 +265,7 @@ certainly wrong (or the class should be canvas-scroller).
               ; by having datapoints watching other datapoints, so we want data in the Lisp domain
               ; changing automatically as it changes on the TK side (such as when the user is actually
               ; typing in the entry widget). See the entry class to see how it uses the TCL "trace write"
-              ; mechanism to keep the Lisp md-value slot abreast of the Tk entry text configuration
+              ; mechanism to keep the Lisp value slot abreast of the Tk entry text configuration
               ; keystroke by keystroke. 
               ; 
               ; I added the :user-errors rule above to demonstrate the mechanism in action. Click
@@ -275,28 +275,28 @@ certainly wrong (or the class should be canvas-scroller).
               
               (mk-button-ex ("Print" (format t "~&User wants to see ~A points" (fm^v :point-ct))))
               ;
-              ; (fm^v :point-ct) -> (md-value (fm^ :point-ct))
+              ; (fm^v :point-ct) -> (value (fm^ :point-ct))
               ;
-              ; The idea being that every Cells model object has an md-value slot bearing the value
+              ; The idea being that every Cells model object has an value slot bearing the value
               ; of the thing being modeled. Here, the entry widget is modelling a place for users
-              ; to supply information to an application, and the md-value slot is a good place to
+              ; to supply information to an application, and the value slot is a good place to
               ; keep that information.
               ;
-              ; Thus each class uses md-value to hold something different, but in all cases it is
+              ; Thus each class uses value to hold something different, but in all cases it is
               ; the current value of whatever the instance of that class is understood to hold. 
               ; 
               (mk-button-ex ("Reset" (setf (fm^v :point-ct) "42")))
               ;
               ; Driving home this point again, in Ltk one would SETF (text my-entry) and the
               ; SETF method would communicate with Tk to make the change to the Tk widget -text
-              ; configuration. In Celtk, the md-value slot of the entry gets changed (possibly
+              ; configuration. In Celtk, the value slot of the entry gets changed (possibly
               ; triggering other slots to update, which is why we do not just talk to Tk) and
               ; then that value gets propagated to Tk via "set <widget path> <value>". Because
               ; the textVariable for every entry is the entry itself, the text of the entry
               ; then changes. If that sounds weird, what we are actually doing is tapping into
-              ; the fact that Tk to a large degree takes the same approach as Cells does with md-value:
+              ; the fact that Tk to a large degree takes the same approach as Cells does with value:
               ; in Cells, we think of model instances as wrapping some model-specific 
-              ; value, which is held in the md-value slot of the model instance. Tk simply
+              ; value, which is held in the value slot of the model instance. Tk simply
               ; allows a widget path to be a global variable. Furthermore, as the company name
               ; ActiveState suggests, Tk also provides automatic propagation: change the
               ; variable, and anyone with that as its textVariable also changes.
@@ -439,7 +439,7 @@ certainly wrong (or the class should be canvas-scroller).
   ((num-parse :initarg :num-parse :accessor num-parse
      :initform (c? (eko ("numparse")
                      (handler-case
-                         (parse-integer (^md-value))
+                         (parse-integer (^value))
                        (parse-error (c)
                          (princ-to-string c))))))
    (num-value :initarg :num-value :accessor num-value
@@ -447,7 +447,7 @@ certainly wrong (or the class should be canvas-scroller).
                        (^num-parse)
                      (or .cache 42)))))
   (:default-initargs
-      :md-value "42"
+      :value "42"
     :user-errors (c? (unless (numberp (^num-parse))
                        (^num-parse)))))
   

@@ -543,7 +543,7 @@
     (let ((data (read-line stream nil nil nil)))
       (trc "*** USRF: data = " data)
       (if data
-	 (setf (md-value (fm-other :receive-window)) data)
+	 (setf (value (fm-other :receive-window)) data)
 	 (funcall (^eof-fn) self)))))
 
 (defmodel fileevent-test-window (window)
@@ -555,7 +555,7 @@
 			       :pady 10)
 		     (mk-text-widget :id :receive-window
 				     ;:state 'disabled
-				     :md-value (c-in "")
+				     :value (c-in "")
 				     :height 10
 				     :width 80
 				     :borderwidth 2

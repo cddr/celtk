@@ -51,10 +51,10 @@ See the Lisp Lesser GNU Public License for more details.
                            ;; assuming write op, but data field shows that
                            (let ((new-value (tcl-get-var *tki* (^path)
                                               (var-flags :TCL-NAMESPACE-ONLY))))
-                             (unless (string= new-value (^md-value))
-                               (setf (^md-value) new-value))))))))
+                             (unless (string= new-value (^value))
+                               (setf (^value) new-value))))))))
    
-    :md-value (c-in "")))
+    :value (c-in "")))
 
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
@@ -63,10 +63,10 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; /// this next replicates the handling of tk-mirror-variable because
 ;;; those leverage the COMMAND mechanism, which entry lacks
 ;;
-(defobserver .md-value ((self entry))
+(defobserver .value ((self entry))
   (when new-value 
     (unless (string= new-value old-value)
-      (trc nil "md-value output" self new-value)
+      (trc nil "value output" self new-value)
       (tcl-set-var *tki* (^path) new-value (var-flags :TCL-NAMESPACE-ONLY)))))
 
 (deftk text-widget (widget)
@@ -86,7 +86,7 @@ See the Lisp Lesser GNU Public License for more details.
     -undo -width -wrap)
   (:default-initargs
       :id (gentemp "TXT")
-      :md-value (c-in "<your text here>")
+      :value (c-in "<your text here>")
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :modified (c-in nil)
@@ -101,10 +101,10 @@ See the Lisp Lesser GNU Public License for more details.
                        ))))
 
 (defmethod clear ((self text-widget))
-  (setf (md-value self) nil))
+  (setf (value self) nil))
 
-(defobserver .md-value ((self text-widget))
-  (trc nil "md-value output" self new-value)
+(defobserver .value ((self text-widget))
+  (trc nil "value output" self new-value)
   (with-integrity (:client `(:variable ,self))
     (tk-format-now "~a delete 1.0 end" (^path))
     (when (plusp (length new-value))

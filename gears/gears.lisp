@@ -37,12 +37,12 @@
                  (mk-row ()
                    (mk-label :text "Spin delay (ms):")
                    (mk-entry :id :vtime
-                     :md-value (c-in "100"))
+                     :value (c-in "100"))
                    (mk-button-ex (" Quit " (tk-eval "destroy ."))))
                  (make-instance 'gears
                    :fm-parent *parent*
                    :width 400 :height 400
-                   :timer-interval (c? (let ((n$ (md-value (fm-other :vtime))))
+                   :timer-interval (c? (let ((n$ (value (fm-other :vtime))))
                                          (format nil "~a" (max 1 (or (parse-integer n$ :junk-allowed t) 0)))))
                    :double 1 ;; "yes"
                    :event-handler (c? (lambda (self xe)

@@ -66,12 +66,12 @@ See the Lisp Lesser GNU Public License for more details.
     -offvalue -onvalue)
   (:default-initargs
       :id (gentemp "CK")
-    :md-value (c-in nil)
+    :value (c-in nil)
     :tk-variable (c? (^path))
     :on-command (lambda (self)
-                  (setf (^md-value) (not (^md-value))))))
+                  (setf (^value) (not (^value))))))
 
-(defobserver .md-value ((self checkbutton))
+(defobserver .value ((self checkbutton))
   (tk-format `(:variable ,self) "set ~(~a~) ~a" (path self) (if new-value 1 0)))
 
 ; --- radiobutton -------------------------------------
