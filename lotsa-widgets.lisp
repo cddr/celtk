@@ -83,10 +83,10 @@ See the Lisp Lesser GNU Public License for more details.
 
  
 (defun style-by-edit-menu ()
-    (mk-row ("Style by Edit Menu")
-      (mk-label :text "Four score and seven years ago today"
-        :wraplength 600
-        :tkfont (c? (list
+  (mk-row ("Style by Edit Menu")
+    (mk-label :text "Four score and seven years ago today"
+      :wraplength 600
+      :tkfont (c? (list
                    (selection (fm^ :app-font-face))
                    (selection (fm^ :app-font-size))
                    (if (fm^v :app-font-italic)

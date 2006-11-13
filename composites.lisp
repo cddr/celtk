@@ -97,7 +97,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defun app-idle (self)
   (setf (^app-time) (get-internal-real-time)))
 
-(defmd window (composite-widget decoration-mixin)
+(defmd window (toplevel composite-widget decoration-mixin)
   (title$ (c? (string-capitalize (class-name (class-of self)))))
   (dictionary (make-hash-table :test 'equalp))
   (tkwins (make-hash-table))
@@ -109,12 +109,19 @@ See the Lisp Lesser GNU Public License for more details.
   tkfonts-to-load
   tkfont-sizes-to-load
   (tkfont-info (tkfont-info-loader))
+  start-up-fn
+  close-fn
   initial-focus
+  (focus-state (c-in nil) :documentation "This is about the window having the focus on the desktop, not the key focus.
+Actually holds last event code, :focusin or :focusout")
   on-key-down
-  on-key-up)
+  on-key-up
+  :width (c?n 800)
+  :height (c?n 600))
 
-(export! .control-key-p)
+(export! .control-key-p .alt-key-p focus-state ^focus-state)
 (define-symbol-macro .control-key-p (find :control (keyboard-modifiers .tkw)))
+(define-symbol-macro .alt-key-p (find :alt (keyboard-modifiers .tkw)))
 
 (defmethod make-tk-instance ((self window)) 
   (setf (gethash (^path) (dictionary .tkw)) self))

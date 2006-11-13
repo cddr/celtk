@@ -25,6 +25,8 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-now!
   (export '(tk-scaling run-window test-window)))
 
+
+
 (defun run-window (root-class &optional (resetp t) &rest window-initargs)
   (declare (ignorable root-class))
   (setf *tkw* nil)
@@ -37,7 +39,16 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
-  
+  (tk-format-now "package require snack")
+  (tk-format-now "snack::sound s")
+;;;  (tk-format-now (conc$ "snack::sound s -load "
+;;;                   (snackify-pathname (make-pathname :directory '(:absolute  "sounds")
+;;;                                        :name "ahem_x" :type "wav")
+;;;                     #+vs (car (directory (make-pathname :directory '(:absolute  "sounds")))))))
+;;;  (tk-format-now "s play -blocking yes")
+;;;  (sleep 2)
+;;;  (tk-format-now "s play")
+
   (tcl-create-command *tki* "do-on-command" (get-callback 'do-on-command) (null-pointer) (null-pointer))
 
   ;; these next exist because of limitations in the Tcl API. eg, the keypress event does not
@@ -65,8 +76,10 @@ See the Lisp Lesser GNU Public License for more details.
   ;
   (tk-format-now "bind . <KeyPress> {do-key-down %W %K}")
   (tk-format-now "bind . <KeyRelease> {do-key-up %W %K}")
-
-  (tcl-do-one-event-loop))
+  (bwhen (ifn (start-up-fn *tkw*))
+    (funcall ifn *tkw*))
+  (tcl-do-one-event-loop)
+  )
 
 
 
@@ -93,15 +106,27 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod widget-event-handle ((self window) xe)
   (let ((*tkw* self))
-    (TRC nil "main window event" self *tkw* (xevent-type xe))
+    (unless (find (xevent-type xe) '(:MotionNotify))
+      (TRC nil "main window event" self *tkw* (xevent-type xe)))
     (flet ((give-to-window ()
              (bwhen (eh (event-handler *tkw*))
                (funcall eh *tkw* xe))))
       (case (xevent-type xe)
+        ((:focusin :focusout) (setf (^focus-state) (xevent-type xe)))
         ((:MotionNotify :buttonpress)
          #+shhh (call-dump-event client-data xe))
 
+        (:configurenotify
+         (setf (^width) (ekx new-width!!! parse-integer (tk-eval "winfo width .")))
+         (with-cc :height
+           (setf (^height) (parse-integer (tk-eval "winfo height ."))))
+         )
+
+        (:visibilitynotify
+         (mathx::a1-snack-off :startup "" 0.8))
         (:destroyNotify
+         (mathx::a1-snack-off :quit "-blocking yes" 0.5)
+              
          (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
            (ensure-destruction *tkw*)))
 

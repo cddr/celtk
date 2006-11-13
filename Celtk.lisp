@@ -96,12 +96,12 @@ See the Lisp Lesser GNU Public License for more details.
         unless (find (car defer-info) +tk-client-task-priority+)
         do (error "unknown tk client task type ~a in task: ~a " (car defer-info) defer-info))
 
-  (loop for (nil #+not defer-info . task) in (prog1
-                                                 (stable-sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
-                                               (fifo-clear user-q))
+  (loop for (defer-info . task) in (prog1
+                                       (stable-sort (fifo-data user-q) 'tk-user-queue-sort :key 'car)
+                                     (fifo-clear user-q))
         do
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
-        (funcall task)))
+        (funcall task :user-q defer-info)))
 
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
@@ -111,12 +111,12 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '())
+      (let ((yes '("pack"))
             (no  '("font")))
         (declare (ignorable yes no))
-        (when #+not t (and (or ;; (null yes)
-                     (find-if (lambda (s) (search s tk$)) yes))
-                (not (find-if (lambda (s) (search s tk$)) no)))
+        (when (and (or ;; (null yes)
+                    (find-if (lambda (s) (search s tk$)) yes))
+                #+hunh? (not (find-if (lambda (s) (search s tk$)) no)))
           (format t "~&tk> ~a~%" tk$)))
       (assert *tki*)
 
