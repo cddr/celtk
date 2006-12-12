@@ -53,6 +53,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :Celtk)
 
+
 #+(and allegrocl ide (not runtime-system))
 (ide::defdefiner defcallback defun)
 
@@ -111,7 +112,7 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '("pack"))
+      (let ((yes '())
             (no  '("font")))
         (declare (ignorable yes no))
         (when (and (or ;; (null yes)

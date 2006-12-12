@@ -183,7 +183,10 @@ See the Lisp Lesser GNU Public License for more details.
 (defun argv0 ()
   #+allegro (sys:command-line-argument 0)
   #+lispworks (nth 0 system:*line-arguments-list*) ;; portable to OS X
-  #+sbcl (nth 0 sb-ext:*posix-argv*))
+  #+sbcl (nth 0 sb-ext:*posix-argv*)
+  #+openmcl (car ccl:*command-line-argument-list*)
+  #-(or allegro lispworks sbcl openmcl)
+  (error "argv0 function not implemented for this lisp"))
 
 (defun tk-interp-init-ensure ()
   (unless *initialized*

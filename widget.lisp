@@ -121,10 +121,22 @@ See the Lisp Lesser GNU Public License for more details.
         (^path) new-value (^parent-y)))))
 
 (defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
+  #+demo
+  (handler-case
+      (bif (self (tkwin-widget client-data))
+        (widget-event-handle self xe)
+        ;; sometimes I hit the next branch restarting after crash....
+        (trc "widget-event-handler > no widget for tkwin ~a" client-data))
+    (t (error)
+      (declare (ignorable error))
+      ;;(mathx::a1-sound-play :backtrace)
+      #-demo (invoke-debugger error)
+      ))
+  #-demo
   (bif (self (tkwin-widget client-data))
-    (widget-event-handle self xe)
-    ;; sometimes I hit the next branch restarting after crash....
-    (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
+        (widget-event-handle self xe)
+        ;; sometimes I hit the next branch restarting after crash....
+        (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
 
 (defmethod widget-event-handle ((self widget) xe) ;; override for class-specific handling
   (trc nil "bingo widget-event-handle" (xevent-type xe))

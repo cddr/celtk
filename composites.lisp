@@ -147,6 +147,7 @@ Actually holds last event code, :focusin or :focusout")
   )
 
 
+
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
   (bwhen (mod (keysym-to-modifier keysym))

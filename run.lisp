@@ -117,15 +117,17 @@ See the Lisp Lesser GNU Public License for more details.
          #+shhh (call-dump-event client-data xe))
 
         (:configurenotify
-         (setf (^width) (ekx new-width!!! parse-integer (tk-eval "winfo width .")))
+         (setf (^width) (parse-integer (tk-eval "winfo width .")))
          (with-cc :height
            (setf (^height) (parse-integer (tk-eval "winfo height ."))))
          )
 
         (:visibilitynotify
-         (mathx::a1-snack-off :startup "" 0.8))
+         ;;(funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :startup "" 0.8)
+         )
+        
         (:destroyNotify
-         (mathx::a1-snack-off :quit "-blocking yes" 0.5)
+         ;(funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :quit "-blocking yes" 0.5)
               
          (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
            (ensure-destruction *tkw*)))

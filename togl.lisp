@@ -197,8 +197,8 @@ See the Lisp Lesser GNU Public License for more details.
   ;
   ; just comment out these two lines if not using Cello
   ;
-  (setf cl-ftgl:*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-  (kt-opengl:kt-opengl-reset)
+  ;; (setf cl-ftgl:*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
+  ;;(kt-opengl:kt-opengl-reset)
   (setf (togl-ptr self) togl-ptr) ;; this cannot be deferred
   (setf (togl-ptr-set self) togl-ptr) ;; this gets deferred, which is OK
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
