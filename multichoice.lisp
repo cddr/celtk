@@ -114,8 +114,7 @@ See the Lisp Lesser GNU Public License for more details.
     :xscrollcommand (c-in nil)
     :command (c? (format nil "do-on-command ~a %s" (^path)))
     :on-command (c? (lambda (self text)
-                      (eko ("variable mirror command fired !!!!!!!" text)
-                        (setf (^value) text))))))
+                      (setf (^value) text)))))
 
 (defobserver .value ((self spinbox))
   (when new-value
@@ -123,7 +122,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defobserver initial-value ((self spinbox))
   (when new-value
-    (trc "spinbox intializing from initvalue !!!!!!!!!!!!" self new-value)
     (setf (^value) new-value)))
 
 

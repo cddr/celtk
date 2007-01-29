@@ -18,14 +18,34 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :celtk)
 
-(export! mk-movie url tk-file)
+(export! mk-movie url tk-file plug-n-play-movie)
+
 (deftk movie (widget)
-  ()
-  (:tk-spec movie -url (tk-file -file))
+  ((loop :initarg :loop :accessor loop)) ;; fnyi
+  (:tk-spec movie -url (tk-file -file)
+    -controller -custombutton -highlightbackground -highlightcolor 
+    -highlightthickness -height -loadcommand -loadintoram -loopstate 
+    -mccommand -mcedit -palindromeloopstate -preferredrate -progressproc
+    -qtprogress -qtvrqualitymotion -qtvrqualitystatic -resizable
+    -swing -swingspeed -volume -width)
   (:default-initargs
       :tile? nil))
 
 (defobserver tk-file :around ((self movie))
   (call-next-method)
   (when (and new-value old-value)
-    (tk-format `(:fini ,self) "~a play" (^path))))
+    (plug-n-play-movie self new-value nil)))
+
+(defun plug-n-play-movie (m file &optional (install? t))
+  ;
+  ; silly harcodes follow....
+  ;
+  (when install? (setf (tk-file m) file))
+  ;
+  ; this off-on sequence apparently necessary each time a file is loaded or sth.
+  ;
+  (with-cc :loopstate
+    (setf (palindromeloopstate m) 0)
+    (with-cc :loopstate
+      (setf (palindromeloopstate m) 1)
+      (tk-format `(:fini ,m) "~a play" (path m)))))

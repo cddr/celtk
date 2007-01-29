@@ -74,35 +74,27 @@ See the Lisp Lesser GNU Public License for more details.
                            (style-by-widgets)
                            
                            (mk-row (:layout-anchor 'sw)
-                             (mk-entry
-                              :id :enter-me
-                              :event-handler (lambda (self xe)
-                                               (case (tk-event-type (xsv type xe))
-                                                 (:virtualevent
-                                                  (case (read-from-string (string-upcase (xsv name xe)))
-                                                    (trace (let ((new-value (ctk::tcl-get-var ctk::*tki* (^path)
-                                                                              (ctk::var-flags :TCL-NAMESPACE-ONLY))))
-                                                             (unless (string= new-value (^value)) ;; I guess it would loop
-                                                               (setf (^value) new-value))
-                                                             (cond
-                                                              ((find new-value '("bush" "war" "anger" "hate") :test 'string-equal)
-                                                               (setf (tk-file (fm^ :play-me))
-                                                                 "c:/0dev/celtk/demo.mov"))
-                                                              ((find new-value '("sex" "drugs" "rock-n-roll" "peace") :test 'string-equal)
-                                                               (setf (tk-file (fm^ :play-me))
-                                                                 "c:/0dev/celtk/good-thing2.mov"))))))))))
+                             (mk-entry :id :enter-me)
 
                              (mk-label :text (c? (conc$ "echo " (fm^v :enter-me))))))
                          
                          (mk-stack ()
                            (duelling-scrolled-lists)
                            (mk-row ()
-                             (mk-button-ex ("Serious Demo" (setf (tk-file (fm^ :play-me))
-                                                          "c:/0dev/celtk/demo.mov")))
-                             (mk-button-ex ("Celtk?" (setf (tk-file (fm^ :play-me))
-                                                          "c:/0dev/celtk/good-thing2.mov"))))
+                             (mk-button-ex ("Serious Demo" (plug-n-play-movie (fm^ :play-me)
+                                                             "c:/0dev/celtk/demo.mov")))
+                             (mk-button-ex ("Celtk?" (plug-n-play-movie (fm^ :play-me)
+                                                       "c:/0dev/celtk/good-thing2.mov"))))
+
                            (mk-movie :id :play-me
-                             :tk-file (c-in "c:/0dev/celtk/good-thing2.mov")))))))))))
+                             :loopstate (c-in 0) :palindromeloopstate (c-in 0)
+                             :tk-file (c? (let ((entry (fm^v :enter-me)))
+                                            (cond
+                                             ((find entry '("bush" "war" "anger" "hate") :test 'string-equal)
+                                              "c:/0dev/celtk/demo.mov")
+                                             ((find entry '("sex" "drugs" "rock-n-roll" "peace") :test 'string-equal)
+                                              "c:/0dev/celtk/good-thing2.mov")
+                                             (t "c:/0dev/celtk/good-thing2.mov" #+not .cache))))))))))))))
 
 (defun style-by-edit-menu ()
   (mk-row ("Style by Edit Menu")

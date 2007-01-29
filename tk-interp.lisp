@@ -124,8 +124,6 @@ See the Lisp Lesser GNU Public License for more details.
   (flags :int))
 
 (defun tcl-eval-ex (i s)
-  (when (search "package" s)
-    (print s))
   (tcl_evalex i s -1 0))
 
 (defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))

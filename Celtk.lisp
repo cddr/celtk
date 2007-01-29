@@ -114,7 +114,7 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '("movie" "play"))
+      (let ((yes '("play-me"))
             (no  '("font")))
         (declare (ignorable yes no))
         (when (and (or ;; (null yes)
