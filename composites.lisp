@@ -215,15 +215,15 @@ Actually holds last event code, :focusin or :focusout")
                             for (nil ascent nil descent nil linespace nil fixed) = (tk-eval-list "font metrics ~a" tkf)
                             collect 
                               (progn (trc nil "tkfontloaded" id fname fsize tkfont tkf)
-                                (make-tkfinfo :ascent (round (parse-integer ascent) scaling)
+                                (make-tkfinfo :ascent (round (parse-integer ascent :junk-allowed t) scaling)
                                   :id id
                                   :family fname
                                   :size fsize
-                                  :descent (round (parse-integer descent) scaling)
-                                  :linespace (round (parse-integer linespace) scaling)
-                                  :fixed (plusp (parse-integer fixed))
+                                  :descent (round (parse-integer descent :junk-allowed t) scaling)
+                                  :linespace (round (parse-integer linespace :junk-allowed t) scaling)
+                                  :fixed (plusp (parse-integer fixed  :junk-allowed t))
                                   :em (round (parse-integer
-                                              (tk-eval "font measure ~(~a~) \"m\"" tkfont))
+                                              (tk-eval "font measure ~(~a~) \"m\"" tkfont) :junk-allowed t)
                                         scaling))))))))))
 
 (defobserver title$ ((self window))

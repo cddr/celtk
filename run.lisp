@@ -25,8 +25,6 @@ See the Lisp Lesser GNU Public License for more details.
 (eval-now!
   (export '(tk-scaling run-window test-window)))
 
-
-
 (defun run-window (root-class &optional (resetp t) &rest window-initargs)
   (declare (ignorable root-class))
   (setf *tkw* nil)
@@ -39,7 +37,12 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-app-init *tki*)
   (tk-togl-init *tki*)
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
+  
   (tk-format-now "package require snack")
+  (tk-format-now "package require tile")
+  (tk-format-now "package require QuickTimeTcl")
+  ;(tk-format-now "tile::setTheme xpnative")
+  ;(tk-format-now "namespace import -force ttk::*")
   (tk-format-now "snack::sound s")
 ;;;  (tk-format-now (conc$ "snack::sound s -load "
 ;;;                   (snackify-pathname (make-pathname :directory '(:absolute  "sounds")
@@ -123,12 +126,14 @@ See the Lisp Lesser GNU Public License for more details.
          )
 
         (:visibilitynotify
-         ;;(funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :startup "" 0.8)
+         (when (find-package "MATHX")
+           (funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :startup "" 0.8))
          )
         
         (:destroyNotify
-         ;(funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :quit "-blocking yes" 0.5)
-              
+         #+live (when (find-package "MATHX")
+           (funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :quit "-blocking yes" 0.5))
+                       
          (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
            (ensure-destruction *tkw*)))
 

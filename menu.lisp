@@ -142,7 +142,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
       (tk-format-now "bind . <~a> {~a invoke ~a}" new-value (path (upper self menu)) (idx self)))))
 
 
-(deftk menu-entry-cascade (selector family menu-entry-usable)
+(deftk menu-entry-cascade (tk-selector family menu-entry-usable)
   ()
   (:tk-spec cascade
     -menu)
@@ -210,13 +210,13 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     (tk-variable -variable)
     -value)
   (:default-initargs
-    :tk-variable (c? (down$ (path (upper self selector))))
+    :tk-variable (c? (down$ (path (upper self tk-selector))))
     :on-command  (lambda (self)
                    (declare (ignore key args))
-                   (trc "menu radio button command firing" self (^value) (upper self selector))
-                   (setf (selection (upper self selector)) (^value)))))
+                   (trc "menu radio button command firing" self (^value) (upper self tk-selector))
+                   (setf (selection (upper self tk-selector)) (^value)))))
 
-(defmodel menu-radio-group (selector family)
+(defmodel menu-radio-group (tk-selector family)
   ((.md-name :cell nil :initform (gentemp "RG") :initarg :id))
   (:documentation "Sits in Celtk menu tree managing radio buttons but has no Tk correlate"))
 
@@ -254,7 +254,7 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
     (tk-format `(:make-tk ,self) "~(~a~) ~a ~{~(~a~) ~a~^ ~}"
       (tk-class self) (path self)(tk-configurations self)) :stdfctry))
 
-(deftk popup-menubutton (selector menubutton)
+(deftk popup-menubutton (tk-selector menubutton)
   ((initial-value :initarg :initial-value :initform nil :accessor initial-value)
    (entry-values :initarg :entry-values :initform nil :accessor entry-values))
   (:tk-spec menubutton)

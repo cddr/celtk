@@ -31,6 +31,15 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "LBL")))
 
+;;; --- images -------------------------------------------------------
+
+(defobserver image-files ()
+  (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
+      do (tk-format `(:pre-make-tk  ,self)
+           "image create photo ~(~a.~a~) -file {~a} -height ~a -width ~a"
+           (^path) name (namestring file-pathname)
+           (^height)(^width))))
+
 ;--------------------------------------------------------------------------
 
 (deftk message (widget)

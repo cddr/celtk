@@ -35,6 +35,8 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "B")))
 
+
+
 (defmacro mk-button-ex ((text command) &rest initargs)
   `(make-instance 'button
      :fm-parent *parent*
@@ -82,9 +84,9 @@ See the Lisp Lesser GNU Public License for more details.
     -value)
   (:default-initargs
       :id (gentemp "RB")
-      :tk-variable (c? (path (upper self selector)))
+      :tk-variable (c? (path (upper self tk-selector)))
       :on-command (lambda (self)
-                 (setf (selection (upper self selector)) (value self)))))
+                 (setf (selection (upper self tk-selector)) (value self)))))
 
 (defmacro mk-radiobutton-ex ((text value) &rest initargs)
   `(make-instance 'radiobutton

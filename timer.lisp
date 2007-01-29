@@ -74,7 +74,7 @@ See the Lisp Lesser GNU Public License for more details.
    
    (on-command :reader on-command
      :initform (lambda (self)
-                 (unless (md-dead self)
+                 (unless (mdead self)
                    (trc nil "timer on-command dispatched!!!!!" self)
                    (when (eq (^state) :on)
                      (assert (^action))

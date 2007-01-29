@@ -40,7 +40,7 @@ See the Lisp Lesser GNU Public License for more details.
     :yscrollcommand (c-in nil)
     :on-command (lambda (self value)
                   ;; (trc "hi scale" self value)
-                  (setf (^value) (parse-integer value)))))
+                  (setf (^value) (parse-integer value :junk-allowed t)))))
 
 (defmethod make-tk-instance :after ((self scale))
   "Still necessary?"
@@ -60,6 +60,7 @@ See the Lisp Lesser GNU Public License for more details.
     -takefocus -width -xscrollcommand -yscrollcommand)
   (:default-initargs
       :id (gentemp "LBX")
+    :tile? nil
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :event-handler (lambda (self xe)
@@ -69,7 +70,7 @@ See the Lisp Lesser GNU Public License for more details.
                         (case (read-from-string (string-upcase (xsv name xe)))
                           (ListboxSelect
                            (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
-                             (setf (selection (selector self))
+                             (setf (selection (tk-selector self))
                                (value (elt (^kids) selection)))))))))))
 
 (defmodel listbox-item (tk-object)
@@ -109,6 +110,7 @@ See the Lisp Lesser GNU Public License for more details.
       :value (c-in nil)
       :id (gentemp "SPN")
       :textVariable (c? (^path))
+    :tile? nil
     :xscrollcommand (c-in nil)
     :command (c? (format nil "do-on-command ~a %s" (^path)))
     :on-command (c? (lambda (self text)

@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (Oct 17, 2006 12:56)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Jan 22, 2007 8:01)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -27,6 +27,7 @@
                  (make-instance 'module :name "composites.lisp")
                  (make-instance 'module :name "frame.lisp")
                  (make-instance 'module :name "fileevent.lisp")
+                 (make-instance 'module :name "movie.lisp")
                  (make-instance 'module :name "togl.lisp")
                  (make-instance 'module :name "run.lisp")
                  (make-instance 'module :name "ltktest-ci.lisp")
@@ -104,7 +105,7 @@
   :old-space-size 256000
   :new-space-size 6144
   :runtime-build-option :standard
-  :on-initialization 'celtk::ltktest-ci
+  :on-initialization 'celtk::tk-test
   :on-restart 'do-default-restart)
 
 ;; End of Project Definition

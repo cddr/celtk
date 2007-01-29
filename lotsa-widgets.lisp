@@ -27,7 +27,6 @@ See the Lisp Lesser GNU Public License for more details.
   (merge-pathnames (make-pathname :name name :type type)
                    #.(or *compile-file-truename* *load-truename*)))
 
-
 (defmodel lotsa-widgets (window)
   ()
   (:default-initargs
@@ -37,51 +36,74 @@ See the Lisp Lesser GNU Public License for more details.
                  (mk-row (:packing (c?pack-self))
                    (mk-label :text "aaa"
                      :image-files (list (list 'kt (data-pathname "kt69" "gif")))
-                     :height 200
+                     :height 400
                      :width 300
                      :image (c? (format nil "~(~a.~a~)" (ctk::^path) 'kt)))
                    
                    (assorted-canvas-items)
                    
-                   (mk-stack ()
-                     (mk-text-widget
-                      :id :my-text
-                      :value (c?n "hello, world")
-                      :height 8
-                      :width 25)
-                     
-                     (spin-package-with-symbols))
-                   
-                   (mk-stack ()
-                     (mk-row (:id :radio-ny :selection (c-in 'yes))
-                       (mk-radiobutton-ex ("yes" 'yes))
-                       (mk-radiobutton-ex ("no" 'no))
-                       (mk-label :text (c? (string (selection (upper self selector))))))
-                     (mk-row ()
-                       (mk-checkbutton :id :check-me
-                         :text "Check Me"
-                         :value (c-in t))
-                       (mk-label :text (c? (if (fm^v :check-me) "checked" "unchecked"))))
-                     (mk-row ()
-                       (mk-button-ex ("Time now?" (setf (fm^v :push-time)
-                                                    (get-universal-time))))
-                       (mk-label :text (c? (time-of-day (^value)))
-                         :id :push-time
-                         :value (c-in (get-universal-time))))
-                     
-                     (style-by-edit-menu)
-                     
-                     (style-by-widgets)
-                     
-                     (mk-row (:layout-anchor 'sw)
-                       (mk-entry
-                        :id :enter-me)
-                       (mk-label :text (c? (conc$ "echo " (fm^v :enter-me))))))
-                   
-                   (duelling-scrolled-lists)
-                   )))))
+                   (mk-row ()
+                     (mk-stack ()
+                       (style-by-edit-menu)
+                       (mk-row ()
+                         (mk-stack ()
+                           (mk-text-widget
+                            :id :my-text
+                            :value (c?n "hello, world")
+                            :height 8
+                            :width 25)
+                           
+                           (spin-package-with-symbols))
+                         
+                         (mk-stack ()
+                           (mk-row (:id :radio-ny :selection (c-in 'yes))
+                             (mk-radiobutton-ex ("yes" 'yes))
+                             (mk-radiobutton-ex ("no" 'no))
+                             (mk-label :text (c? (string (selection (upper self tk-selector))))))
+                           (mk-row ()
+                             (mk-checkbutton :id :check-me
+                               :text "Check Me"
+                               :value (c-in t))
+                             (mk-label :text (c? (if (fm^v :check-me) "checked" "unchecked"))))
+                           (mk-row ()
+                             (mk-button-ex ("Time now?" (setf (fm^v :push-time)
+                                                          (get-universal-time))))
+                             (mk-label :text (c? (time-of-day (^value)))
+                               :id :push-time
+                               :value (c-in (get-universal-time))))
+                           (style-by-widgets)
+                           
+                           (mk-row (:layout-anchor 'sw)
+                             (mk-entry
+                              :id :enter-me
+                              :event-handler (lambda (self xe)
+                                               (case (tk-event-type (xsv type xe))
+                                                 (:virtualevent
+                                                  (case (read-from-string (string-upcase (xsv name xe)))
+                                                    (trace (let ((new-value (ctk::tcl-get-var ctk::*tki* (^path)
+                                                                              (ctk::var-flags :TCL-NAMESPACE-ONLY))))
+                                                             (unless (string= new-value (^value)) ;; I guess it would loop
+                                                               (setf (^value) new-value))
+                                                             (cond
+                                                              ((find new-value '("bush" "war" "anger" "hate") :test 'string-equal)
+                                                               (setf (tk-file (fm^ :play-me))
+                                                                 "c:/0dev/celtk/demo.mov"))
+                                                              ((find new-value '("sex" "drugs" "rock-n-roll" "peace") :test 'string-equal)
+                                                               (setf (tk-file (fm^ :play-me))
+                                                                 "c:/0dev/celtk/good-thing2.mov"))))))))))
 
- 
+                             (mk-label :text (c? (conc$ "echo " (fm^v :enter-me))))))
+                         
+                         (mk-stack ()
+                           (duelling-scrolled-lists)
+                           (mk-row ()
+                             (mk-button-ex ("Serious Demo" (setf (tk-file (fm^ :play-me))
+                                                          "c:/0dev/celtk/demo.mov")))
+                             (mk-button-ex ("Celtk?" (setf (tk-file (fm^ :play-me))
+                                                          "c:/0dev/celtk/good-thing2.mov"))))
+                           (mk-movie :id :play-me
+                             :tk-file (c-in "c:/0dev/celtk/good-thing2.mov")))))))))))
+
 (defun style-by-edit-menu ()
   (mk-row ("Style by Edit Menu")
     (mk-label :text "Four score and seven years ago today"

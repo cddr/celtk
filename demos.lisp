@@ -87,25 +87,7 @@ See the Lisp Lesser GNU Public License for more details.
                              (make-instance 'entry
                                :id :entree
                                :fm-parent *parent*
-                               :value (c-in "Boots"))
-                             ;;;                           (make-instance 'button
-                             ;;;                             :fm-parent *parent*
-                             ;;;                             :text "read"
-                             ;;;                             :on-command (lambda (self)
-                             ;;;                                           (trc "entry reads" (ctk::tk-eval-var (path (fm^ :entree))))))
-                             ;;;                           (make-instance 'scale
-                             ;;;                             :fm-parent *parent*
-                             ;;;                             :tk-label "Boots"
-                             ;;;                             :on-command (c? (lambda (self value)
-                             ;;;                                               (trc "we got scale callbacks" self (parse-integer value)))))
-                             ;;;                           (mk-spinbox
-                             ;;;                            :id :spin-pkg
-                             ;;;                            :value (c-in "cells") ;;(cells::c?n "cells")
-                             ;;;                            :tk-values (mapcar 'down$
-                             ;;;                                         (sort (mapcar 'package-name
-                             ;;;                                                 (list-all-packages))
-                             ;;;                                           'string>)))
-                             )))))))
+                               :value (c-in "Boots")))))))))
 
 (defun one-deep-menubar ()
   (mk-menubar

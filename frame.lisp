@@ -64,7 +64,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "F")))
 
-(deftk frame-selector (selector frame) ())
+(deftk frame-selector (tk-selector frame) ())
 (deftk frame-row (row-mixin frame-selector)())
 (deftk frame-stack (stack-mixin frame-selector)())
 
@@ -80,7 +80,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "LF")))
 
-(deftk labelframe-selector (selector labelframe)())
+(deftk labelframe-selector (tk-selector labelframe)())
 (deftk labelframe-row (row-mixin labelframe-selector)())
 (deftk labelframe-stack (stack-mixin labelframe-selector)())
 

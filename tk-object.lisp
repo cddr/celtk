@@ -31,7 +31,8 @@ See the Lisp Lesser GNU Public License for more details.
      :documentation "Long story. Tcl C API weak for keypress events. This gets dispatched
 eventually thanks to DEFCOMMAND")
    (on-key-up :initarg :on-key-up :accessor on-key-up :initform nil)
-   (user-errors :initarg :user-errors :accessor user-errors :initform nil))
+   (user-errors :initarg :user-errors :accessor user-errors :initform nil)
+   (tile? :initform t :cell nil :reader tile? :initarg :tile?))
   (:documentation "Root class for widgets and (canvas) items"))
 
 (defmethod md-awaken :before ((self tk-object))
@@ -49,32 +50,24 @@ eventually thanks to DEFCOMMAND")
     
     (setf tk-options (tk-options-normalize tk-options))
     
-    (multiple-value-bind (slots outputs)
-        (loop for (slot-name tk-option) in tk-options
-            collecting `(,slot-name :initform nil
-                          :initarg ,(intern (string slot-name) :keyword)
-                          :accessor ,slot-name)
-            into slot-defs
-            when tk-option
-            collecting `(setf (get ',slot-name 'tk-config-option) ',tk-option)
-            into outputs
-            finally (return (values slot-defs outputs)))
-      `(eval-now!
-         (defmodel ,class ,(or superclasses '(tk-object))
-           (,@(append std-slots slots))
-           ,@(remove-if (lambda (k) (find k '(:default-initargs :tk-spec))) defclass-options :key 'car)
-           (:default-initargs
-               ,@(when tk-class `(:tk-class ',tk-class))
-             ,@(cdr (find :default-initargs defclass-options :key 'car))))
-         (defmethod tk-class-options append ((self ,class))
-           ',tk-options)
-         (export ',(loop for (slot nil) in tk-options
-                        nconcing (list slot (intern (conc$ "^" slot)))))
-         (defmacro ,(intern (conc$ "MK-" (symbol-name class))) (&rest inits)
-           `(make-instance ',',class
-              :fm-parent *parent*
-              ,@inits))
-         ,@outputs))))
+    `(eval-now!
+     (defmodel ,class ,(or superclasses '(tk-object))
+       (,@(append std-slots (loop for (slot-name nil) in tk-options
+                                collecting `(,slot-name :initform nil
+                                              :initarg ,(intern (string slot-name) :keyword)
+                                              :accessor ,slot-name))))
+       ,@(remove-if (lambda (k) (find k '(:default-initargs :tk-spec))) defclass-options :key 'car)
+       (:default-initargs
+           ,@(when tk-class `(:tk-class ',tk-class))
+         ,@(cdr (find :default-initargs defclass-options :key 'car))))
+     (defmethod tk-class-options append ((self ,class))
+       ',tk-options)
+     (export ',(loop for (slot nil) in tk-options
+                   nconcing (list slot (intern (conc$ "^" slot)))))
+     (defmacro ,(intern (conc$ "MK-" (symbol-name class))) (&rest inits)
+       `(make-instance ',',class
+          :fm-parent *parent*
+          ,@inits)))))
 
 (defun tk-options-normalize (tk-options)
   "normalize '(-aaa (tk-bbb -bbb)) => '((aaa -aaa)(tk-bbb -bbb))"
@@ -89,19 +82,30 @@ eventually thanks to DEFCOMMAND")
     (remove #\- (symbol-name sym) :end 1)))
   
 (defgeneric tk-class-options (self)
-  (:method-combination append))
+  (:method-combination append)
+  (:method :around (self)
+    (or ;;(get (type-of self) 'tk-class-options)
+             (setf (get (type-of self) 'tk-class-options)
+               (loop with all = (remove-duplicates (call-next-method) :key 'second)
+                     for old in (when (tile? self)
+                                  (case (type-of self)
+                                    (label '(pady padx height indicatoron relief tk-label))
+                                    (otherwise '(pady padx #+hmmm height indicatoron relief tk-label))));;
+                     do (setf old (delete old all :key 'car))
+                     finally (return all))))))
+
+(defun tk-config-option (self slot-name)
+  (second (assoc slot-name (tk-class-options self))))
 
 (defmethod slot-value-observe progn (slot-name (self tk-object) new-value old-value old-value-boundp)
   (declare (ignorable old-value))
   (when old-value-boundp ;; initial propagation to Tk happens during make-tk-instance
-    (bwhen (tk-config-option (get slot-name 'tk-config-option))
-      (tk-configure self (string tk-config-option) (or new-value "")))))
+    (bwhen (tco (tk-config-option self slot-name)) ;; (get slot-name 'tk-config-option))
+      (tk-configure self (string tco) (or new-value "")))))
 
 (defun tk-configurations (self)
   (loop with configs
-      for (slot-name tk-option) in (or (get (type-of self) 'tk-class-options)
-                                     (setf (get (type-of self) 'tk-class-options)
-                                       (remove-duplicates (tk-class-options self) :key 'second)))
+      for (slot-name tk-option) in (tk-class-options self)
       when tk-option
       do (bwhen (slot-value (funcall slot-name self)) ;; must go thru accessor with Cells, not 'slot-value
            (setf configs (nconc (list tk-option (tk-send-value slot-value)) configs)))

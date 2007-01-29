@@ -18,6 +18,8 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; $Header$
 
+(pushnew :tile *features*)
+
 (defpackage :celtk
   (:nicknames "CTK")
   (:use :common-lisp :utils-kt :cells :cffi)
@@ -28,7 +30,7 @@ See the Lisp Lesser GNU Public License for more details.
    #:window #:panedwindow #:mk-row #:c?pack-self #:mk-stack #:mk-text-widget #:text-widget
    #:mk-panedwindow
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label
-   #:^selection #:selection #:selector
+   #:^selection #:selection #:tk-selector
    #:mk-checkbutton #:button #:mk-button #:mk-button-ex  #:entry #:mk-entry #:text
    #:frame-stack #:mk-frame-stack #:path #:^path
    #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
@@ -112,7 +114,7 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '())
+      (let ((yes '("movie" "play"))
             (no  '("font")))
         (declare (ignorable yes no))
         (when (and (or ;; (null yes)
@@ -185,7 +187,8 @@ See the Lisp Lesser GNU Public License for more details.
                  &aux (tk$ (apply 'format nil tk-form$ fmt-args)))
   (assert *tki* () "Global *tki* is not bound to anything, let alone a Tcl interpreter")
   (tk-format :grouped tk$)
-  (tcl-get-string-result *tki*))
+  (tcl-get-string-result *tki*)
+  )
 
 (defun tk-eval-var (var)
   (tk-eval "set ~a" var))

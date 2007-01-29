@@ -87,6 +87,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:default-initargs
       :id (gentemp "TXT")
       :value (c-in "<your text here>")
+    :tile? nil
     :xscrollcommand (c-in nil)
     :yscrollcommand (c-in nil)
     :modified (c-in nil)

@@ -64,8 +64,8 @@ See the Lisp Lesser GNU Public License for more details.
    (menus :reader menus :initarg :menus :initform nil
      :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
    (image-files :reader image-files :initarg :image-files :initform nil)
-   (selector :reader selector :initarg :selector
-     :initform (c? (upper self selector))))
+   (tk-selector :reader tk-selector :initarg :tk-selector
+     :initform (c? (upper self tk-selector))))
   (:default-initargs
       :id (gentemp "W")
     :event-handler nil #+debug (lambda (self xe)
@@ -107,6 +107,12 @@ See the Lisp Lesser GNU Public License for more details.
     (when (tk-class self)
       (tk-format-now "~(~a~) ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
         (tk-class self) (path self)(tk-configurations self)))))
+
+(defmethod tk-class :around ((self widget))
+  (let ((c (call-next-method)))
+    (if (tile? self)
+        (conc$ "TTK::" c)
+      c)))
 
 (defmethod make-tk-instance :after ((self widget)) 
   (with-integrity (:client `(:post-make-tk ,self))
@@ -242,9 +248,9 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- widget mixins ------------------------------
 
-;;; --- selector ---------------------------------------------------
+;;; --- tk-selector ---------------------------------------------------
 
-(defmodel selector () ;; mixin
+(defmodel tk-selector () ;; mixin
   ((selection :initform nil :accessor selection :initarg :selection)
    (tk-variable :initform nil :accessor tk-variable :initarg :tk-variable
      :documentation "The TK node name to set as the selection changes (not the TK -variable option)"))
@@ -252,7 +258,7 @@ See the Lisp Lesser GNU Public License for more details.
       :selection (c-in nil)
       :tk-variable (c? (^path))))
 
-(defobserver selection ()
+(defobserver selection ((self tk-selector))
   ;
   ; handling varies on this, so we hand off to standard GF lest the PROGN
   ; method combo on slot-listener cause multiple handling
@@ -270,12 +276,7 @@ See the Lisp Lesser GNU Public License for more details.
         (tcl-set-var *tki* (tk-variable self) v$ (var-flags :tcl-namespace-only))))))
 
 
-;;; --- images -------------------------------------------------------
 
-(defobserver image-files ()
-  (loop for (name file-pathname) in (set-difference new-value old-value :key 'car) 
-      do (tk-format `(:pre-make-tk  ,self) "image create photo ~(~a.~a~) -file {~a}"
-           (^path) name (namestring file-pathname))))
 
 
 ;;; --- menus ---------------------------------

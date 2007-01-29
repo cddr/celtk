@@ -33,6 +33,12 @@ See the Lisp Lesser GNU Public License for more details.
   (:unix "libtk.so")
   (t (:default "libtk")))
 
+(define-foreign-library Tile
+    ;(:darwin (:framework "Tk"))
+  (:windows (:or "/tcl/lib/tile/tile078.dll"))
+  ;(:unix "libtk.so")
+  (t (:default "libtk")))
+
 (defctype tcl-retcode :int)
 
 (defcenum tcl-retcode-values
@@ -118,6 +124,8 @@ See the Lisp Lesser GNU Public License for more details.
   (flags :int))
 
 (defun tcl-eval-ex (i s)
+  (when (search "package" s)
+    (print s))
   (tcl_evalex i s -1 0))
 
 (defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
@@ -180,6 +188,9 @@ See the Lisp Lesser GNU Public License for more details.
 (defun reset-initialized ()
   (setq *initialized* nil))
 
+#+doit
+(reset-initialized)
+
 (defun argv0 ()
   #+allegro (sys:command-line-argument 0)
   #+lispworks (nth 0 system:*line-arguments-list*) ;; portable to OS X
@@ -192,6 +203,7 @@ See the Lisp Lesser GNU Public License for more details.
   (unless *initialized*
     (use-foreign-library Tcl)
     (use-foreign-library Tk)
+    ;(use-foreign-library Tile)
     (use-foreign-library Togl)
     (tcl-find-executable (argv0))
     (set-initialized)))
