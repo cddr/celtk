@@ -12,7 +12,7 @@
   :licence "Lisp LGPL"
   :description "Tcl/Tk with Cells Inside(tm)"
   :long-description "A Cells-driven portable GUI, ultimately implmented by Tcl/Tk"
-  :depends-on (:cells :cffi :gui-geometry :cl-ftgl)
+  :depends-on (:cells :cffi :gui-geometry)
   :serial t
   :components ((:file "Celtk")
                (:file "tk-structs")

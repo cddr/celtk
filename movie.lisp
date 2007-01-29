@@ -21,7 +21,7 @@ See the Lisp Lesser GNU Public License for more details.
 (export! mk-movie url tk-file plug-n-play-movie)
 
 (deftk movie (widget)
-  ((loop :initarg :loop :accessor loop)) ;; fnyi
+  ()
   (:tk-spec movie -url (tk-file -file)
     -controller -custombutton -highlightbackground -highlightcolor 
     -highlightthickness -height -loadcommand -loadintoram -loopstate 
