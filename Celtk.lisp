@@ -18,7 +18,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; $Header$
 
-(pushnew :tile *features*)
+;(pushnew :tile *features*) ;; frgo, 2007-09-21: Need to do this only when tile actually loaded
 
 (defpackage :celtk
   (:nicknames "CTK")
