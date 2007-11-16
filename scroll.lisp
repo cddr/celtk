@@ -37,7 +37,8 @@ See the Lisp Lesser GNU Public License for more details.
 (deftk scrolled-list (row-mixin frame-selector)
   ((list-item-keys :initarg :list-item-keys :accessor list-item-keys :initform nil)
    (list-item-factory :initarg :list-item-factory :accessor list-item-factory :initform nil)
-   (list-height :initarg :list-height :accessor list-height :initform nil))
+   (list-height :initarg :list-height :accessor list-height :initform nil)
+   (tkfont :initarg :tkfont :accessor tkfont :initform (c-in '(courier 9))))
   (:default-initargs
       :list-height (c? (max 1 (length (^list-item-keys))))
     :kids-packing nil
@@ -46,7 +47,7 @@ See the Lisp Lesser GNU Public License for more details.
                    :kids (c? (the-kids
                               (mapcar (list-item-factory .parent)
                                 (list-item-keys .parent))))
-                   :tkfont '(courier 9)
+                   :tkfont (c? (tkfont .parent))
                    :state (c? (if (enabled .parent) 'normal 'disabled))
                    :takefocus (c? (if (enabled .parent) 1 0))
                    :height (c? (list-height .parent))
