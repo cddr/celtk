@@ -146,8 +146,6 @@ Actually holds last event code, :focusin or :focusout")
   (tk-format '(:pre-make-tk self) "wm overrideredirect . yes")
   )
 
-
-
 (defmethod do-on-key-down :before (self &rest args &aux (keysym (car args)))
   (trc nil "ctk::do-on-key-down window" keysym (keyboard-modifiers .tkw))
   (bwhen (mod (keysym-to-modifier keysym))
@@ -163,28 +161,29 @@ Actually holds last event code, :focusin or :focusout")
 
 ;;; Helper function that actually executes decoration change
 (defun %%do-decoration (widget decoration)
-  (break "hunh?")
   (let ((path (path widget)))
-    (ecase decoration
-      (:none    (progn
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm withdraw ~a" path)    
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm overrideredirect ~a 1" path)
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm deiconify ~a" path)
-		  (tk-format '(:pre-make-tk decoration)
-			     "update idletasks" path)
-		  ))
-      (:normal  (progn
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm withdraw ~a" path)    
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm overrideredirect ~a 0" path)
-		  (tk-format '(:pre-make-tk decoration)
-			     "wm deiconify ~a" path)
-		  (tk-format '(:pre-make-tk decoration)
-			     "update idletasks" path))))))
+    (case decoration
+      (:none
+       (progn
+         (tk-format '(:pre-make-tk decoration)
+                    "wm withdraw ~a" path)    
+         (tk-format '(:pre-make-tk decoration)
+                    "wm overrideredirect ~a 1" path)
+         (tk-format '(:pre-make-tk decoration)
+                    "wm deiconify ~a" path)
+         (tk-format '(:pre-make-tk decoration)
+                    "update idletasks" path)
+         ))
+      (:normal
+       (progn
+         (tk-format '(:pre-make-tk decoration)
+                    "wm withdraw ~a" path)    
+         (tk-format '(:pre-make-tk decoration)
+                    "wm overrideredirect ~a 0" path)
+         (tk-format '(:pre-make-tk decoration)
+                    "wm deiconify ~a" path)
+         (tk-format '(:pre-make-tk decoration)
+                    "update idletasks" path))))))
 
 ;;; Decoration observer for all widgets that inherit from decoration-mixin
 ;;; On Mac OS X this is a one-way operation. When created without decorations
