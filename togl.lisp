@@ -50,6 +50,8 @@ See the Lisp Lesser GNU Public License for more details.
 (defcfun ("Togl_Interp" Togl-Interp) :pointer
   (togl-struct-ptr :pointer))
 
+;; The following functions are not CFFI-translated yet ...
+
 ;; Togl_AllocColor
 ;; Togl_FreeColor
 
@@ -80,8 +82,8 @@ See the Lisp Lesser GNU Public License for more details.
 ;;
 
 (defun tk-togl-init (interp)
-  ;(assert (not (zerop (tcl-init-stubs interp "8.1" 0))))
-  ;(assert (not (zerop (tk-init-stubs interp "8.1" 0))))
+  ;(assert (not (zerop (tcl-init-stubs interp "8.1" 0)))) ;; Only meaningful on Windows
+  ;(assert (not (zerop (tk-init-stubs interp "8.1" 0)))) ;; dito
   (togl-init interp)
   (togl-create-func (callback togl-create))
   (togl-destroy-func (callback togl-destroy))
@@ -194,13 +196,17 @@ See the Lisp Lesser GNU Public License for more details.
 
 (def-togl-callback create ()
   (trc "___________________ TOGL SET UP _________________________________________" togl-ptr )
-;;;  ;
-;;;  ; just comment out these next two lines if not using Cello
-;;;  ;
-;;;  (setf cl-ftgl:*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes to defer FTGL till Ogl ready
-;;;  (kt-opengl:kt-opengl-reset)
-;;;  ; ^^^^^ above two needed only for cello ^^^^^^
-;;;  ;
+  ;;  
+  ;; Cello dependency here: relies on :CELLO being pushed to *features*!
+  ;;
+  ;;(eval-when (:compile-toplevel :execute)
+  ;;  (if (member :cello cl-user::*features*)
+  ;;    (progn
+  ;;      (setf cl-ftgl:*ftgl-ogl* togl-ptr) ;; help debug failure to use lazy cells/classes
+  ;;                                         ;; to defer FTGL till Ogl ready
+  ;;      (kt-opengl:kt-opengl-reset))))
+;;;   ^^^^^ above two needed only for cello ^^^^^^
+;;;  
   (setf (togl-ptr self) togl-ptr) ;; this cannot be deferred
   (setf (togl-ptr-set self) togl-ptr) ;; this gets deferred, which is OK
   (setf (gethash (pointer-address togl-ptr) (tkwins *tkw*)) self))
