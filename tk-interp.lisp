@@ -22,13 +22,13 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Tcl/Tk
 
 (define-foreign-library Tcl
-    (:darwin (:framework "Tcl"))
+  (:darwin (:framework "Tcl"))
   (:windows (:or "/tcl/bin/Tcl85.dll"))
   (:unix "libtcl.so")
   (t (:default "libtcl")))
 
 (define-foreign-library Tk
-    (:darwin (:framework "Tk"))
+  (:darwin (:framework "Tk"))
   (:windows (:or "/tcl/bin/tk85.dll"))
   (:unix "libtk.so")
   (t (:default "libtk")))
@@ -42,7 +42,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defctype tcl-retcode :int)
 
 (defcenum tcl-retcode-values
-    (:tcl-ok    0)
+  (:tcl-ok    0)
   (:tcl-error 1))
     
 (defmethod translate-from-foreign (value (type (eql 'tcl-retcode)))
@@ -63,16 +63,17 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defcallback Tk_AppInit tcl-retcode
   ((interp :pointer))
-  (tk-app-init interp))
+  (unwind-protect
+    (tk-app-init interp)))
 
 (defun tk-app-init (interp)
+  (assert interp)
   (Tcl_Init interp)
   (Tk_Init interp)
-  ;;(format t "~%*** Tk_AppInit has been called.~%")
   ;; Return OK
   (foreign-enum-value 'tcl-retcode-values :tcl-ok))
 
-    ;; Tk_Main
+  ;; Tk_Main
     
 (defcfun ("Tk_MainEx" %Tk_MainEx) :void
   (argc :int)
@@ -91,7 +92,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defcfun ("Tcl_CreateInterp" Tcl_CreateInterp) :pointer)
 
 (defcfun ("Tcl_DeleteInterp" tcl-delete-interp) :void
-  (interp        :pointer))
+  (interp :pointer))
 
 ;;; --- windows ----------------------------------
 
@@ -113,29 +114,35 @@ See the Lisp Lesser GNU Public License for more details.
   (with-foreign-string (filename-cstr filename)
     (%Tcl_EvalFile interp filename-cstr)))
 
-(defcfun ("Tcl_Eval" tcl-eval) tcl-retcode
+(defcfun ("Tcl_Eval" %Tcl_Eval) tcl-retcode
   (interp      :pointer)
   (script-cstr :string))
 
-(defcfun ("Tcl_EvalEx" tcl_evalex) tcl-retcode
+(defun tcl-eval (i s)
+  (%Tcl_Eval i s))
+
+(defcfun ("Tcl_EvalEx" %Tcl_EvalEx) tcl-retcode
   (interp      :pointer)
   (script-cstr :string)
-  (num-bytes :int)
-  (flags :int))
+  (num-bytes   :int)
+  (flags       :int))
 
 (defun tcl-eval-ex (i s)
-  (tcl_evalex i s -1 0))
+  (%Tcl_EvalEx i s -1 0))
 
-(defcfun ("Tcl_GetVar" tcl-get-var) :string (interp :pointer)(varName :string)(flags :int))
+(defcfun ("Tcl_GetVar" tcl-get-var) :string
+  (interp  :pointer)
+  (varName :string)
+  (flags   :int))
 
 (defcfun ("Tcl_SetVar" tcl-set-var) :string
-  (interp :pointer)
-  (var-name :string)
+  (interp    :pointer)
+  (var-name  :string)
   (new-value :string)
-  (flags :int))
+  (flags     :int))
 
 (defcfun ("Tcl_GetStringResult" tcl-get-string-result) :string
-  (interp      :pointer))
+  (interp :pointer))
 
 ;; ----------------------------------------------------------------------------
 ;; Tcl_CreateCommand - used to implement direct callbacks
@@ -201,12 +208,13 @@ See the Lisp Lesser GNU Public License for more details.
   (unless *initialized*
     (use-foreign-library Tcl)
     (use-foreign-library Tk)
-    ;(use-foreign-library Tile)
+    #-macosx (use-foreign-library Tile)
+    #-macosx (pushnew :tile cl-user::*features*)
     (use-foreign-library Togl)
     (tcl-find-executable (argv0))
     (set-initialized)))
 
-;; Send a script to a piven Tcl/Tk interpreter
+;; Send a script to a given Tcl/Tk interpreter
 
 (defun eval-script (interp script)
   (assert interp)
