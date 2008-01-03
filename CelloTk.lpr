@@ -1,4 +1,4 @@
-;; -*- lisp-version: "8.0 [Windows] (Jan 22, 2007 8:01)"; cg: "1.81"; -*-
+;; -*- lisp-version: "8.0 [Windows] (Mar 11, 2007 7:25)"; cg: "1.81"; -*-
 
 (in-package :cg-user)
 
@@ -20,7 +20,8 @@
                  (make-instance 'module :name "fileevent.lisp")
                  (make-instance 'module :name "togl.lisp")
                  (make-instance 'module :name "run.lisp")
-                 (make-instance 'module :name "CelloTk-test.lisp"))
+                 (make-instance 'module :name "CelloTk-test.lisp")
+                 (make-instance 'module :name "keysym.lisp"))
   :projects (list (make-instance 'project-module :name
                                  "..\\cells\\cells")
                   (make-instance 'project-module :name

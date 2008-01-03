@@ -35,6 +35,14 @@ eventually thanks to DEFCOMMAND")
    (tile? :initform t :cell nil :reader tile? :initarg :tile?))
   (:documentation "Root class for widgets and (canvas) items"))
 
+(export! valid? ^valid?)
+
+(defun valid? (self)
+  (not (^user-errors)))
+
+(defmacro ^valid? ()
+  '(valid? self))
+
 (defmethod md-awaken :before ((self tk-object))
   (make-tk-instance self))
 

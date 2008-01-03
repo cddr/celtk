@@ -31,6 +31,8 @@ See the Lisp Lesser GNU Public License for more details.
         xwin))))
 
 (defun tkwin-widget (tkwin)
+  (assert *tkw*)
+  (assert (tkwins *tkw*) () "Widget hash NIL for *tkw* ~a" *tkw*)
   (gethash (pointer-address tkwin) (tkwins *tkw*)))
 
 (defun xwin-widget (xwin) ;; assignment of xwin is deferred so...all this BS..
@@ -98,6 +100,9 @@ See the Lisp Lesser GNU Public License for more details.
   (let ((tkwin (or (tkwin self)
                   (setf (tkwin self)
                     (tk-name-to-window *tki* (^path) (tk-main-window *tki*))))))
+    (if (not (zerop tkwin))
+        (trc nil "got tkwin" self tkwin)
+      (break "under *tki* ~a unable to get window-ptr for ~a in main ~a" *tki* (^path) (tk-main-window *tki*)))
     (setf (gethash (pointer-address tkwin) (tkwins .tkw)) self)))
 
 (defmethod make-tk-instance ((self widget)) 
@@ -109,10 +114,7 @@ See the Lisp Lesser GNU Public License for more details.
         (tk-class self) (path self)(tk-configurations self)))))
 
 (defmethod tk-class :around ((self widget))
-  (let ((c (call-next-method)))
-    (if (tile? self)
-        (conc$ "TTK::" c)
-      c)))
+  (conc$ (when (tile? self) "TTK::") (call-next-method)))
 
 (defmethod make-tk-instance :after ((self widget)) 
   (with-integrity (:client `(:post-make-tk ,self))
@@ -127,22 +129,45 @@ See the Lisp Lesser GNU Public License for more details.
         (^path) new-value (^parent-y)))))
 
 (defcallback widget-event-handler-callback :void  ((client-data :pointer)(xe :pointer))
-  #+demo
-  (handler-case
+  (bif (self (tkwin-widget client-data))
+        (widget-event-handle self xe)
+        ;; sometimes I hit the next branch restarting after crash....
+        (trc "widget-event-handler > no widget for tkwin ~a" client-data))
+  #+nahhh(handler-case
       (bif (self (tkwin-widget client-data))
         (widget-event-handle self xe)
         ;; sometimes I hit the next branch restarting after crash....
         (trc "widget-event-handler > no widget for tkwin ~a" client-data))
+    (excl:simple-break (error)
+      (declare (ignorable error))
+      (trc "widget-event-handler-callback honoring break" error)
+     (invoke-debugger error)
+      )
     (t (error)
       (declare (ignorable error))
-      ;;(mathx::a1-sound-play :backtrace)
-      #-demo (invoke-debugger error)
+      (trc "widget-event-handler-callback ignoring error" error)
+      ;;#-demo (invoke-debugger error)
       ))
-  #-demo
-  (bif (self (tkwin-widget client-data))
-        (widget-event-handle self xe)
-        ;; sometimes I hit the next branch restarting after crash....
-        (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
+;;;  #+demo
+;;;  (handler-case
+;;;      (bif (self (tkwin-widget client-data))
+;;;        (widget-event-handle self xe)
+;;;        ;; sometimes I hit the next branch restarting after crash....
+;;;        (trc "widget-event-handler > no widget for tkwin ~a" client-data))
+;;;    (t (error)
+;;;      (declare (ignorable error))
+;;;      #-demo (invoke-debugger error)
+;;;      ))
+;;;  #+development
+;;;  (progn
+;;;    
+;;;    (bif (self (tkwin-widget client-data))
+;;;      (widget-event-handle self xe)
+;;;      ;; sometimes I hit the next branch restarting after crash....
+;;;      (trc "widget-event-handler > no widget for tkwin ~a" client-data)))
+  )
+
+(export! widget-event-handle)
 
 (defmethod widget-event-handle ((self widget) xe) ;; override for class-specific handling
   (trc nil "bingo widget-event-handle" (xevent-type xe))
@@ -157,9 +182,12 @@ See the Lisp Lesser GNU Public License for more details.
 (defmethod tk-configure ((self widget) option value)
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
 
+
 (defmethod not-to-be :after ((self widget))
   (when (or (and (eql self .tkw) (not (find .tkw *windows-destroyed*)))
           (not (find .tkw *windows-being-destroyed*)))
+    (trc "not-to-be destroying widget" (^path))
+    (break "not to be")
     (tk-format `(:forget ,self) "pack forget ~a" (^path))
     (tk-format `(:destroy ,self) "destroy ~a" (^path))))
 

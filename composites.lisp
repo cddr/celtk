@@ -86,7 +86,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defvar *app*)
 
 (defmodel application (family)
-  ((app-time :initform (c-in (get-internal-real-time))
+  ((app-time :initform (c-in (now))
      :initarg :app-time
      :accessor app-time)))
 
@@ -94,14 +94,41 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod path ((self application)) nil)
 
+(defvar *app-idle-tasks*)
+(defun app-idle-tasks-clear ()
+  (setf *app-idle-tasks* nil))
+(defun app-idle-task-new (task-fn)
+  (push task-fn *app-idle-tasks*)
+  *app-idle-tasks*)
+
+(defun app-idle-task-destroy (task-fn)
+  (setf *app-idle-tasks*
+    (delete task-fn *app-idle-tasks*)))
+
+#+crazier
+(defun app-idle-task-destroy (task-cell)
+  (setf *app-idle-tasks*
+    (if (eq task-cell *app-idle-tasks*)
+        (cdr *app-idle-tasks*)
+      (mapl (lambda (tasks)
+              (when (eq task-cell (cdr tasks))
+                (rplacd tasks (cdr task-cell))))))))
+
+
 (defun app-idle (self)
-  (setf (^app-time) (get-internal-real-time)))
+  (loop for w in (^kids)
+      do (when (not (eq :arrow (cursor w)))
+           (setf (cursor w) :arrow)))
+  (setf (^app-time) (now))
+  (loop for task in *app-idle-tasks*
+      do (funcall task self task)))
 
 (defmd window (toplevel composite-widget decoration-mixin)
   (title$ (c? (string-capitalize (class-name (class-of self)))))
   (dictionary (make-hash-table :test 'equalp))
   (tkwins (make-hash-table))
   (xwins (make-hash-table))
+  (cursor :arrow :cell nil)
   (keyboard-modifiers (c-in nil))
   (callbacks (make-hash-table :test #'eq))
   (edit-style (c-in nil))
@@ -119,9 +146,14 @@ Actually holds last event code, :focusin or :focusout")
   :width (c?n 800)
   :height (c?n 600))
 
-(export! .control-key-p .alt-key-p focus-state ^focus-state)
+(defmethod (setf cursor) :after (new-value (self window))
+  (when new-value
+    (tk-format-now ". configure -cursor ~a" (string-downcase (symbol-name new-value)))))
+
+(export! .control-key-p .alt-key-p .shift-key-p focus-state  ^focus-state)
 (define-symbol-macro .control-key-p (find :control (keyboard-modifiers .tkw)))
 (define-symbol-macro .alt-key-p (find :alt (keyboard-modifiers .tkw)))
+(define-symbol-macro .shift-key-p (find :shift (keyboard-modifiers .tkw)))
 
 (defmethod make-tk-instance ((self window)) 
   (setf (gethash (^path) (dictionary .tkw)) self))

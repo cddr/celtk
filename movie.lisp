@@ -33,17 +33,30 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defobserver tk-file :around ((self movie))
   (call-next-method)
-  (when (and new-value old-value)
-    (plug-n-play-movie self new-value nil)))
+  (with-cc :playmovie
+    (when (plusp (length new-value)) ;; gets nil and ""
+      (plug-n-play-movie self new-value nil)
+      #+goodluck (app-idle-task-new 
+       (let ((start (now)))
+         (lambda (task app)
+           (declare (ignore app))
+           (when (> (- (now) start) 2)
+             (with-cc 
+                 (setf (tk-file self) "")
+               (app-idle-task-destroy task)))))))))
+
 
 (defun plug-n-play-movie (m file &optional (install? t))
   ;
   ; silly harcodes follow....
   ;
   (when install? (setf (tk-file m) file))
+  #-silliness
+  (tk-format `(:fini ,m) "~a play" (path m))
   ;
   ; this off-on sequence apparently necessary each time a file is loaded or sth.
   ;
+  #+silliness
   (with-cc :loopstate
     (setf (palindromeloopstate m) 0)
     (with-cc :loopstate

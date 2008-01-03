@@ -34,7 +34,13 @@ dynamic add/remove
     inits))
 
 (defmethod make-tk-instance ((self menubar))
-  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0 -type menubar" (^path))
+  (tk-format `(:make-tk ,self) "menu ~a -tearoff 0 -type menubar ~{~(~a~) ~a~^ ~}" (^path) (tk-configurations self))
+
+;;;  (let ((opts (tk-class-options self))
+;;;        (figs (tk-configurations self)))
+;;;    (trc (background self) " menu-figs!!!!!!!!!!!!" figs :opts opts)
+;;;    (tk-format `(:make-tk ,self) "menu ~a ~{~(~a~) ~a~^ ~}" ;; call to this GF now integrity-wrapped by caller
+;;;      (path self) figs))
   (tk-format `(:configure ,self) ". configure -menu ~a" (^path)))
 
 ;;; --- menus -------------------------------------------
@@ -48,6 +54,7 @@ dynamic add/remove
     (-title nil) (-tk-type -type))
   (:default-initargs
       :id (gentemp "MNU")))
+
 
 (defmethod make-tk-instance ((self menu))
   (trc nil "maketkinstance menu" self :parent .parent (type-of .parent)

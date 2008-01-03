@@ -23,7 +23,9 @@ See the Lisp Lesser GNU Public License for more details.
 ;;; --- running a Celtk (window class, actually) --------------------------------------
 
 (eval-now!
-  (export '(tk-scaling run-window test-window)))
+ (export '(tk-scaling run-window test-window *ctk-dbg*)))
+
+(defparameter *ctk-dbg* nil)
 
 (defun run-window (root-class &optional (resetp t) &rest window-initargs)
   (declare (ignorable root-class))
@@ -40,9 +42,8 @@ See the Lisp Lesser GNU Public License for more details.
   
   (tk-format-now "package require snack")
   (tk-format-now "package require tile")
-  (tk-format-now "package require QuickTimeTcl")
-  ;(tk-format-now "tile::setTheme xpnative")
-  ;(tk-format-now "namespace import -force ttk::*")
+  #-unix
+  ;;(tk-format-now "package require QuickTimeTcl")
   (tk-format-now "snack::sound s")
 ;;;  (tk-format-now (conc$ "snack::sound s -load "
 ;;;                   (snackify-pathname (make-pathname :directory '(:absolute  "sounds")
@@ -81,15 +82,18 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-format-now "bind . <KeyRelease> {do-key-up %W %K}")
   (bwhen (ifn (start-up-fn *tkw*))
     (funcall ifn *tkw*))
+  (CG:kill-splash-screen)
   (tcl-do-one-event-loop)
   )
 
 
 
-(defun ensure-destruction (w)
-  (TRC nil "ensure-destruction entry" W)
+(defun ensure-destruction (w key)
+  (declare (ignorable key))
+  ;(TRC "ensure.destruction entry" key W (type-of w))
   (unless (find w *windows-being-destroyed*)
-    (TRC nil "ensure-destruction not-to-being" W)
+    ;(TRC "ensure.destruction not-to-being" key W)
+    
     (let ((*windows-being-destroyed* (cons w *windows-being-destroyed*)))
       (not-to-be w))))
 
@@ -110,7 +114,7 @@ See the Lisp Lesser GNU Public License for more details.
 (defmethod widget-event-handle ((self window) xe)
   (let ((*tkw* self))
     (unless (find (xevent-type xe) '(:MotionNotify))
-      (TRC nil "main window event" self *tkw* (xevent-type xe)))
+      #+xxx (TRC "main window event" self *tkw* (xevent-type xe)))
     (flet ((give-to-window ()
              (bwhen (eh (event-handler *tkw*))
                (funcall eh *tkw* xe))))
@@ -125,42 +129,36 @@ See the Lisp Lesser GNU Public License for more details.
            (setf (^height) (parse-integer (tk-eval "winfo height ."))))
          )
 
-        (:visibilitynotify
-         (when (find-package "MATHX")
-           (funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :startup "" 0.8))
-         )
+        
         
         (:destroyNotify
-         #+live (when (find-package "MATHX")
-           (funcall (find-symbol "A1-SOUND-EFFECT-PLAY" '#:mathx) self :quit "-blocking yes" 0.5))
-                       
-         (let ((*windows-destroyed* (cons *tkw* *windows-destroyed*)))
-           (ensure-destruction *tkw*)))
+         (pushnew *tkw* *windows-destroyed*)
+         (ensure-destruction *tkw* :destroyNotify))
 
         (:virtualevent
          (bwhen (n$ (xsv name xe))
            (trc nil "main-window-proc :" n$ (unless (null-pointer-p (xsv user-data xe))
                                               (tcl-get-string (xsv user-data xe))))
            (case (read-from-string (string-upcase n$))
-             (keypress (break "this works??: going after keysym")
+             (keypress ;(break "this works??: going after keysym")
                (let ((keysym (tcl-get-string (xsv user-data xe))))
-                         (trc "keypress keysym!!!!" (tcl-get-string (xsv user-data xe)))
+                         (trc nil "keypress keysym!!!!" (tcl-get-string (xsv user-data xe)))
                          (bIf (mod (keysym-to-modifier keysym))
-                           (eko ("modifiers now")
+                           (eko (nil "modifiers now")
                              (pushnew mod (keyboard-modifiers *tkw*)))
                            (trc "unhandled pressed keysym" keysym))))
              (keyrelease (break "this works??: going after keysym")
                (let ((keysym (tcl-get-string (xsv user-data xe))))
                            (bIf (mod (keysym-to-modifier keysym))
-                             (eko ("modifiers now")
+                             (eko (nil "modifiers now")
                                (setf (keyboard-modifiers *tkw*)
                                  (delete mod (keyboard-modifiers *tkw*))))
                              (trc "unhandled released keysym" keysym))))
              (close-window
-              (ensure-destruction *tkw*))
+              (ensure-destruction *tkw* :close-window))
            
              (window-destroyed
-              (ensure-destruction *tkw*))
+              (ensure-destruction *tkw* :window-destroyed))
              
              (otherwise
               (give-to-window)))))
@@ -172,10 +170,16 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defparameter *event-loop-delay*  .10 "Minimum delay [s] in event loop not to lock out IDE (ACL anyway)")
 
+(defparameter *doe-last* 0)
+
 (defun tcl-do-one-event-loop ()
+  (app-idle-tasks-clear)
   (loop while (plusp (tk-get-num-main-windows))
       do (loop until (zerop (Tcl_DoOneEvent 2)) ;; 2== TCL_DONT_WAIT
-             do (app-idle *app*))
+             do (when (and *ctk-dbg* (> (- (now) *doe-last*) 1))
+                    (trcx doe-loop)
+                  (setf *doe-last* (now)))
+               (app-idle *app*))
         (app-idle *app*)
         (sleep *event-loop-delay*) ;; give the IDE a few cycles
       finally

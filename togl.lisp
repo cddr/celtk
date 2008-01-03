@@ -22,7 +22,7 @@ See the Lisp Lesser GNU Public License for more details.
 (define-foreign-library Togl
   (:darwin (:or "libTogl1.7.dylib"
                 "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
-  (:windows (:or "/tcl/lib/togl/togl17.dll"))
+  (:windows (:or "togl17.dll"))
   (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
 
 (defctype togl-struct-ptr-type :pointer)
@@ -156,18 +156,14 @@ See the Lisp Lesser GNU Public License for more details.
     :id (gentemp "TOGL")
     :ident (c? (^path))))
 
-(export! togl-redisp)
-(defun togl-redisp (togl)
-  (when (togl-ptr togl)
-    (togl-post-redisplay (togl-ptr togl))))
-
-(defmacro with-togl ((togl-form width-var height-var) &body body &aux (togl-ptr (gensym)))
-  `(let* ((,togl-ptr (togl-ptr ,togl-form))
-          (*tki* (togl-interp ,togl-ptr))
-          (,width-var (togl-width ,togl-ptr))
-          (,height-var (togl-height ,togl-ptr)))
-     ,@body))
-
+(defmacro with-togl ((togl-form width-var height-var) &body body &aux (togl (gensym))(togl-ptr (gensym)))
+  `(let* ((,togl ,togl-form)
+          (,togl-ptr (togl-ptr ,togl)))
+     (when ,togl-ptr
+       (let ((*tki* (togl-interp ,togl-ptr))
+             (,width-var (togl-width ,togl-ptr))
+             (,height-var (togl-height ,togl-ptr)))
+         ,@body))))
 
 (defmacro def-togl-callback (root (&optional (ptr-var 'togl-ptr)(self-var 'self)) &body preamble)
   (let ((register$ (format nil "TOGL-~a-FUNC" root))

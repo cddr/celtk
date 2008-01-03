@@ -125,6 +125,7 @@ typedef struct {
 (defmacro xke (slot-name xptr)
   `(foreign-slot-value ,xptr 'x-key-event ',slot-name))
 
+(export! xevent-type)
 (defun xevent-type (xe)
   (tk-event-type (xsv type xe)))
 

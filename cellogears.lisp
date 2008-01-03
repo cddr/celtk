@@ -30,6 +30,15 @@
       :title$ "Rotating Gear Widget Test"
     :kids (c? (the-kids
                (mk-stack (:packing (c?pack-self "-side left -fill both"))
+                 ;
+                 ; An awful use of GUI...
+                 ;
+                 (mk-checkbutton :id :on-off
+                   :text (c? (if (^value) "Stop" "Start"))
+                   :value (c-in t))
+                 ;
+                 ; The pretty bit...
+                 ;
                  (make-instance 'gears
                    :fm-parent *parent*
                    :width 400 :height 400
@@ -38,6 +47,7 @@
                    :double 1 ;; "yes"
                    :event-handler (c? (lambda (self xe)
                                         (trc nil "togl event" (tk-event-type (xsv type xe)))
+                                        
                                         (case (tk-event-type (xsv type xe))
                                           (:virtualevent
                                            (trc nil "canvas virtual" (xsv name xe)))
@@ -48,7 +58,8 @@
                                            #+not (RotMove self (xsv x xe) (xsv y xe))
                                            (RotMove self (xsv x-root xe) (xsv y-root xe)))
                                           (:buttonrelease
-                                           (setf *startx* nil)))))))))))
+                                           (setf *startx* nil))))))
+                 (mk-label :text "Click and drag to rotate model"))))))
 
 (defun RotStart (self x y)
   (setf *startx* x)
@@ -67,6 +78,9 @@
 
 (defconstant +pif+ (coerce pi 'single-float))
 
+(defun draw-scaled-gear (scale)
+  (draw-gear 1.0 (* 2.0 scale) 1.0 (* 10 scale) 0.7))
+
 (defmodel gears (togl)
   ((rotx :initform (c-in 40) :accessor rotx :initarg :rotx)
    (roty :initform (c-in 25) :accessor roty :initarg :roty)
@@ -76,19 +90,19 @@
                  (let ((dl (gl:gen-lists 1)))
                    (gl:with-new-list (dl :compile)
                      (gl:material :front :ambient-and-diffuse #(0.8 0.1 0.0 1.0))
-                     (draw-gear 1.0 4.0 1.0 20 0.7))
+                     (draw-scaled-gear 2))
                    dl)))
    (gear2 :initarg :gear2 :accessor gear2
      :initform (c_? (let ((dl (gl:gen-lists 1)))
                       (gl:with-new-list (dl :compile)
                         (gl:material :front :ambient-and-diffuse #(0.0 0.8 0.2 1.0))
-                        (draw-gear 0.5 2.0 2.0 10 0.7))
+                        (draw-scaled-gear 1))
                       dl)))
    (gear3 :initarg :gear3 :accessor gear3
      :initform (c_? (let ((dl (gl:gen-lists 1)))
                       (gl:with-new-list (dl :compile)
                         (gl:material :front :ambient-and-diffuse #(0.2 0.2 1.0 1.0))
-                        (draw-gear 1.3 2.0 0.5 10 0.7))
+                        (draw-scaled-gear 1))
                       dl)))
 
    (angle :initform (c-in 0.0) :accessor angle :initarg :angle)
@@ -100,8 +114,9 @@
 
 (defmethod togl-timer-using-class ((self gears))
   (trc nil "enter gear timer" self (togl-ptr self) (get-internal-real-time))
-  (incf (^angle) 5.0)
-  (togl-post-redisplay (togl-ptr self))
+  (when (fmv :on-off)
+    (incf (^angle) 5.0)
+    (togl-post-redisplay (togl-ptr self)))
   ;(loop until (zerop (ctk::Tcl_DoOneEvent 2)))
   )
 

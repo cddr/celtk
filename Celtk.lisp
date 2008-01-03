@@ -106,6 +106,7 @@ See the Lisp Lesser GNU Public License for more details.
         (trc nil "!!! --- tk-user-queue-handler dispatching" defer-info)
         (funcall task :user-q defer-info)))
 
+#+save
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
     (let* ((*print-circle* nil)
@@ -114,7 +115,7 @@ See the Lisp Lesser GNU Public License for more details.
       ; --- debug stuff ---------------------------------
       ;
 
-      (let ((yes '("play-me"))
+      (let ((yes '(#+shhh "play-me"))
             (no  '("font")))
         (declare (ignorable yes no))
         (when (and (or ;; (null yes)
@@ -127,6 +128,19 @@ See the Lisp Lesser GNU Public License for more details.
       ;
       ; --- serious stuff ---
       ;
+      (setf *tk-last* tk$)
+      (tcl-eval-ex *tki* tk$))))
+
+(defun tk-format-now (fmt$ &rest fmt-args)
+  (unless (find *tkw* *windows-destroyed*)
+    (let* ((*print-circle* nil)
+           (tk$ (apply 'format nil fmt$ fmt-args)))
+      (let ((yes ) ; '("menubar" "cd"))
+            (no  '()))
+        (declare (ignorable yes no))
+        (when (find-if (lambda (s) (search s tk$)) yes)
+          (format t "~&tk> ~a~%" tk$)))
+      (assert *tki*)
       (setf *tk-last* tk$)
       (tcl-eval-ex *tki* tk$))))
 
@@ -146,14 +160,16 @@ See the Lisp Lesser GNU Public License for more details.
     (do-it))))
 
 (defmethod tk-send-value ((s string))
-  (if nil #+not (find #\\ s) ;; welllll, we cannot send: -text "[" to Tk because t misinterprets it, so we have to send the octal
+  #+whoa (if nil #+not (find #\\ s) ;; welllll, we cannot send: -text "[" to Tk because t misinterprets it, so we have to send the octal
                                                        ; which begins with \. There is probably a better way ///
       (format nil "\"~a\"" s) ;; no good if \ is in file path as opposed to escaping
       (format nil "~s" s)                                  ; this fails where I want to send a /Tk/ escape sequence "\065" 
                                                        ; because the ~s directive adds its own escaping
   ;;(format nil "{~a}" s)                                ;this fails, too, not sure why
-  
-  ))
+  )
+  (if (find #\space s)
+      (format nil "{~a}" s)
+    (format nil "~s" s)))
 
 (defmethod tk-send-value ((c character))
   ;
@@ -229,3 +245,9 @@ See the Lisp Lesser GNU Public License for more details.
           finally (gather-item)
             (return (nreverse items))))))
         
+
+
+
+
+
+

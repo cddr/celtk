@@ -22,20 +22,20 @@ See the Lisp Lesser GNU Public License for more details.
 ;; Tcl/Tk
 
 (define-foreign-library Tcl
-  (:darwin (:framework "Tcl"))
-  (:windows (:or "/tcl/bin/Tcl85.dll"))
+    (:darwin (:framework "Tcl"))
+  (:windows (:or "Tcl85.dll"))
   (:unix "libtcl.so")
   (t (:default "libtcl")))
 
 (define-foreign-library Tk
-  (:darwin (:framework "Tk"))
-  (:windows (:or "/tcl/bin/tk85.dll"))
+    (:darwin (:framework "Tk"))
+  (:windows (:or "Tk85.dll"))
   (:unix "libtk.so")
   (t (:default "libtk")))
 
 (define-foreign-library Tile
     ;(:darwin (:framework "Tk"))
-  (:windows (:or "/tcl/lib/tile/tile078.dll"))
+    (:windows (:or "tile078.dll"))
   ;(:unix "libtk.so")
   (t (:default "libtk")))
 

@@ -80,12 +80,14 @@ See the Lisp Lesser GNU Public License for more details.
                          
                          (mk-stack ()
                            (duelling-scrolled-lists)
+                           #+tcl-quicktime
                            (mk-row ()
                              (mk-button-ex ("Serious Demo" (plug-n-play-movie (fm^ :play-me)
-                                                             "c:/0dev/celtk/demo.mov")))
+                                                             "c:/0dev/celtk/demo.mov"))
+                               :id :serious-demo)
                              (mk-button-ex ("Celtk?" (plug-n-play-movie (fm^ :play-me)
                                                        "c:/0dev/celtk/good-thing2.mov"))))
-
+                           #+tcl-quicktime
                            (mk-movie :id :play-me
                              :loopstate (c-in 0) :palindromeloopstate (c-in 0)
                              :tk-file (c? (let ((entry (fm^v :enter-me)))
@@ -95,6 +97,7 @@ See the Lisp Lesser GNU Public License for more details.
                                              ((find entry '("sex" "drugs" "rock-n-roll" "peace") :test 'string-equal)
                                               "c:/0dev/celtk/good-thing2.mov")
                                              (t "c:/0dev/celtk/good-thing2.mov" #+not .cache))))))))))))))
+
 
 (defun style-by-edit-menu ()
   (mk-row ("Style by Edit Menu")
@@ -160,7 +163,6 @@ See the Lisp Lesser GNU Public License for more details.
                             :fm-parent *parent*
                             :item-text (down$ (symbol-name sym)))))))
 
-(namestring (make-pathname :directory '(:absolute "0dev" "Celtk") :name "x1" :type "xbm"))
 (defun assorted-canvas-items ()
   (mk-canvas
    :height 350
