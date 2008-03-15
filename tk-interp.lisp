@@ -24,19 +24,19 @@ See the Lisp Lesser GNU Public License for more details.
 (define-foreign-library Tcl
     (:darwin (:framework "Tcl"))
   (:windows (:or "Tcl85.dll"))
-  (:unix "libtcl.so")
+  (:unix (:or "libtcl8.5.so" "libtcl.so"))
   (t (:default "libtcl")))
 
 (define-foreign-library Tk
     (:darwin (:framework "Tk"))
   (:windows (:or "Tk85.dll"))
-  (:unix "libtk.so")
+  (:unix (:or "libtk8.5.so" "libtk.so"))
   (t (:default "libtk")))
 
 (define-foreign-library Tile
     ;(:darwin (:framework "Tk"))
     (:windows (:or "tile078.dll"))
-  ;(:unix "libtk.so")
+  (:unix (:or "libtk8.5.so" "libtk.so"))
   (t (:default "libtk")))
 
 (defctype tcl-retcode :int)
@@ -210,7 +210,7 @@ See the Lisp Lesser GNU Public License for more details.
     (use-foreign-library Tk)
     #-macosx (use-foreign-library Tile)
     #-macosx (pushnew :tile cl-user::*features*)
-    (use-foreign-library Togl)
+;    (use-foreign-library Togl)
     (tcl-find-executable (argv0))
     (set-initialized)))
 

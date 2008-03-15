@@ -23,7 +23,7 @@ See the Lisp Lesser GNU Public License for more details.
   (:darwin (:or "libTogl1.7.dylib"
                 "/opt/tcltk/togl/lib/Togl1.7/libtogl1.7.dylib"))
   (:windows (:or "togl17.dll"))
-  (:unix "/usr/lib/Togl1.7/libTogl1.7.so"))
+  (:unix (:or "/usr/lib/Togl1.7/libTogl1.7.so" "/usr/local/lib/Togl1.7/libTogl1.7.so")))
 
 (defctype togl-struct-ptr-type :pointer)
 

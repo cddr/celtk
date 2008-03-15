@@ -251,7 +251,7 @@ certainly wrong (or the class should be canvas-scroller).
                                      (princ-to-string c)))))
                 :background (c? (if (user-errors (fm! :point-ct)) 
                                     "red"
-                                  'SystemButtonFace))) ;; TK won't allow "" as a way of saying "default color"
+                                  "white"))) ;; TK won't allow "" as a way of saying "default color"
               ;
               ; As you edit the field, if you key in an invalid (non-digit) character, the background
               ; immediately turns red. Delete it and it reverts to the default.
@@ -307,7 +307,7 @@ certainly wrong (or the class should be canvas-scroller).
   (:default-initargs
       :id :test-canvas
     :background (c? (or (selection (fm! :bkg (^menus)))
-                      'SystemButtonFace))
+                      "white"))
     ;
     ; we are taking the demo a little further to make it a little more real world than just
     ; printing to standard output. A point to make here is the decoupling of the menu from

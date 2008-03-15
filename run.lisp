@@ -82,7 +82,7 @@ See the Lisp Lesser GNU Public License for more details.
   (tk-format-now "bind . <KeyRelease> {do-key-up %W %K}")
   (bwhen (ifn (start-up-fn *tkw*))
     (funcall ifn *tkw*))
-  (CG:kill-splash-screen)
+  #+allegro (CG:kill-splash-screen)
   (tcl-do-one-event-loop)
   )
 

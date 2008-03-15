@@ -105,8 +105,8 @@ eventually thanks to DEFCOMMAND")
 (defun tk-config-option (self slot-name)
   (second (assoc slot-name (tk-class-options self))))
 
-(defmethod slot-value-observe progn (slot-name (self tk-object) new-value old-value old-value-boundp)
-  (declare (ignorable old-value))
+(defmethod slot-value-observe progn (slot-name (self tk-object) new-value old-value old-value-boundp cell)
+  (declare (ignorable old-value cell))
   (when old-value-boundp ;; initial propagation to Tk happens during make-tk-instance
     (bwhen (tco (tk-config-option self slot-name)) ;; (get slot-name 'tk-config-option))
       (tk-configure self (string tco) (or new-value "")))))

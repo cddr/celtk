@@ -51,11 +51,13 @@ See the Lisp Lesser GNU Public License for more details.
 (defun ctk::tk-test () ;; ACL project manager needs a zero-argument function, in project package
   (test-window 
    ;;'place-test
+   'font-view-2
    ;; 'one-button-window
-   ;;'ltktest-cells-inside
+   ;; 'ltktest-cells-inside
    ;;'menu-button-test
    ;;'spinbox-test
-   'lotsa-widgets
+   ;;'one-button-window
+   ;;'lotsa-widgets
    ;; Now in Gears project 'gears-demo
   ))
 
@@ -177,7 +179,7 @@ See the Lisp Lesser GNU Public License for more details.
   ()
   (:default-initargs
       :value (c? (tk-eval-list "font families"))
-    :pady 2 :padx 4
+    :pady 10 :padx 4
     :packing-side 'left
     :layout-anchor 'nw
     :kids (c? (the-kids

@@ -100,9 +100,9 @@ See the Lisp Lesser GNU Public License for more details.
   (let ((tkwin (or (tkwin self)
                   (setf (tkwin self)
                     (tk-name-to-window *tki* (^path) (tk-main-window *tki*))))))
-    (if (not (zerop tkwin))
-        (trc nil "got tkwin" self tkwin)
-      (break "under *tki* ~a unable to get window-ptr for ~a in main ~a" *tki* (^path) (tk-main-window *tki*)))
+ ;;    (if (not (zerop tkwin))
+;;         (trc nil "got tkwin" self tkwin)
+;;       (break "under *tki* ~a unable to get window-ptr for ~a in main ~a" *tki* (^path) (tk-main-window *tki*)))
     (setf (gethash (pointer-address tkwin) (tkwins .tkw)) self)))
 
 (defmethod make-tk-instance ((self widget)) 
