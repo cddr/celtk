@@ -8,12 +8,12 @@
 
 (in-package :gears)
 
-(defvar *startx*)
-(defvar *starty*)
-(defvar *xangle0*)
-(defvar *yangle0*)
-(defvar *xangle*)
-(defvar *yangle*)
+(defvar *startx* nil)
+(defvar *starty* nil)
+(defvar *xangle0* nil)
+(defvar *yangle0* nil)
+(defvar *xangle* 0.2)
+(defvar *yangle* 0.0)
 
 (defparameter *vTime* 100)
 
