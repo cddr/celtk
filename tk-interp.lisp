@@ -210,7 +210,7 @@ See the Lisp Lesser GNU Public License for more details.
     (use-foreign-library Tk)
     #-macosx (use-foreign-library Tile)
     #-macosx (pushnew :tile cl-user::*features*)
-;    (use-foreign-library Togl)
+    (use-foreign-library Togl)
     (tcl-find-executable (argv0))
     (set-initialized)))
 
