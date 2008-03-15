@@ -1,8 +1,11 @@
 ;;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
 
-#+(or allegro lispworks cmu mcl clisp cormanlisp sbcl scl)
-(progn
-  (declaim (optimize (debug 3) (speed 3) (safety 1) (compilation-speed 0))))
+;; adjust the following form and uncomment to adjust 
+;; optimization parameters
+
+;; #+(or allegro lispworks cmu mcl clisp cormanlisp sbcl scl)
+;; (progn
+;;   (declaim (optimize (debug 3) (speed 0) (safety 1) (compilation-speed 0))))
 
 (asdf:defsystem :celtk
     :name "celtk"
@@ -14,7 +17,8 @@
   :long-description "A Cells-driven portable GUI, ultimately implmented by Tcl/Tk"
   :depends-on (:cells :cffi :gui-geometry)
   :serial t
-  :components ((:file "Celtk")
+  :components ((:file "packages")
+	       (:file "celtk")
                (:file "tk-structs")
                (:file "tk-interp")
                (:file "tk-events")
