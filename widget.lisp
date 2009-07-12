@@ -47,31 +47,32 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- widget -----------------------------------------
 
-(defmodel widget (family tk-object)
-  ((path :accessor path :initarg :path
-     :initform (c? (eko (nil "path" self (parent-path (fm-parent self))(md-name self))
-                     (format nil "~(~a.~a~)"
-                       (parent-path (fm-parent self))
-                       (md-name self)))))
-   (tkwin :cell nil :accessor tkwin :initform nil)
-   (xwin :cell nil :accessor xwin :initform nil)
-   (packing :reader packing :initarg :packing :initform nil)
-   (gridding :reader gridding :initarg :gridding :initform nil)
-   (parent-x :reader parent-x :initarg :parent-x :initform nil)
-   (parent-y :reader parent-y :initarg :parent-y :initform nil)
-   (relx :reader relx :initarg :relx :initform nil)
-   (rely :reader rely :initarg :rely :initform nil)
-   (enabled :reader enabled :initarg :enabled :initform t)
-   (event-handler :reader event-handler :initarg :event-handler :initform nil)
-   (menus :reader menus :initarg :menus :initform nil
-     :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
-   (image-files :reader image-files :initarg :image-files :initform nil)
-   (tk-selector :reader tk-selector :initarg :tk-selector
-     :initform (c? (upper self tk-selector))))
-  (:default-initargs
-      :id (gentemp "W")
-    :event-handler nil #+debug (lambda (self xe)
-                                 (TRC "debug event handler" self (tk-event-type (xsv type xe))))))
+(defmd widget (family tk-object)
+  (path (c? (eko (nil "path" self (parent-path 
+				   (fm-parent self))
+		      (md-name self))
+		 (format nil "~(~a.~a~)"
+			 (parent-path (fm-parent self))
+			 (md-name self)))))
+  (tkwin :cell nil :accessor tkwin :initform nil)
+  (xwin :cell nil :accessor xwin :initform nil)
+  (packing :reader packing :initarg :packing :initform nil)
+  (gridding :reader gridding :initarg :gridding :initform nil)
+  (parent-x :reader parent-x :initarg :parent-x :initform nil)
+  (parent-y :reader parent-y :initarg :parent-y :initform nil)
+  (relx :reader relx :initarg :relx :initform nil)
+  (rely :reader rely :initarg :rely :initform nil)
+  (enabled :reader enabled :initarg :enabled :initform t)
+  (event-handler :reader event-handler :initarg :event-handler :initform nil)
+  (menus :reader menus :initarg :menus :initform nil
+	 :documentation "An assoc of an arbitrary key and the associated CLOS menu instances (not their tk ids)")
+  (image-files :reader image-files :initarg :image-files :initform nil)
+  (tk-selector :reader tk-selector :initarg :tk-selector
+	       :initform (c? (upper self tk-selector)))
+  :id (gentemp "W")
+  :event-handler nil #+debug (lambda (self xe)
+			       (TRC "debug event handler" self 
+				    (tk-event-type (xsv type xe)))))
 
 (eval-now!
   (export '()))
@@ -205,21 +206,7 @@ See the Lisp Lesser GNU Public License for more details.
   (export '(canvas-offset ^canvas-offset coords-tweak ^coords-tweak caret-tweak ^caret-tweak
              decorations ^decorations)))
 
-(defmodel item-geometer () ;; mix-in
-  ()
-  #+vestigial?
-  ((canvas-offset :initarg :canvas-offset :accessor canvas-offset
-     :initform (c_? (eko (nil "standard canvas offset" self (type-of self) (^p-offset))
-                     (c-offset self))))
-   (caret-tweak :initarg :caret-tweak :accessor caret-tweak :initform '(0 0))
-   (l-bounds :initarg :l-bounds :initform nil :reader l-bounds
-     :documentation "Vector of local left, top, right, bottom")
-   (p-offset :initarg :p-offset :reader p-offset :initform '(0 0))
-   (p-bounds :initarg :p-bounds :reader p-bounds
-     :documentation "Vector of parent-relative left, top, right, bottom"
-     :initform (c_? (when (and (^l-bounds)(^p-offset) )
-                     (bounds-offset (^l-bounds) (^p-offset))))))
-  (:documentation "For things like mx-power, which inhabit canvases but need no item for visual representation."))
+(defmd item-geometer ())
 
 (defmethod l-bounds :around (i)
   (or (call-next-method)
@@ -227,22 +214,27 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmethod anchor (other)(declare (ignore other)) nil)
 
-(defmodel item (item-geometer tk-object)
-  ((id-no :cell nil :initarg :id-no :accessor id-no :initform nil)
-   (l-coords :initarg :l-coords :initform nil :accessor l-coords)
-   (coords-tweak :initarg :coords-tweak :initform '(0 0) :accessor coords-tweak
-     :documentation "Text items need this to get positioned according to baseline")
-   (coords :initarg :coords :accessor coords
-     :initform nil #+old (c_? (eko (nil "final coords" self (anchor self)(^l-coords)(^canvas-offset)(^coords-tweak))
-                     (loop for coord-xy = (^l-coords) then (cddr coord-xy)
-                         while coord-xy
-                         nconcing (mapcar '+ coord-xy (^canvas-offset) (^coords-tweak))))))
-   (decorations :initarg :decorations :accessor decorations :initform nil
-     :documentation "eg, For a left parens text item, the corresponding right parens text item")
-   )
+(defmd item (item-geometer tk-object)
+  (id-no :cell nil :initarg :id-no :accessor id-no :initform nil)
+  (l-coords :initarg :l-coords :initform nil :accessor l-coords)
+  (coords-tweak :initarg :coords-tweak :initform '(0 0) :accessor coords-tweak
+		:documentation "Text items need this to get positioned according to baseline")
+  (coords :initarg :coords :accessor coords
+	  :initform nil #+old (c_? (eko (nil "final coords" self 
+					     (anchor self)
+					     (^l-coords)
+					     (^canvas-offset)
+					     (^coords-tweak))
+					(loop for coord-xy = (^l-coords) 
+					   then (cddr coord-xy)
+					   while coord-xy
+					   nconcing (mapcar '+ coord-xy 
+							    (^canvas-offset) 
+							    (^coords-tweak))))))
+  (decorations :initarg :decorations :accessor decorations :initform nil
+	       :documentation "eg, For a left parens text item, the corresponding right parens text item")
   (:documentation "Things you put on a canvas")
-  (:default-initargs
-      :id (gentemp "I")))
+  :id (gentemp "I"))
 
 (defmethod make-tk-instance :around ((self item))
   (when (upper self canvas)
@@ -278,13 +270,12 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- tk-selector ---------------------------------------------------
 
-(defmodel tk-selector () ;; mixin
-  ((selection :initform nil :accessor selection :initarg :selection)
-   (tk-variable :initform nil :accessor tk-variable :initarg :tk-variable
-     :documentation "The TK node name to set as the selection changes (not the TK -variable option)"))
-  (:default-initargs
-      :selection (c-in nil)
-      :tk-variable (c? (^path))))
+(defmd tk-selector () ;; mixin
+  (selection :initform nil :accessor selection :initarg :selection)
+  (tk-variable :initform nil :accessor tk-variable :initarg :tk-variable
+	       :documentation "The TK node name to set as the selection changes (not the TK -variable option)")
+  :selection (c-in nil)
+  :tk-variable (c? (^path)))
 
 (defobserver selection ((self tk-selector))
   ;

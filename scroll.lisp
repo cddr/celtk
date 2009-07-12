@@ -71,23 +71,26 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;--- scroller (of canvas; need to generalize this) ----------
 
-(defmodel scroller (grid-manager frame)
-  ((canvas :initarg :canvas :accessor canvas :initform nil))
-  (:default-initargs
-      :id :cv-scroller
-    :kids-packing nil
-    :gridding '(:columns ("-weight {1}" "-weight {0}")
+(defmd scroller (grid-manager frame)
+  (canvas :initarg :canvas :accessor canvas :initform nil)
+  :id :cv-scroller
+  :kids-packing nil
+  :gridding '(:columns ("-weight {1}" "-weight {0}")
                  :rows ("-weight {1}" "-weight {0}"))
-    :kids (c? (the-kids
-               (^canvas)
-               (mk-scrollbar :id :hscroll
-                 :orient "horizontal"
-                 :gridding "-row 1 -column 0 -sticky we"
-                 :command (c? (format nil "~a xview" (path (kid1 .parent)))))
-               (mk-scrollbar :id :vscroll
-                 :orient "vertical"
-                 :gridding "-row 0 -column 1 -sticky ns"
-                 :command (c? (format nil "~a yview" (path (kid1 .parent)))))))))
+  :kids (c? (the-kids
+	     (^canvas)
+	     (mk-scrollbar 
+	      :id :hscroll
+	      :orient "horizontal"
+	      :gridding "-row 1 -column 0 -sticky we"
+	      :command (c? (format nil "~a xview" 
+				   (path (kid1 .parent)))))
+	     (mk-scrollbar 
+	      :id :vscroll
+	      :orient "vertical"
+	      :gridding "-row 0 -column 1 -sticky ns"
+	      :command (c? (format nil "~a yview" 
+				   (path (kid1 .parent))))))))
 
 (defmacro mk-scroller (&rest iargs)
   `(make-instance 'scroller

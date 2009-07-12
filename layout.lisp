@@ -43,7 +43,7 @@ This parent is ~a, kids-packing ~a" self (list .parent (type-of .parent)) (kids-
 
 ;;; --- grids -------------------------------------------------------------------------
 
-(defmodel grid-manager ()())
+(defmd grid-manager ())
 
 (defobserver gridding ((self grid-manager))
   (when new-value

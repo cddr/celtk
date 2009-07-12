@@ -20,37 +20,27 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;--- group geometry -----------------------------------------
 
-(defmodel inline-mixin (composite-widget widget)
-  ((padx :initarg :padx :accessor padx :initform 0)
-   (pady :initarg :pady :accessor pady :initform 0)
-   (packing-side :initarg :packing-side :accessor packing-side :initform 'left)
-   (layout-anchor :initarg :layout-anchor :accessor layout-anchor :initform 'nw))
-  (:default-initargs
-      :kid-slots (lambda (self) ;; /// vestigial? packing now defaults to nil anyway, methinks
-                   (declare (ignore self))
-                   (list
-                    (mk-kid-slot (packing :if-missing t)
-                      nil))) ;; suppress default (but see overall comment a few lines up)
-    :kids-packing (c? (when (^kids)
-                        (format nil "pack~{ ~a~} -side ~a -anchor ~a -padx ~a -pady ~a"
-                          (mapcar 'path (^kids))
-                          (down$ (^packing-side))
-                          (down$ (^layout-anchor))
-                          (^padx)(^pady))))))
+(defmd inline-mixin (composite-widget widget)
+  (padx 0)
+  (pady 0)
+  (packing-side 'left)
+  (layout-anchor 'nw)
+  :kids-packing (c? (when (^kids)
+		      (format nil "pack~{ ~a~} -side ~a -anchor ~a -padx ~a -pady ~a"
+			      (mapcar 'path (^kids))
+			      (down$ (^packing-side))
+			      (down$ (^layout-anchor))
+			      (^padx)(^pady)))))
 
 (defobserver kids-packing ()
   (when new-value
     (tk-format `(:pack ,self kids-packing) new-value)))
 
-(defmodel row-mixin (inline-mixin)
-  ()
-  (:default-initargs
-    :packing-side 'left))
+(defmd row-mixin (inline-mixin)
+  :packing-side 'left)
 
-(defmodel stack-mixin (inline-mixin)
-  ()
-  (:default-initargs
-    :packing-side 'top))
+(defmd stack-mixin (inline-mixin)
+  :packing-side 'top)
 
 
 ;--- f r a m e --------------------------------------------------

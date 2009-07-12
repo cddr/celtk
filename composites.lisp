@@ -80,15 +80,14 @@ See the Lisp Lesser GNU Public License for more details.
 
 ; --------------------------------------------------------
 
-(defmodel composite-widget (widget)
-  ((kids-packing :initarg :kids-packing :accessor kids-packing :initform nil)))
+(defmd composite-widget (widget)
+  (kids-packing))
 
 (defvar *app*)
 
-(defmodel application (family)
-  ((app-time :initform (c-in (now))
-     :initarg :app-time
-     :accessor app-time)))
+(defmd application (family)
+  (app-time (c-in (now))))
+
 
 (define-symbol-macro .time (app-time *app*))
 
@@ -166,8 +165,8 @@ Actually holds last event code, :focusin or :focusout")
   (let ((*tkw* *tkw*))
     (tk-format-now "winfo screenheight .")))
 
-(defmodel full-screen-no-deco-window (window)
-  ())
+(defmd full-screen-no-deco-window (window))
+
 
 (defmethod initialize-instance :before ((self full-screen-no-deco-window)
 					&key &allow-other-keys)

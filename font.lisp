@@ -63,19 +63,17 @@ See the Lisp Lesser GNU Public License for more details.
 
 (defmacro ^tkfont-find (tkfont-id)
   `(cdr (assoc ,tkfont-id (tkfont-info .tkw))))
-      
-(defmodel tkfontified ()
-  ((fkey :initarg :fkey :accessor fkey :initform nil)
-   (f-size-step :initarg :f-size-step :accessor f-size-step
-     :initform 0)
-   (tkfinfo :initarg :tkfinfo :accessor tkfinfo
-     :initform (c_? (bwhen (fkey (^fkey))
+
+(defmd tkfontified ()
+  (fkey)
+  (f-size-step 0)
+  (tkfinfo (c_? (bwhen (fkey (^fkey))
                        (let ((fkey-table (cdr (assoc fkey (tkfont-info .tkw)))))
-                         (ASSERT fkey-table () "no such tkfont: ~a ~a" fkey (symbol-package fkey))
-                         (svref fkey-table (^f-size-step)))))))
-  (:default-initargs
-      :tkfont (c_? (bwhen (fi (^tkfinfo))
-                  (tkfinfo-id fi)))))
+                         (ASSERT fkey-table () "no such tkfont: ~a ~a" 
+				 fkey (symbol-package fkey))
+                         (svref fkey-table (^f-size-step))))))
+  :tkfont (c_? (bwhen (fi (^tkfinfo))
+                  (tkfinfo-id fi))))
 
 (defun tkfont-size-info (self tkfont decrements)
   (let ((tkfont-size-table (cdr (assoc tkfont (tkfont-info .tkw)))))

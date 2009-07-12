@@ -27,7 +27,7 @@ dynamic add/remove
 
 ;;; --- menu bars -----------------------------------
 
-(defmodel menubar (menu)())
+(defmd menubar (menu))
 (defun mk-menubar (&rest inits)
   (apply 'make-instance 'menubar
     :fm-parent *parent*
@@ -80,8 +80,8 @@ dynamic add/remove
 ;;;   specified diff, so we start a new object hierarchy for them
 ;;;
 
-(defmodel menu-entry (tk-object)
-  ((idx :cell nil :initarg :idx :accessor idx :initform nil))
+(defmd menu-entry (tk-object)
+  (idx :cell nil :initarg :idx :accessor idx :initform nil)
   (:documentation "e.g, New, Open, Save in a File menu"))
 
 (defmethod idx :around ((self menu-entry))
@@ -223,8 +223,8 @@ was implicitly invoked (which is why menu is not passed to callback fn))."
                    (trc "menu radio button command firing" self (^value) (upper self tk-selector))
                    (setf (selection (upper self tk-selector)) (^value)))))
 
-(defmodel menu-radio-group (tk-selector family)
-  ((.md-name :cell nil :initform (gentemp "RG") :initarg :id))
+(defmd menu-radio-group (tk-selector family)
+  (.md-name :cell nil :initform (gentemp "RG") :initarg :id)
   (:documentation "Sits in Celtk menu tree managing radio buttons but has no Tk correlate"))
 
 (defmethod path ((self menu-radio-group))

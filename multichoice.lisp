@@ -73,9 +73,9 @@ See the Lisp Lesser GNU Public License for more details.
                              (setf (selection (tk-selector self))
                                (value (elt (^kids) selection)))))))))))
 
-(defmodel listbox-item (tk-object)
-  ((item-text :initarg :item-text :accessor item-text
-     :initform (c? (format nil "~a" (^value))))))
+(defmd listbox-item (tk-object)
+  (item-text :initarg :item-text :accessor item-text
+	     :initform (c? (format nil "~a" (^value)))))
 
 (defmethod make-tk-instance ((self listbox-item))
   (trc nil "make-tk-instance listbox-item insert" self)
