@@ -18,7 +18,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; $Header$
 
-(in-package :Celtk)
+(in-package :celtk)
 
 ;----------------------------------------------------------------------------
 

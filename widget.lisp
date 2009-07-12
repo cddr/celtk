@@ -16,7 +16,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
-(in-package :Celtk)
+(in-package :celtk)
 
 ;;; --- widget tkwin window glue -----------------------
 

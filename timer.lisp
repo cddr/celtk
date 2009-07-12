@@ -18,7 +18,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 ;;; --- timers ----------------------------------------
 
-(in-package :Celtk)
+(in-package :celtk)
 
 (defun never-unchanged (new old) (declare (ignore new old)))
 

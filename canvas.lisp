@@ -16,7 +16,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
-(in-package :Celtk)
+(in-package :celtk)
 
 (deftk canvas (widget)
   ((active :initarg :active :accessor active :initform (c-in t))   

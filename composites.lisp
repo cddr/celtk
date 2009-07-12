@@ -16,7 +16,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 |#
 
-(in-package :Celtk)
+(in-package :celtk)
 
 (eval-now!
   (export '(title$ active .time decoration)))
