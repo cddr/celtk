@@ -176,9 +176,34 @@ See the Lisp Lesser GNU Public License for more details.
     (funcall h self xe)
     (case (xevent-type xe)
       (:buttonpress (trc "button pressed:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))
-      (:buttonrelease (trc "button released:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))(:MotionNotify
+      (:buttonrelease (trc "button released:" (xbe button xe)(xbe x xe)(xbe y xe)(xbe x-root xe)(xbe y-root xe)))
+      (:MotionNotify
        (xevent-dump xe))
-      (:virtualevent))))
+      (:EnterNotify
+       (initiate-hover-event self))
+      (:LeaveNotify
+       (cancel-hover-event self))
+      (:virtualevent
+       (trc "detected virtual event...")))))
+
+
+(defun initiate-hover-event (self)
+  (trc "initiate hover event;")
+  (setf (hover-timer self)
+  	(make-instance 'timer
+  	  :delay 1500
+  	  :repeat (c-in 1)
+  	  :action (lambda (timer)
+		    (declare (ignore timer))
+		    (bif (fn (on-hover self))
+			 (funcall fn self))))))
+  		    ;; (declare (ignore timer))
+  		    ;; (funcall (on-hover self))))))
+
+(defun cancel-hover-event (self)
+  (cancel-timer (hover-timer self)))
+
+
 
 (defmethod tk-configure ((self widget) option value)
   (tk-format `(:configure ,self ,option) "~a configure ~(~a~) ~a" (path self) option (tk-send-value value)))
@@ -188,7 +213,6 @@ See the Lisp Lesser GNU Public License for more details.
   (when (or (and (eql self .tkw) (not (find .tkw *windows-destroyed*)))
           (not (find .tkw *windows-being-destroyed*)))
     (trc "not-to-be destroying widget" (^path))
-    (break "not to be")
     (tk-format `(:forget ,self) "pack forget ~a" (^path))
     (tk-format `(:destroy ,self) "destroy ~a" (^path))))
 
