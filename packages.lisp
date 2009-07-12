@@ -12,7 +12,7 @@
    #:mk-stack #:mk-radiobutton #:mk-radiobutton-ex #:mk-radiobutton #:mk-label
    #:^selection #:selection #:tk-selector
    #:mk-checkbutton #:button #:mk-button #:mk-button-ex  #:entry #:mk-entry #:text
-   #:frame-stack #:mk-frame-stack #:path #:^path
+   #:frame-stack #:frame-row #:mk-frame-stack #:path #:^path
    #:mk-menu-entry-radiobutton #:mk-menu-entry-checkbutton
    #:mk-menu-radio-group #:mk-menu-entry-separator
    #:mk-menu-entry-command #:mk-menu-entry-command-ex
