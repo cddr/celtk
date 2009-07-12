@@ -37,37 +37,29 @@ See the Lisp Lesser GNU Public License for more details.
     -validate -validatecommand -width )
   (:default-initargs
       :id (gentemp "ENT")
-    :xscrollcommand (c-in nil)
     :textvariable (c? (intern (^path)))
+    :xscrollcommand (c-in nil)
     :event-handler (lambda (self xe)
-                     (TRC nil "ENTRY event-handler" self (xsv type xe) (tk-event-type (xsv type xe)))
+                     (TRC "ENTRY event-handler" self (xsv type xe) (tk-event-type (xsv type xe)))
                      (case (tk-event-type (xsv type xe))
                        (:virtualevent
-                        (trc nil "ENTRY virtual event" (xsv name xe))
-                        (case (read-from-string (string-upcase (xsv name xe)))
-                          (trace
-                           (TRC nil "entry e/h trace" self (when (plusp (xsv user-data xe))
-                                                              (tcl-get-string (xsv user-data xe))))
+                        (trc "ENTRY virtual event" (xsv name xe))
+                        (case (intern (string-upcase (xsv name xe))
+				      :keyword)
+                          (:trace
+			   (trc "trace: " self (when (pointerp (xsv user-data xe))
+						 (tcl-get-string (xsv user-data xe))))
                            ;; assuming write op, but data field shows that
                            (let ((new-value (tcl-get-var *tki* (^path)
-                                              (var-flags :TCL-NAMESPACE-ONLY))))
+							 (var-flags :TCL-NAMESPACE-ONLY))))
                              (unless (string= new-value (^value))
                                (setf (^value) new-value))))))))
-   
     :value (c-in "")))
 
 (defmethod md-awaken :after ((self entry)) ;; move this to a traces slot on widget
   (with-integrity (:client `(:trace ,self))
     (tk-format-now "trace add variable ~a write TraceOP" (^path))))
  
-;;; /// this next replicates the handling of tk-mirror-variable because
-;;; those leverage the COMMAND mechanism, which entry lacks
-;;
-(defobserver .value ((self entry))
-  (when new-value 
-    (unless (string= new-value old-value)
-      (trc nil "value output" self new-value)
-      (tcl-set-var *tki* (^path) new-value (var-flags :TCL-NAMESPACE-ONLY)))))
 
 (deftk text-widget (widget)
   ((modified :initarg :modified :accessor modified :initform nil))
@@ -114,3 +106,12 @@ See the Lisp Lesser GNU Public License for more details.
     ;; side effects - frgo 2006-05-29 1:30 am ;-)
     (tk-format-now "update idletasks"))) ;; Causes a display update after each text widget operation.
 
+(defobserver .value ((self entry))
+  (trc nil "value output" self new-value)
+  (with-integrity (:client `(:variable ,self))
+    (tk-format-now "~a delete 0 end" (^path))
+    (when (plusp (length new-value))
+      (tk-format-now "~a insert end {~a}"
+		     (^path)
+		     new-value))
+    (tk-format-now "update idletasks")))

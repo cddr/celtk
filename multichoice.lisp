@@ -67,11 +67,14 @@ See the Lisp Lesser GNU Public License for more details.
                      (case (tk-event-type (xsv type xe))
                        (:virtualevent
                         (trc ":virtualevent" (xsv name xe))
-                        (case (read-from-string (string-upcase (xsv name xe)))
-                          (ListboxSelect
-                           (let ((selection (parse-integer (tk-eval "~a curselection" (^path)))))
+                        (case (intern (string-upcase (xsv name xe))
+				      :celtk)
+                          (listboxselect
+                           (let* ((id-no (parse-integer 
+					  (tk-eval "~a curselection" (^path))))
+				  (val (value (elt (^kids) id-no))))
                              (setf (selection (tk-selector self))
-                               (value (elt (^kids) selection)))))))))))
+				   val)))))))))
 
 (defmd listbox-item (tk-object)
   (item-text :initarg :item-text :accessor item-text
