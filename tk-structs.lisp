@@ -20,7 +20,7 @@ See the Lisp Lesser GNU Public License for more details.
 
 
 (defctype Window :unsigned-long) ;; <sigh> The XWindow pointer stored in the tkwin record
-(defctype Time :unsigned-long)
+(defctype CTime :unsigned-long)
 (defctype Tk_Uid :string)
 
 (defcstruct tk-fake-win
@@ -106,7 +106,7 @@ typedef struct {
   (event-window Window)
   (root-window Window)
   (sub-window Window)
-  (time Time)
+  (time CTime)
   (x :int)
   (y :int)
   (x-root :int)
@@ -148,7 +148,7 @@ typedef struct {
   (event-window Window)
   (root-window Window)
   (sub-window Window)
-  (time Time)
+  (time CTime)
   (x :int)
   (y :int)
   (x-root :int)
