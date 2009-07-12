@@ -37,7 +37,7 @@ See the Lisp Lesser GNU Public License for more details.
   (setf *tki* (Tcl_CreateInterp))
   ;; not recommended by Tcl doc (tcl-do-when-idle (get-callback 'tcl-idle-proc) 42)
   (tk-app-init *tki*)
-  (tk-togl-init *tki*)
+
   (tk-format-now "proc TraceOP {n1 n2 op} {event generate $n1 <<trace>> -data $op}")
   
   (tk-format-now "package require snack")

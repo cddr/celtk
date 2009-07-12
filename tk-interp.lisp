@@ -201,7 +201,8 @@ See the Lisp Lesser GNU Public License for more details.
   #+lispworks (nth 0 system:*line-arguments-list*) ;; portable to OS X
   #+sbcl (nth 0 sb-ext:*posix-argv*)
   #+openmcl (car ccl:*command-line-argument-list*)
-  #-(or allegro lispworks sbcl openmcl)
+  #+clisp "clisp"
+  #-(or allegro lispworks sbcl openmcl clisp)
   (error "argv0 function not implemented for this lisp"))
 
 (defun tk-interp-init-ensure ()
@@ -210,7 +211,7 @@ See the Lisp Lesser GNU Public License for more details.
     (use-foreign-library Tk)
     #-macosx (use-foreign-library Tile)
     #-macosx (pushnew :tile cl-user::*features*)
-    (use-foreign-library Togl)
+;    (use-foreign-library Togl)
     (tcl-find-executable (argv0))
     (set-initialized)))
 

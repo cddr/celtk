@@ -40,7 +40,6 @@
                (:file "composites")
                (:file "frame")
                (:file "fileevent")
-               (:file "togl")
                (:file "run")
 	         (:file "ltktest-ci")
                (:file "lotsa-widgets")
