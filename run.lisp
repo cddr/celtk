@@ -195,8 +195,8 @@ See the Lisp Lesser GNU Public License for more details.
   #+notquite (when (and *tkw* (fm-parent *tkw*)) ;; probably a better way to test if the window is still alive
     (not-to-be (fm-parent *tkw*))
     (setf *tkw* nil ctk::*app* nil))
-
-  (apply 'run-window root-class resetp window-initargs))
+  
+  (apply 'run-celtk-window root-class  window-initargs))
 
 ;;; --- commands -----------------------------------------------------------------
 

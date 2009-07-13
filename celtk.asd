@@ -42,6 +42,7 @@
                (:file "frame")
                (:file "fileevent")
                (:file "run")
-	         (:file "ltktest-ci")
+	       (:file "run-celtk-window")
+	       (:file "ltktest-ci")
                (:file "lotsa-widgets")
                (:file "demos")))
