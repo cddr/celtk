@@ -18,6 +18,7 @@
   :depends-on (:cells :cffi :gui-geometry)
   :serial t
   :components ((:file "packages")
+	       (:file "libraries")
 	       (:file "celtk")
                (:file "tk-structs")
                (:file "tk-interp")

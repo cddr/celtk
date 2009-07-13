@@ -19,26 +19,6 @@ See the Lisp Lesser GNU Public License for more details.
 
 (in-package :celtk)
 
-;; Tcl/Tk
-
-(define-foreign-library Tcl
-    (:darwin (:framework "Tcl"))
-  (:windows (:or "Tcl85.dll"))
-  (:unix (:or "libtcl8.5.so" "libtcl.so"))
-  (t (:default "libtcl")))
-
-(define-foreign-library Tk
-    (:darwin (:framework "Tk"))
-  (:windows (:or "Tk85.dll"))
-  (:unix (:or "libtk8.5.so" "libtk.so"))
-  (t (:default "libtk")))
-
-(define-foreign-library Tile
-    ;(:darwin (:framework "Tk"))
-    (:windows (:or "tile078.dll"))
-  (:unix (:or "libtk8.5.so" "libtk.so"))
-  (t (:default "libtk")))
-
 (defctype tcl-retcode :int)
 
 (defcenum tcl-retcode-values
@@ -182,38 +162,6 @@ See the Lisp Lesser GNU Public License for more details.
   (interp :pointer)
   (channelName :string)
   (modePtr :pointer))
-
-;; Initialization mgmt - required to avoid multiple library loads
-
-(defvar *initialized* nil)
-
-(defun set-initialized ()
-  (setq *initialized* t))
-
-(defun reset-initialized ()
-  (setq *initialized* nil))
-
-#+doit
-(reset-initialized)
-
-(defun argv0 ()
-  #+allegro (sys:command-line-argument 0)
-  #+lispworks (nth 0 system:*line-arguments-list*) ;; portable to OS X
-  #+sbcl (nth 0 sb-ext:*posix-argv*)
-  #+openmcl (car ccl:*command-line-argument-list*)
-  #+clisp "clisp"
-  #-(or allegro lispworks sbcl openmcl clisp)
-  (error "argv0 function not implemented for this lisp"))
-
-(defun tk-interp-init-ensure ()
-  (unless *initialized*
-    (use-foreign-library Tcl)
-    (use-foreign-library Tk)
-    #-macosx (use-foreign-library Tile)
-    #-macosx (pushnew :tile cl-user::*features*)
-;    (use-foreign-library Togl)
-    (tcl-find-executable (argv0))
-    (set-initialized)))
 
 ;; Send a script to a given Tcl/Tk interpreter
 

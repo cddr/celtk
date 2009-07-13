@@ -32,7 +32,6 @@ See the Lisp Lesser GNU Public License for more details.
   (setf *tkw* nil)
   (when resetp
     (cells-reset 'tk-user-queue-handler))
-  (tk-interp-init-ensure)
 
   (setf *tki* (Tcl_CreateInterp))
   ;; not recommended by Tcl doc (tcl-do-when-idle (get-callback 'tcl-idle-proc) 42)
