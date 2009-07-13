@@ -40,9 +40,23 @@ See the Lisp Lesser GNU Public License for more details.
 ; --- tk-format --- talking to wish/Tk -----------------------------------------------------
 
 (defparameter +tk-client-task-priority+
-    '(:delete :forget :destroy 
-       :pre-make-tk :make-tk :make-tk-menubutton :post-make-tk 
-       :variable :bind :selection :trace :configure :grid :pack :fini))
+  '(
+    :delete
+    :forget
+    :destroy
+    :pre-make-tk
+    :make-tk
+    :make-tk-menubutton
+    :post-make-tk
+    :variable
+    :bind
+    :selection
+    :trace
+    :configure
+    :grid
+    :pack
+    :fini
+    ))
 
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it stuff in the order it needs to work properly."
