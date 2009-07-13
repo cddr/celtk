@@ -58,6 +58,13 @@ See the Lisp Lesser GNU Public License for more details.
     :fini
     ))
 
+(defun defer-info-p (info)
+  (find (car info)
+	+tk-client-task-priority+))
+(deftype defer-info ()
+  `(or (eql :grouped)
+    (and list
+     (satisfies defer-info-p))))
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it stuff in the order it needs to work properly."
   (destructuring-bind (type1 self1 &rest dbg) task1
