@@ -9,35 +9,34 @@ This library is free software; you can redistribute it and/or
 modify it under the terms of the Lisp Lesser GNU Public License
  (http://opensource.franz.com/preamble.html), known as the LLGPL.
 
-This library is distributed  WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+This library is distributed  WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the Lisp Lesser GNU Public License for more details.
 
 |#
 
-;(pushnew :tile *features*) ;; frgo, 2007-09-21: Need to do this only when tile actually loaded
-
-
 (in-package :celtk)
-
-
-#+(and allegrocl ide (not runtime-system))
-(ide::defdefiner defcallback defun)
 
 (defvar *tki* nil
   "The tcl/tk interpreter stream")
-(defparameter *windows-being-destroyed* nil)
+
+(defparameter *windows-being-destroyed* nil
+  "When destroying a widget, add it to this list to ensure
+no attempt is made to destroy it when destroying children of
+that widget")
+
 (defparameter *windows-destroyed* nil)
 
-(defparameter *tk-last* nil "Debug aid. Last recorded command send to Tk")
+(defparameter *tk-last* nil
+  "Debug aid. Last recorded command send to Tk")
 
 (defparameter *tkw* nil
   "The root tk window")
 
 (define-symbol-macro .tkw (nearest self window))
 
-; --- tk-format --- talking to wish/Tk -----------------------------------------------------
+; --- tk-format --- talking to wish/Tk -----------------------------------------
 
 (defparameter +tk-client-task-priority+
   '(
@@ -65,6 +64,8 @@ See the Lisp Lesser GNU Public License for more details.
   `(or (eql :grouped)
     (and list
      (satisfies defer-info-p))))
+
+
 (defun tk-user-queue-sort (task1 task2)
   "Intended for use as user queue sorter, to make Tk happy by giving it
 stuff in the order it needs to work properly."
@@ -104,30 +105,7 @@ stuff in the order it needs to work properly."
     (validate-queue user-q)
     (process-queue user-q)))
 
-#+save
-(defun tk-format-now (fmt$ &rest fmt-args)
-  (unless (find *tkw* *windows-destroyed*)
-    (let* ((*print-circle* nil)
-           (tk$ (apply 'format nil fmt$ fmt-args)))
-      ;
-      ; --- debug stuff ---------------------------------
-      ;
 
-      (let ((yes '(#+shhh "play-me"))
-            (no  '("font")))
-        (declare (ignorable yes no))
-        (when (and (or ;; (null yes)
-                    (find-if (lambda (s) (search s tk$)) yes))
-                #+hunh? (not (find-if (lambda (s) (search s tk$)) no)))
-          (format t "~&tk> ~a~%" tk$)))
-      (assert *tki*)
-
-      ; --- end debug stuff ------------------------------
-      ;
-      ; --- serious stuff ---
-      ;
-      (setf *tk-last* tk$)
-      (tcl-eval-ex *tki* tk$))))
 
 (defun tk-format-now (fmt$ &rest fmt-args)
   (unless (find *tkw* *windows-destroyed*)
@@ -142,40 +120,26 @@ stuff in the order it needs to work properly."
       (setf *tk-last* tk$)
       (tcl-eval-ex *tki* tk$))))
 
+
 (defun tk-format (defer-info fmt$ &rest fmt-args)
   "Format then send to wish (via user queue)"
-  (assert (or (eq defer-info :grouped)
-            (consp defer-info)) () "need defer-info to sort command ~a. Specify :grouped if caller is managing user-queue"
-    (apply 'format nil fmt$ fmt-args))
+  (assert (typep defer-info 'defer-info)
+	  () (conc$ "Need defer-info to sort command ~a."
+		    "Specify :grouped if caller is managing user-queue")
+	  (apply 'format nil fmt$ fmt-args))
 
-  (when (eq defer-info :grouped)
-    (setf defer-info nil))
   (flet ((do-it ()
            (apply 'tk-format-now fmt$ fmt-args)))
-    (if defer-info
+    (if (eq defer-info :grouped)
+	(do-it)
         (with-integrity (:client defer-info)
-          (do-it))
-    (do-it))))
+          (do-it)))))
+
 
 (defmethod tk-send-value ((s string))
-  #+whoa (if nil #+not (find #\\ s) ;; welllll, we cannot send: -text "[" to Tk because t misinterprets it, so we have to send the octal
-                                                       ; which begins with \. There is probably a better way ///
-      (format nil "\"~a\"" s) ;; no good if \ is in file path as opposed to escaping
-      (format nil "~s" s)                                  ; this fails where I want to send a /Tk/ escape sequence "\065" 
-                                                       ; because the ~s directive adds its own escaping
-  ;;(format nil "{~a}" s)                                ;this fails, too, not sure why
-  )
   (if (find #\space s)
       (format nil "{~a}" s)
     (format nil "~s" s)))
-
-(defmethod tk-send-value ((c character))
-  ;
-  ; all this just to display "[". Unsolved is how we will
-  ; send a text label with a string /containing/ the character #\[
-  ;
-  (trc nil "tk-send-value" c (char-code c) (format nil "\"\\~3,'0o\"" (char-code c)))
-  (format nil "\"\\~3,'0o\"" (char-code c)))
 
 (defmethod tk-send-value (other)
   (format nil "~a" other))
@@ -199,7 +163,8 @@ stuff in the order it needs to work properly."
 
 (defun tk-eval (tk-form$ &rest fmt-args
                  &aux (tk$ (apply 'format nil tk-form$ fmt-args)))
-  (assert *tki* () "Global *tki* is not bound to anything, let alone a Tcl interpreter")
+  (assert *tki* () (conc$ "Global *tki* is not bound to anything, "
+			  "let alone a Tcl interpreter"))
   (tk-format :grouped tk$)
   (tcl-get-string-result *tki*)
   )
@@ -242,7 +207,7 @@ stuff in the order it needs to work properly."
           else do (push ch item)
           finally (gather-item)
             (return (nreverse items))))))
-        
+
 
 
 
