@@ -42,6 +42,32 @@ See the Lisp Lesser GNU Public License for more details.
 (defmd stack-mixin (inline-mixin)
   :packing-side 'top)
 
+;--- g r i d s ----------------------------------------------
+
+(defmd grid (grid-manager frame)
+  (rows)
+  (row-factory)
+  (kids (c? (the-kids
+	     (loop for row in (^rows)
+		for row-num from 0
+		collect (funcall (^row-factory)
+				 row
+				 row-num))))))
+
+(defobserver .kids ((self grid))
+  (when new-value
+    (loop for k in new-value
+	 when (gridding k)
+	 do (tk-format `(:grid ,k)
+		       (format nil "grid ~a ~a"
+			       (path k)
+			       (gridding k))))))
+
+(defmacro mk-grid (&rest initargs)
+  `(make-instance 'grid
+    ,@initargs
+    :fm-parent *parent*))
+
 
 ;--- f r a m e --------------------------------------------------
 
